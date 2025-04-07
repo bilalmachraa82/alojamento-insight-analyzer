@@ -26,29 +26,78 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const formSchema = z.object({
-  nome: z.string().min(2, {
-    message: "O nome deve ter pelo menos 2 caracteres.",
-  }),
-  email: z.string().email({
-    message: "Por favor insira um email válido.",
-  }),
-  link: z.string().url({
-    message: "Por favor insira um URL válido.",
-  }),
-  plataforma: z.string({
-    required_error: "Por favor selecione uma plataforma.",
-  }),
-  rgpd: z.boolean().refine((val) => val === true, {
-    message: "Deve aceitar a política de RGPD para continuar.",
-  }),
-});
+interface DiagnosticFormProps {
+  language: "en" | "pt";
+}
 
-type FormValues = z.infer<typeof formSchema>;
-
-export default function DiagnosticForm() {
+const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  const translations = {
+    en: {
+      name: "Name",
+      namePlaceholder: "Ex: John Smith",
+      email: "Email",
+      emailPlaceholder: "Ex: john@email.com",
+      link: "Property link",
+      linkPlaceholder: "https://www.booking.com/...",
+      platform: "Main platform",
+      gdpr: "I agree that my data can be used for contact and diagnostic purposes",
+      submit: "Generate Analysis",
+      processing: "Processing...",
+      success: "Diagnostic Sent!",
+      thankYou: "Thank you, {name}. We are processing your smart diagnostic. Soon, you will receive your personalized plan in your email.",
+      sendAnother: "Send another diagnostic",
+      emailError: "Please enter a valid email.",
+      nameError: "Name must be at least 2 characters.",
+      urlError: "Please enter a valid URL.",
+      platformError: "Please select a platform.",
+      gdprError: "You must accept the GDPR policy to continue."
+    },
+    pt: {
+      name: "Nome",
+      namePlaceholder: "Ex: Ana Costa",
+      email: "Email",
+      emailPlaceholder: "Ex: ana@email.com",
+      link: "Link da propriedade",
+      linkPlaceholder: "https://www.booking.com/...",
+      platform: "Plataforma principal",
+      gdpr: "Aceito que os meus dados sejam usados para contacto e envio do diagnóstico",
+      submit: "Gerar Análise",
+      processing: "A processar...",
+      success: "Diagnóstico Enviado!",
+      thankYou: "Obrigado, {name}. Estamos a processar o teu diagnóstico inteligente. Em breve, receberás o plano personalizado no teu email.",
+      sendAnother: "Enviar outro diagnóstico",
+      emailError: "Por favor insira um email válido.",
+      nameError: "O nome deve ter pelo menos 2 caracteres.",
+      urlError: "Por favor insira um URL válido.",
+      platformError: "Por favor selecione uma plataforma.",
+      gdprError: "Deve aceitar a política de RGPD para continuar."
+    }
+  };
+  
+  const t = language === "en" ? translations.en : translations.pt;
+  
+  const formSchema = z.object({
+    nome: z.string().min(2, {
+      message: t.nameError,
+    }),
+    email: z.string().email({
+      message: t.emailError,
+    }),
+    link: z.string().url({
+      message: t.urlError,
+    }),
+    plataforma: z.string({
+      required_error: t.platformError,
+    }),
+    rgpd: z.boolean().refine((val) => val === true, {
+      message: t.gdprError,
+    }),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -89,19 +138,19 @@ export default function DiagnosticForm() {
       );
 
       if (!response.ok) {
-        throw new Error("Falha ao enviar o formulário.");
+        throw new Error(language === "en" ? "Failed to submit the form." : "Falha ao enviar o formulário.");
       }
 
       setIsSuccess(true);
       toast({
-        title: "Diagnóstico enviado com sucesso!",
-        description: `Obrigado, ${data.nome}. Estamos a processar o teu diagnóstico inteligente. Em breve, receberás o plano personalizado no teu email.`,
+        title: language === "en" ? "Diagnostic sent successfully!" : "Diagnóstico enviado com sucesso!",
+        description: t.thankYou.replace("{name}", data.nome),
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.",
+        title: language === "en" ? "Error" : "Erro",
+        description: language === "en" ? "An error occurred while submitting the form. Please try again." : "Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.",
       });
       console.error("Error submitting form:", error);
     } finally {
@@ -110,7 +159,7 @@ export default function DiagnosticForm() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto" id="diagnosticoForm">
       {!isSuccess ? (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -119,9 +168,9 @@ export default function DiagnosticForm() {
               name="nome"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel>{t.name}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Ana Costa" {...field} />
+                    <Input placeholder={t.namePlaceholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -133,9 +182,9 @@ export default function DiagnosticForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t.email}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: ana@email.com" {...field} type="email" />
+                    <Input placeholder={t.emailPlaceholder} {...field} type="email" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,9 +196,9 @@ export default function DiagnosticForm() {
               name="link"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Link da propriedade</FormLabel>
+                  <FormLabel>{t.link}</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://www.booking.com/..." {...field} type="url" />
+                    <Input placeholder={t.linkPlaceholder} {...field} type="url" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -161,11 +210,11 @@ export default function DiagnosticForm() {
               name="plataforma"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Plataforma principal</FormLabel>
+                  <FormLabel>{t.platform}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma plataforma" />
+                        <SelectValue placeholder={language === "en" ? "Select a platform" : "Selecione uma plataforma"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -173,7 +222,7 @@ export default function DiagnosticForm() {
                       <SelectItem value="Airbnb">Airbnb</SelectItem>
                       <SelectItem value="Vrbo">Vrbo</SelectItem>
                       <SelectItem value="Google">Google</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
+                      <SelectItem value="Outro">{language === "en" ? "Other" : "Outro"}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -194,7 +243,7 @@ export default function DiagnosticForm() {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      Aceito que os meus dados sejam usados para contacto e envio do diagnóstico
+                      {t.gdpr}
                     </FormLabel>
                     <FormMessage />
                   </div>
@@ -210,10 +259,10 @@ export default function DiagnosticForm() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  A processar...
+                  {t.processing}
                 </>
               ) : (
-                "Gerar Análise"
+                t.submit
               )}
             </Button>
           </form>
@@ -223,10 +272,9 @@ export default function DiagnosticForm() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 mb-4">
             <Check className="h-6 w-6 text-green-600" />
           </div>
-          <h3 className="text-lg font-medium text-green-800">Diagnóstico Enviado!</h3>
+          <h3 className="text-lg font-medium text-green-800">{t.success}</h3>
           <p className="mt-2 text-sm text-green-600">
-            Obrigado, {form.getValues("nome")}. Estamos a processar o teu diagnóstico inteligente. 
-            Em breve, receberás o plano personalizado no teu email.
+            {t.thankYou.replace("{name}", form.getValues("nome"))}
           </p>
           <Button 
             onClick={() => {
@@ -236,10 +284,12 @@ export default function DiagnosticForm() {
             variant="outline"
             className="mt-4"
           >
-            Enviar outro diagnóstico
+            {t.sendAnother}
           </Button>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default DiagnosticForm;

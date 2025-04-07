@@ -1,28 +1,63 @@
 
-import DiagnosticForm from "@/components/DiagnosticForm";
+import { useState, useEffect } from "react";
 import MariaFazLogo from "@/components/MariaFazLogo";
+import LanguageToggle from "@/components/LanguageToggle";
+import HeroSection from "@/components/HeroSection";
+import HowItWorks from "@/components/HowItWorks";
+import PricingTable from "@/components/PricingTable";
+import DiagnosticForm from "@/components/DiagnosticForm";
+import { Separator } from "@/components/ui/separator";
 
 const Index = () => {
+  const [language, setLanguage] = useState<"en" | "pt">("en");
+
+  const scrollToForm = () => {
+    const form = document.getElementById("diagnosticoForm");
+    form?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start py-12 px-4 bg-gradient-to-br from-white to-gray-50">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-white to-gray-50">
+      {/* Header */}
+      <header className="w-full py-4 px-6 md:px-8 flex justify-between items-center shadow-sm bg-white sticky top-0 z-10">
         <MariaFazLogo />
+        <LanguageToggle language={language} setLanguage={setLanguage} />
+      </header>
+
+      <main className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
+        {/* Hero Section */}
+        <HeroSection language={language} scrollToForm={scrollToForm} />
         
+        <Separator className="my-12" />
+        
+        {/* How It Works */}
+        <HowItWorks language={language} />
+        
+        <Separator className="my-12" />
+        
+        {/* Pricing Table */}
+        <PricingTable language={language} scrollToForm={scrollToForm} />
+        
+        <Separator className="my-12" />
+        
+        {/* Diagnostic Form */}
         <div className="bg-white shadow-sm rounded-xl p-8 mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-center mb-2 text-brand-black font-montserrat">
-            Diagnóstico Inteligente
-          </h1>
-          <h2 className="text-lg text-center mb-8 text-gray-600 font-inter">
-            Alojamento Local
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 text-brand-black font-montserrat">
+            {language === "en" ? "Smart Diagnostic" : "Diagnóstico Inteligente"}
           </h2>
+          <p className="text-lg text-center mb-8 text-gray-600 font-inter">
+            {language === "en" ? "Short-Term Rental" : "Alojamento Local"}
+          </p>
           
-          <DiagnosticForm />
+          <DiagnosticForm language={language} />
         </div>
-        
-        <div className="text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Maria Faz. Todos os direitos reservados.</p>
+      </main>
+      
+      <footer className="w-full py-6 px-4 bg-gray-50 border-t border-gray-100">
+        <div className="max-w-7xl mx-auto text-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} Maria Faz. {language === "en" ? "All rights reserved." : "Todos os direitos reservados."}</p>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };
