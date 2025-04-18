@@ -39,7 +39,8 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
                     }
                     
                     // Then check if it's an object and has the right displayName
-                    if (typeof childType === 'object' && 
+                    // Use type guard to ensure TypeScript knows childType is not null at this point
+                    if (typeof childType === 'object' && childType !== null && 
                         'displayName' in childType &&
                         childType.displayName === 'Select') {
                       return field.onChange;

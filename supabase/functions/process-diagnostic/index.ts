@@ -62,7 +62,8 @@ serve(async (req: Request) => {
         actorId = "apify/airbnb-scraper";
         break;
       case "booking":
-        actorId = "apify/booking-scraper";
+        // Fix: Use correct actor ID for Booking
+        actorId = "apify/booking-hotels-scraper";
         break;
       case "vrbo":
         actorId = "apify/vrbo-scraper";
@@ -73,6 +74,14 @@ serve(async (req: Request) => {
     }
 
     console.log(`Using actor ${actorId} for platform ${submission.plataforma}`);
+
+    if (!APIFY_API_TOKEN) {
+      console.error("Missing APIFY_API_TOKEN");
+      return new Response(
+        JSON.stringify({ error: "Missing API token configuration" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Call Apify API to start the scraper
     const apifyUrl = `https://api.apify.com/v2/actor-tasks?token=${APIFY_API_TOKEN}`;
