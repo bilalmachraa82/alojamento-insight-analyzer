@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -14,11 +13,10 @@ const Index: React.FC = () => {
   useEffect(() => {
     const testSupabaseConnection = async () => {
       try {
-        // Just test the connection without trying to access a specific table
-        const { data, error } = await supabase.from('_unused_').select('*').limit(0).maybeSingle();
+        // Just making a basic request to test the connection
+        const { data, error } = await supabase.auth.getSession();
         
-        if (error && error.code !== 'PGRST116') {
-          // If there's an error that's not just "relation does not exist"
+        if (error) {
           toast({
             variant: "destructive",
             title: "Supabase Connection Test Failed",
