@@ -29,8 +29,8 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
               ? React.cloneElement(children as React.ReactElement, {
                   ...field,
                   // Special handling for Select components which need different onChange handling
-                  onChange: typeof (children as any).type === 'object' && 
-                            (children as any).type?.displayName === 'Select' 
+                  onChange: (typeof children.type === 'object' && 
+                           children.type?.displayName === 'Select') 
                     ? field.onChange 
                     : (e: any) => field.onChange(e?.target?.value !== undefined ? e.target.value : e),
                 })
