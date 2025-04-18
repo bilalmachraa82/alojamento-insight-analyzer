@@ -2,7 +2,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Initialize Resend with the API key
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+const resend = new Resend(resendApiKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +25,9 @@ serve(async (req) => {
   }
 
   try {
+    // Debug Resend API key (masked)
+    console.log(`DEBUG: Using Resend API key: ${resendApiKey ? "***" + resendApiKey.slice(-4) : "NOT FOUND"}`);
+    
     const { email, name, submissionId, language } = await req.json() as EmailRequest;
     
     console.log(`DEBUG: Sending diagnostic email to ${email} for submission ${submissionId}`);
@@ -59,24 +64,29 @@ serve(async (req) => {
 
     console.log(`DEBUG: Preparing to send email to ${email}`);
 
-    const { data, error } = await resend.emails.send({
-      from: "Maria Faz <noreply@mariafaz.com>",
-      to: [email],
-      subject: subject,
-      html: html,
-    });
+    try {
+      const { data, error } = await resend.emails.send({
+        from: "Maria Faz <onboarding@resend.dev>", // Using Resend's verified domain for testing
+        to: [email],
+        subject: subject,
+        html: html,
+      });
 
-    if (error) {
-      console.error("Email sending failed:", error);
-      throw error;
+      if (error) {
+        console.error("Resend API error:", error);
+        throw error;
+      }
+
+      console.log("DEBUG: Email sent successfully:", data);
+      
+      return new Response(JSON.stringify({ success: true, data }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (resendError) {
+      console.error("Resend send error:", resendError);
+      throw resendError;
     }
-
-    console.log("DEBUG: Email sent successfully:", data);
-    
-    return new Response(JSON.stringify({ success: true, data }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
   } catch (error) {
     console.error("Error in send-diagnostic-email function:", error);
     return new Response(

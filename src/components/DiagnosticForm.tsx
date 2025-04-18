@@ -37,6 +37,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
 
   const sendConfirmationEmail = async (email: string, name: string, submissionId: string) => {
     try {
+      console.log("Sending confirmation email to:", email);
       const { data, error } = await supabase.functions.invoke("send-diagnostic-email", {
         body: {
           email,
@@ -48,6 +49,14 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
 
       if (error) {
         console.error("Error sending confirmation email:", error);
+        // We'll continue with the form submission even if email fails
+        toast({
+          variant: "destructive",
+          title: language === "en" ? "Email notification failed" : "Falha na notificação por e-mail",
+          description: language === "en" 
+            ? "We couldn't send you a confirmation email, but your submission was processed successfully." 
+            : "Não conseguimos enviar-lhe um e-mail de confirmação, mas a sua submissão foi processada com sucesso.",
+        });
         return false;
       }
 
@@ -55,6 +64,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       return true;
     } catch (err) {
       console.error("Exception sending confirmation email:", err);
+      // We'll continue with the form submission even if email fails
       return false;
     }
   };
@@ -91,8 +101,16 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       const newSubmissionId = submissionData[0].id;
       setSubmissionId(newSubmissionId);
       
-      // Send confirmation email
-      await sendConfirmationEmail(data.email, data.nome, newSubmissionId);
+      // Send confirmation email (but don't wait for it to complete the main flow)
+      sendConfirmationEmail(data.email, data.nome, newSubmissionId)
+        .then(emailSuccess => {
+          if (emailSuccess) {
+            console.log("Email sent successfully");
+          }
+        })
+        .catch(e => {
+          console.error("Email sending error caught:", e);
+        });
       
       try {
         const { data: functionData, error: functionError } = await supabase.functions.invoke("process-diagnostic", {
