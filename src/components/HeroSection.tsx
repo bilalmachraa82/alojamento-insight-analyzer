@@ -67,8 +67,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language, scrollToForm }) => 
         <div className="hidden md:block md:w-1/2">
           <div className="rounded-lg bg-gradient-to-br from-brand-pink/20 to-brand-blue/20 p-6 h-96 flex items-center justify-center">
             <img 
-              src="/placeholder.svg" 
-              alt="Property Analysis" 
+              src="https://images.unsplash.com/photo-1721322800607-8c38375eef04"
+              alt="Short-Term Rental Accommodation" 
               className="max-h-full object-contain rounded-lg shadow-lg"
             />
           </div>
