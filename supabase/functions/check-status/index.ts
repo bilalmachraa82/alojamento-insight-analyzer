@@ -61,6 +61,20 @@ serve(async (req: Request) => {
       );
     }
     
+    // If the status is "pending_manual_review", return the current status
+    if (status === "pending_manual_review" || status === "manual_review_requested") {
+      return new Response(
+        JSON.stringify({
+          status,
+          message: `Current status: ${status}`
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+    
     // If the status is "scraping", check the status of the Apify run
     if (status === "scraping" && submission.scraped_data?.apify_run_id) {
       try {

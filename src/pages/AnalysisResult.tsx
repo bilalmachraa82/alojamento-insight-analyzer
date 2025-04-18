@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, RefreshCw } from "lucide-react";
+import { Loader2, ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
 import AnalysisResultsViewer from "@/components/results/AnalysisResultsViewer";
 import { useToast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
@@ -78,6 +79,9 @@ const AnalysisResult = () => {
       if (data.status !== "completed" && data.status !== "failed") {
         setAnalyzing(true);
         switch (data.status) {
+          case "pending_manual_review":
+            setProgressValue(30);
+            break;
           case "pending":
             setProgressValue(20);
             break;
@@ -134,6 +138,8 @@ const AnalysisResult = () => {
           setProgressValue(60);
         } else if (data.status === "analyzing") {
           setProgressValue(80);
+        } else if (data.status === "pending_manual_review") {
+          setProgressValue(30);
         } else if (data.status === "completed") {
           setProgressValue(100);
           setAnalyzing(false);
@@ -161,6 +167,39 @@ const AnalysisResult = () => {
     setLoading(true);
     fetchAnalysisData();
   };
+
+  const requestManualAnalysis = async () => {
+    try {
+      if (!analysisData) return;
+      
+      toast({
+        title: "Solicitação enviada",
+        description: "Seu pedido para análise manual foi registrado. Nossa equipe entrará em contato em breve.",
+      });
+      
+      // Atualize o banco de dados para marcar esta submissão para revisão por um humano
+      await supabase
+        .from("diagnostic_submissions")
+        .update({ 
+          status: "manual_review_requested",
+          scraped_data: {
+            ...analysisData.scraped_data,
+            manual_review_requested_at: new Date().toISOString()
+          }
+        })
+        .eq("id", analysisData.id);
+        
+      // Recarregar os dados para atualizar a UI
+      setTimeout(() => fetchAnalysisData(), 1000);
+    } catch (error) {
+      console.error("Error requesting manual analysis:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível solicitar análise manual. Tente novamente.",
+      });
+    }
+  };
   
   const getPropertyName = () => {
     if (!analysisData) return "Propriedade";
@@ -183,6 +222,28 @@ const AnalysisResult = () => {
   const getPropertyRating = () => {
     if (!analysisData || !analysisData.analysis_result?.property_data) return null;
     return analysisData.analysis_result.property_data.rating || null;
+  };
+
+  // Função para mostrar detalhes do erro de coleta de dados
+  const getScrapingErrorDetails = () => {
+    if (!analysisData || !analysisData.scraped_data) return null;
+    
+    const scraped_data = analysisData.scraped_data as Record<string, any>;
+    
+    if (scraped_data.error) {
+      try {
+        // Tentar extrair uma mensagem de erro mais legível
+        const errorJson = typeof scraped_data.error === 'string' 
+          ? JSON.parse(scraped_data.error)
+          : scraped_data.error;
+          
+        return errorJson.error?.message || "Erro ao coletar dados da propriedade";
+      } catch (e) {
+        return "Erro ao processar os dados da propriedade";
+      }
+    }
+    
+    return null;
   };
 
   if (loading) {
@@ -248,20 +309,68 @@ const AnalysisResult = () => {
           
           {analyzing ? (
             <div className="p-6 border rounded-lg bg-gray-50">
-              <h2 className="text-xl font-semibold mb-4 text-center">Análise em Andamento</h2>
-              <Progress value={progressValue} className="h-2 mb-2" />
-              <p className="text-center text-gray-600 mb-4">
-                {progressValue < 50 && "Preparando para análise..."}
-                {progressValue >= 50 && progressValue < 60 && "Coletando dados da propriedade..."}
-                {progressValue >= 60 && progressValue < 80 && "Processando informações coletadas..."}
-                {progressValue >= 80 && progressValue < 100 && "Gerando análise inteligente..."}
-              </p>
-              <div className="flex justify-center">
-                <Button onClick={handleRefresh} className="bg-brand-blue">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Verificar Status
-                </Button>
-              </div>
+              {analysisData.status === "pending_manual_review" ? (
+                <>
+                  <div className="flex items-center gap-2 mb-4 text-amber-600">
+                    <AlertTriangle className="h-5 w-5" />
+                    <h2 className="text-xl font-semibold">Precisamos da sua ajuda</h2>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <p className="text-gray-700 mb-4">
+                      Não conseguimos coletar automaticamente todos os dados da sua propriedade. 
+                      Isso pode acontecer por diversos motivos:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-2 text-gray-600 mb-4">
+                      <li>O link fornecido não está acessível</li>
+                      <li>A página da propriedade tem uma estrutura diferente do esperado</li>
+                      <li>A plataforma bloqueou nossa tentativa de coleta de dados</li>
+                    </ul>
+                    
+                    {getScrapingErrorDetails() && (
+                      <div className="bg-gray-100 p-3 rounded-md text-sm mb-4 overflow-auto">
+                        <p className="font-medium text-gray-700">Detalhes técnicos:</p>
+                        <p className="text-gray-600 font-mono">{getScrapingErrorDetails()}</p>
+                      </div>
+                    )}
+                    
+                    <p className="text-gray-700">
+                      Você pode solicitar uma análise manual pela nossa equipe ou tentar novamente com um link diferente.
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button 
+                      onClick={requestManualAnalysis}
+                      className="bg-brand-blue hover:bg-blue-700"
+                    >
+                      Solicitar análise manual
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link to="/">
+                        Tentar com outro link
+                      </Link>
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-semibold mb-4 text-center">Análise em Andamento</h2>
+                  <Progress value={progressValue} className="h-2 mb-2" />
+                  <p className="text-center text-gray-600 mb-4">
+                    {progressValue < 50 && "Preparando para análise..."}
+                    {progressValue >= 50 && progressValue < 60 && "Coletando dados da propriedade..."}
+                    {progressValue >= 60 && progressValue < 80 && "Processando informações coletadas..."}
+                    {progressValue >= 80 && progressValue < 100 && "Gerando análise inteligente..."}
+                  </p>
+                  <div className="flex justify-center">
+                    <Button onClick={handleRefresh} className="bg-brand-blue">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Verificar Status
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <AnalysisResultsViewer analysisData={analysisData} />

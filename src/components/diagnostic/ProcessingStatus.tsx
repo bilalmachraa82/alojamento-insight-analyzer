@@ -1,7 +1,7 @@
 
 import { Progress } from "@/components/ui/progress";
 import { translations, Language } from "./translations";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 
 interface ProcessingStatusProps {
   status: string | null;
@@ -26,6 +26,10 @@ const ProcessingStatus = ({ status, progressValue, language }: ProcessingStatusP
         return t.statusScraping;
       case "analyzing":
         return t.statusAnalyzing;
+      case "pending_manual_review":
+        return "É necessário revisão manual da sua propriedade";
+      case "manual_review_requested":
+        return "Análise manual solicitada";
       case "completed":
         return t.statusCompleted;
       default:
@@ -33,12 +37,18 @@ const ProcessingStatus = ({ status, progressValue, language }: ProcessingStatusP
     }
   };
 
+  const isManualReview = status === "pending_manual_review" || status === "manual_review_requested";
+
   return (
     <div className="mt-4 mb-4">
       <Progress value={progressValue} className="h-2" />
       <div className="flex items-center gap-2 mt-2">
-        {progressValue < 100 && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-        <p className="text-sm text-muted-foreground">
+        {isManualReview ? (
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+        ) : progressValue < 100 ? (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        ) : null}
+        <p className={`text-sm ${isManualReview ? "text-amber-600" : "text-muted-foreground"}`}>
           {getStatusText()}
         </p>
       </div>
