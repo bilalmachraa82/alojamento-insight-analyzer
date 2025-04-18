@@ -47,6 +47,21 @@ serve(async (req: Request) => {
       );
     }
 
+    // Handle case where there was an error in processing
+    if (submission.status === "pending_manual_review") {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          status: "pending_manual_review",
+          message: "This submission requires manual review"
+        }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
     // Extract Apify run ID
     const scraped_data = submission.scraped_data || {};
     const runId = scraped_data.apify_run_id;
@@ -58,79 +73,44 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check run status
-    const statusResponse = await fetch(
-      `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_API_TOKEN}`
-    );
-    
-    if (!statusResponse.ok) {
-      const errorText = await statusResponse.text();
-      throw new Error(`Failed to check run status: ${errorText}`);
-    }
-
-    const statusData = await statusResponse.json();
-    const runStatus = statusData.data.status;
-
-    // If run is finished, fetch the dataset
-    if (runStatus === "SUCCEEDED") {
-      // Get dataset ID
-      const datasetId = statusData.data.defaultDatasetId;
-      
-      // Fetch dataset items
-      const datasetResponse = await fetch(
-        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}`
+    try {
+      // Check run status
+      const statusResponse = await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_API_TOKEN}`
       );
       
-      if (!datasetResponse.ok) {
-        const errorText = await datasetResponse.text();
-        throw new Error(`Failed to fetch dataset: ${errorText}`);
-      }
-      
-      const propertyData = await datasetResponse.json();
-      
-      // Update the submission with the scraped data
-      await supabase
-        .from("diagnostic_submissions")
-        .update({
-          status: "scraping_completed",
-          scraped_data: {
-            ...scraped_data,
-            property_data: propertyData,
-            completed_at: new Date().toISOString(),
-          }
-        })
-        .eq("id", id);
+      if (!statusResponse.ok) {
+        const errorText = await statusResponse.text();
+        console.error(`Failed to check run status: ${errorText}`);
         
-      // Trigger the analyze-property function to process the data with Gemini API
-      try {
-        const analyzeResponse = await supabase.functions.invoke("analyze-property", {
-          body: { id }
-        });
+        // Try the alternative endpoint format if the first one fails
+        const alternativeResponse = await fetch(
+          `https://api.apify.com/v2/acts/runs/${runId}?token=${APIFY_API_TOKEN}`
+        );
         
-        console.log("Analysis process started:", analyzeResponse);
-      } catch (analyzeError) {
-        console.error("Error triggering property analysis:", analyzeError);
-      }
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          status: "scraping_completed",
-          message: "Scraping completed successfully, analysis started",
-          data: propertyData
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        if (!alternativeResponse.ok) {
+          const altErrorText = await alternativeResponse.text();
+          throw new Error(`Failed to check run status with both endpoints: ${altErrorText}`);
         }
-      );
-    } else {
-      // Return the current status
+        
+        const statusData = await alternativeResponse.json();
+        const runStatus = statusData.data.status;
+        
+        return handleRunStatus(runStatus, statusData.data, scraped_data, id);
+      }
+      
+      const statusData = await statusResponse.json();
+      const runStatus = statusData.data.status;
+      
+      return handleRunStatus(runStatus, statusData.data, scraped_data, id);
+    } catch (error) {
+      console.error("Error checking Apify run status:", error);
+      
+      // Return a reasonable response even if there's an error checking status
       return new Response(
         JSON.stringify({
-          success: true,
-          status: runStatus,
-          message: `Scraping is ${runStatus.toLowerCase()}`
+          status: submission.status,
+          message: "Unable to check current scraping status, will retry later"
         }),
         { 
           status: 200, 
@@ -147,5 +127,105 @@ serve(async (req: Request) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
+  }
+  
+  // Helper function to handle run status
+  async function handleRunStatus(runStatus: string, runData: any, scraped_data: any, id: string) {
+    // If run is finished, fetch the dataset
+    if (runStatus === "SUCCEEDED") {
+      // Get dataset ID
+      const datasetId = runData.defaultDatasetId;
+      
+      if (!datasetId) {
+        return new Response(
+          JSON.stringify({ 
+            error: "No dataset ID available in the run",
+            status: "error"
+          }),
+          { 
+            status: 200,  // Return 200 to avoid client errors
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      }
+      
+      // Fetch dataset items
+      try {
+        const datasetResponse = await fetch(
+          `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_TOKEN}`
+        );
+        
+        if (!datasetResponse.ok) {
+          const errorText = await datasetResponse.text();
+          throw new Error(`Failed to fetch dataset: ${errorText}`);
+        }
+        
+        const propertyData = await datasetResponse.json();
+        
+        // Update the submission with the scraped data
+        await supabase
+          .from("diagnostic_submissions")
+          .update({
+            status: "scraping_completed",
+            scraped_data: {
+              ...scraped_data,
+              property_data: propertyData,
+              completed_at: new Date().toISOString(),
+            }
+          })
+          .eq("id", id);
+          
+        // Trigger the analyze-property function to process the data with Gemini API
+        try {
+          const analyzeResponse = await supabase.functions.invoke("analyze-property", {
+            body: { id }
+          });
+          
+          console.log("Analysis process started:", analyzeResponse);
+        } catch (analyzeError) {
+          console.error("Error triggering property analysis:", analyzeError);
+        }
+        
+        return new Response(
+          JSON.stringify({
+            success: true,
+            status: "scraping_completed",
+            message: "Scraping completed successfully, analysis started",
+            data: propertyData
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      } catch (datasetError) {
+        console.error("Error fetching dataset:", datasetError);
+        
+        return new Response(
+          JSON.stringify({
+            status: "error_fetching_data",
+            message: "Error retrieving scraped data",
+            error: String(datasetError)
+          }),
+          { 
+            status: 200, // Return 200 to avoid client errors
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      }
+    } else {
+      // Return the current status
+      return new Response(
+        JSON.stringify({
+          success: true,
+          status: runStatus,
+          message: `Scraping is ${runStatus.toLowerCase()}`
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
   }
 });
