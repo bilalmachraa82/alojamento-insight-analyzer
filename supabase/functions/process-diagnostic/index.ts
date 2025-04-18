@@ -61,17 +61,17 @@ serve(async (req: Request) => {
       
       console.log(`Making request to Website Content Crawler`);
       
-      // Fixed actor input with correct parameters
+      // Actor input with valid parameters
       const actorInput = {
         startUrls: [{ url: startUrl }],
-        maxCrawlPages: 1, // We only need the property page
-        crawlerType: "browser:playwright:firefox", // Use Firefox browser with stealthy mode
+        maxCrawlPages: 1,
+        crawlerType: "playwright:chrome",
         saveHtml: false,
-        saveMarkdown: true, 
+        saveMarkdown: true,
         saveScreenshots: false,
         waitForDynamicContent: true,
-        maxScrollHeight: 5000, // Ensure we get all content
-        htmlTransformer: "readableText", // Use valid value: "readableText" instead of "readability"
+        maxScrollHeight: 5000,
+        htmlTransformer: "readableText", // Using valid value from the API
         removeElements: [
           ".cookie-banner",
           ".cookie-consent",
@@ -82,6 +82,8 @@ serve(async (req: Request) => {
           ".ad-container"
         ]
       };
+      
+      console.log("Actor input:", JSON.stringify(actorInput));
       
       const runResponse = await fetch(websiteContentCrawlerUrl, {
         method: "POST",
