@@ -5,6 +5,7 @@ import * as z from "zod";
 import { Check, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,6 +33,7 @@ interface DiagnosticFormProps {
 }
 
 const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
@@ -53,6 +55,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       success: "Diagnostic Sent!",
       thankYou: "Thank you, {name}. We are processing your smart diagnostic. Soon, you will receive your personalized plan in your email.",
       sendAnother: "Send another diagnostic",
+      viewResults: "View Results",
       emailError: "Please enter a valid email.",
       nameError: "Name must be at least 2 characters.",
       urlError: "Please enter a valid URL.",
@@ -78,6 +81,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       success: "Diagnóstico Enviado!",
       thankYou: "Obrigado, {name}. Estamos a processar o teu diagnóstico inteligente. Em breve, receberás o plano personalizado no teu email.",
       sendAnother: "Enviar outro diagnóstico",
+      viewResults: "Ver Resultados",
       emailError: "Por favor insira um email válido.",
       nameError: "O nome deve ter pelo menos 2 caracteres.",
       urlError: "Por favor insira um URL válido.",
@@ -160,8 +164,8 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
               toast({
                 title: language === "en" ? "Analysis Complete!" : "Análise Concluída!",
                 description: language === "en" 
-                  ? "Your property diagnostic has been completed. We've sent the results to your email." 
-                  : "O diagnóstico da sua propriedade foi concluído. Enviámos os resultados para o seu email.",
+                  ? "Your property diagnostic has been completed. You can now view the detailed results." 
+                  : "O diagnóstico da sua propriedade foi concluído. Pode agora ver os resultados detalhados.",
                 variant: "default",
               });
             }
@@ -251,6 +255,12 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         return t.statusCompleted;
       default:
         return t.statusPending;
+    }
+  };
+
+  const handleViewResults = () => {
+    if (submissionId) {
+      navigate(`/results/${submissionId}`);
     }
   };
 
@@ -384,18 +394,28 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
           <p className="mt-2 text-sm text-green-600">
             {t.thankYou.replace("{name}", form.getValues("nome"))}
           </p>
-          <Button 
-            onClick={() => {
-              setIsSuccess(false);
-              setProcessingStatus(null);
-              setProgressValue(0);
-              form.reset();
-            }} 
-            variant="outline"
-            className="mt-4"
-          >
-            {t.sendAnother}
-          </Button>
+          
+          <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+            {progressValue === 100 && (
+              <Button 
+                onClick={handleViewResults} 
+                className="bg-brand-blue hover:bg-opacity-90 text-white"
+              >
+                {t.viewResults}
+              </Button>
+            )}
+            <Button 
+              onClick={() => {
+                setIsSuccess(false);
+                setProcessingStatus(null);
+                setProgressValue(0);
+                form.reset();
+              }} 
+              variant="outline"
+            >
+              {t.sendAnother}
+            </Button>
+          </div>
         </div>
       )}
     </div>

@@ -73,9 +73,10 @@ serve(async (req: Request) => {
       similarListings: propertyData.similarListings || []
     };
 
+    // Prompt aprimorado com estrutura específica para análise detalhada
     const prompt = `
-      Você é um consultor especialista em alojamento local com anos de experiência em otimização de propriedades no Booking.com, Airbnb e outras plataformas. 
-      Analise detalhadamente esta propriedade e forneça um relatório estratégico completo.
+      Você é um consultor especialista de elite em alojamento local com experiência em otimização de propriedades no Booking.com, Airbnb e outras plataformas. 
+      Analise detalhadamente esta propriedade e forneça um relatório estratégico completo com insights de nível profissional.
       
       DADOS DA PROPRIEDADE:
       Nome: ${propertyInfo.name}
@@ -97,17 +98,26 @@ serve(async (req: Request) => {
       LISTAGENS SIMILARES:
       ${JSON.stringify(propertyInfo.similarListings.slice(0, 5))}
       
-      Forneça uma análise detalhada estruturada no seguinte formato JSON:
+      Forneça uma análise detalhada estruturada no seguinte formato JSON, com dados qualitativos e quantitativos específicos:
       
       {
         "diagnostico_inicial": {
           "desempenho_atual": {
             "pontuacao_visibilidade": number (1-10),
             "analise_precos": string,
-            "analise_ocupacao": string
+            "analise_ocupacao": string,
+            "taxa_ocupacao_estimada": number (1-100),
+            "pontuacao_rating": number (1-10),
+            "comparativo_mercado": string
           },
           "pontos_fortes": string[],
-          "areas_melhoria": string[]
+          "areas_melhoria": string[],
+          "metricas_chave": {
+            "previsao_receita_anual": string,
+            "preco_medio_noite": number,
+            "preco_otimizado_sugerido": number,
+            "potencial_crescimento": string
+          }
         },
         "estrategia_melhoria": {
           "recomendacoes_tecnicas": [
@@ -115,10 +125,19 @@ serve(async (req: Request) => {
               "descricao": string,
               "prioridade": "alta" | "media" | "baixa",
               "custo_estimado": string,
-              "impacto_esperado": string
+              "impacto_esperado": string,
+              "roi_estimado": string,
+              "tempo_implementacao": string
             }
           ],
-          "recomendacoes_marketing": string[],
+          "recomendacoes_marketing": [
+            {
+              "descricao": string,
+              "canal": string,
+              "impacto_esperado": string,
+              "recursos_necessarios": string
+            }
+          ],
           "sugestoes_rebranding": string | null
         },
         "experiencia_hospede": {
@@ -127,38 +146,87 @@ serve(async (req: Request) => {
             {
               "descricao": string,
               "implementacao": string,
-              "custo_estimado": string
+              "custo_estimado": string,
+              "impacto_experiencia": string
             }
           ],
-          "ideias_valor_agregado": string[]
+          "ideias_valor_agregado": string[],
+          "analise_comentarios": {
+            "temas_positivos": string[],
+            "temas_negativos": string[],
+            "sentimento_geral": string
+          }
         },
         "estrategia_precos": {
           "analise_atual": string,
           "recomendacao_preco_base": string,
-          "estrategia_sazonalidade": {
-            "alta_temporada": string,
-            "baixa_temporada": string,
-            "eventos_especiais": string[]
+          "dados_sazonalidade": {
+            "alta_temporada": {
+              "meses": string[],
+              "preco_recomendado": string,
+              "estrategia": string
+            },
+            "media_temporada": {
+              "meses": string[],
+              "preco_recomendado": string,
+              "estrategia": string
+            },
+            "baixa_temporada": {
+              "meses": string[],
+              "preco_recomendado": string,
+              "estrategia": string
+            }
           },
-          "politica_descontos": string[]
+          "eventos_especiais": [
+            {
+              "nome": string,
+              "data": string,
+              "estrategia_preco": string
+            }
+          ],
+          "politica_descontos": string[],
+          "tabela_precos_sugeridos": {
+            "semanal": number,
+            "mensal": number,
+            "minimo_estadia_recomendado": number
+          }
         },
         "gestao_canais": {
           "plataformas_recomendadas": string[],
           "estrategia_distribuicao": string,
-          "dicas_otimizacao": string[]
+          "dicas_otimizacao": [
+            {
+              "plataforma": string,
+              "acao": string,
+              "beneficio": string
+            }
+          ],
+          "canais_adicionais_sugeridos": string[]
         },
         "monitorizacao_desempenho": {
           "kpis_principais": [
             {
               "metrica": string,
+              "valor_atual": string,
               "objetivo": string,
               "frequencia_monitoramento": string
             }
           ],
           "projecoes_financeiras": {
-            "cenario_conservador": string,
-            "cenario_otimista": string,
-            "retorno_investimento": string
+            "cenario_conservador": {
+              "receita_anual": string,
+              "despesas": string,
+              "lucro_estimado": string
+            },
+            "cenario_otimista": {
+              "receita_anual": string,
+              "despesas": string,
+              "lucro_estimado": string
+            },
+            "retorno_investimento": {
+              "tempo_estimado": string,
+              "roi_percentual": string
+            }
           }
         },
         "analise_concorrencia": {
@@ -166,14 +234,23 @@ serve(async (req: Request) => {
           "vantagens_competitivas": string[],
           "areas_desvantagem": string[],
           "oportunidades": string[],
-          "ameacas": string[]
+          "ameacas": string[],
+          "benchmark_concorrentes": [
+            {
+              "nome": string,
+              "preco": string,
+              "pontos_fortes": string[],
+              "diferencial_competitivo": string
+            }
+          ]
         }
       }
       
       Forneça uma análise crítica e prática com recomendações ESPECÍFICAS e ACIONÁVEIS. 
-      Inclua números e estimativas sempre que possível.
-      Foque em sugestões que tragam o melhor ROI possível.
-      Seja direto e objetivo, mas mantenha um tom profissional e construtivo.`;
+      Inclua números e estimativas sempre que possível. Seja preciso nas estimativas de custos e ROI.
+      Foque em sugestões que tragam o melhor retorno sobre investimento possível.
+      Todas as seções devem ter dados concretos e mensuráveis, evitando generalidades.
+      Seja direto, pragmático e preciso, mantendo um tom profissional e construtivo.`;
 
     const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
@@ -208,16 +285,21 @@ serve(async (req: Request) => {
     const analysisResult = geminiData.candidates[0].content.parts[0].text;
     
     // Parse the JSON response to ensure it's valid
-    const parsedAnalysis = JSON.parse(analysisResult);
+    let parsedAnalysis;
+    try {
+      // Limpar o texto para garantir que só temos o JSON válido
+      const jsonString = analysisResult.trim().replace(/```json|```/g, '');
+      parsedAnalysis = JSON.stringify(JSON.parse(jsonString));
+    } catch (error) {
+      console.error("Error parsing Gemini response:", error);
+      throw new Error("Failed to parse analysis result as valid JSON");
+    }
     
     await supabase
       .from("diagnostic_submissions")
       .update({
         status: "completed",
-        analysis_result: {
-          full_report: parsedAnalysis,
-          generated_at: new Date().toISOString()
-        }
+        analysis_result: JSON.parse(parsedAnalysis),
       })
       .eq("id", id);
 
@@ -225,7 +307,8 @@ serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: "Property analysis completed successfully",
-        analysisResult: parsedAnalysis
+        analysisResult: JSON.parse(parsedAnalysis),
+        propertyInfo
       }),
       { 
         status: 200, 
@@ -243,3 +326,4 @@ serve(async (req: Request) => {
     );
   }
 });
+
