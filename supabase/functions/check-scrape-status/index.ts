@@ -47,14 +47,13 @@ serve(async (req: Request) => {
       );
     }
 
-    // Extract Apify task and run IDs
+    // Extract Apify run ID
     const scraped_data = submission.scraped_data || {};
-    const taskId = scraped_data.apify_task_id;
     const runId = scraped_data.apify_run_id;
 
-    if (!taskId || !runId) {
+    if (!runId) {
       return new Response(
-        JSON.stringify({ error: "Missing Apify task or run ID" }),
+        JSON.stringify({ error: "Missing Apify run ID" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

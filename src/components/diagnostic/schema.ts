@@ -32,7 +32,7 @@ export type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
 // Supported platforms that connect to Apify actors
 export const supportedPlatforms = [
   { value: "airbnb", label: "Airbnb", actorId: "apify/airbnb-scraper" },
-  { value: "booking", label: "Booking.com", actorId: "apify/booking-hotels-scraper" },
+  { value: "booking", label: "Booking.com", actorId: "apify/booking-scraper" }, // Fixed actor ID
   { value: "vrbo", label: "VRBO", actorId: "apify/vrbo-scraper" },
   { value: "other", label: "Other", actorId: "apify/web-scraper" }
 ];

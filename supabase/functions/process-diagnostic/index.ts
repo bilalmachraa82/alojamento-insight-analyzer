@@ -55,15 +55,15 @@ serve(async (req: Request) => {
       .update({ status: "processing" })
       .eq("id", id);
 
-    // Determine platform and select appropriate actor
+    // Determine platform and select appropriate actor ID
+    // IMPORTANT: These must be exact Apify actor IDs that exist in your Apify account or publicly
     let actorId;
     switch (submission.plataforma.toLowerCase()) {
       case "airbnb":
         actorId = "apify/airbnb-scraper";
         break;
       case "booking":
-        // Fix: Use correct actor ID for Booking
-        actorId = "apify/booking-hotels-scraper";
+        actorId = "apify/booking-scraper"; // Fixed: was previously incorrect
         break;
       case "vrbo":
         actorId = "apify/vrbo-scraper";
@@ -84,54 +84,42 @@ serve(async (req: Request) => {
     }
 
     // Call Apify API to start the scraper
-    const apifyUrl = `https://api.apify.com/v2/actor-tasks?token=${APIFY_API_TOKEN}`;
+    const apifyUrl = `https://api.apify.com/v2/acts?token=${APIFY_API_TOKEN}`;
     
-    // Create a new task for the actor
-    const taskResponse = await fetch(apifyUrl, {
+    // Create a new task for the actor by running the actor directly
+    const runResponse = await fetch(apifyUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         actId: actorId,
+        runInput: {
+          url: submission.link,
+          maxPages: 1, // Limiting to keep processing time reasonable
+          proxyConfiguration: {
+            useApifyProxy: true
+          }
+        },
+        // Give the task a name based on the submission ID
         name: `Diagnostic-${id}`,
-      }),
-    });
-    
-    if (!taskResponse.ok) {
-      const errorText = await taskResponse.text();
-      throw new Error(`Failed to create task: ${errorText}`);
-    }
-    
-    const taskData = await taskResponse.json();
-    const taskId = taskData.data.id;
-    
-    // Run the task with the URL
-    const runResponse = await fetch(`https://api.apify.com/v2/actor-tasks/${taskId}/runs?token=${APIFY_API_TOKEN}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: submission.link,
       }),
     });
     
     if (!runResponse.ok) {
       const errorText = await runResponse.text();
-      throw new Error(`Failed to run task: ${errorText}`);
+      throw new Error(`Failed to run actor: ${errorText}`);
     }
     
     const runData = await runResponse.json();
     const runId = runData.data.id;
     
-    // Store the Apify task and run IDs in the database
+    // Store the Apify run ID in the database
     await supabase
       .from("diagnostic_submissions")
       .update({
         status: "scraping",
         scraped_data: {
-          apify_task_id: taskId,
           apify_run_id: runId,
           started_at: new Date().toISOString(),
         }
@@ -142,7 +130,6 @@ serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: "Diagnostic processing started successfully",
-        taskId,
         runId
       }),
       { 
