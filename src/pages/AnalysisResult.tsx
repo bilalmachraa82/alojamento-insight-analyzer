@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, RefreshCw } from "lucide-react";
 import AnalysisResultsViewer from "@/components/results/AnalysisResultsViewer";
-import { toast } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
 import { Progress } from "@/components/ui/progress";
 
@@ -37,6 +36,7 @@ const AnalysisResult = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progressValue, setProgressValue] = useState(0);
+  const { toast } = useToast();
 
   const fetchAnalysisData = async () => {
     try {
@@ -60,7 +60,6 @@ const AnalysisResult = () => {
         return;
       }
 
-      // Convert data to the expected AnalysisData type
       const processedData: AnalysisData = {
         id: data.id,
         nome: data.nome,
@@ -76,10 +75,8 @@ const AnalysisResult = () => {
       
       setAnalysisData(processedData);
 
-      // Check if we need to poll for status updates
       if (data.status !== "completed" && data.status !== "failed") {
         setAnalyzing(true);
-        // Calculate progress value based on status
         switch (data.status) {
           case "pending":
             setProgressValue(20);
@@ -100,7 +97,6 @@ const AnalysisResult = () => {
             setProgressValue(20);
         }
         
-        // Start polling for status updates
         checkAnalysisStatus(data.id);
       } else {
         setAnalyzing(false);
@@ -123,7 +119,6 @@ const AnalysisResult = () => {
 
   const checkAnalysisStatus = async (submissionId: string) => {
     try {
-      // Call the check-status edge function
       const { data, error } = await supabase.functions.invoke("check-status", {
         body: { id: submissionId }
       });
@@ -133,7 +128,6 @@ const AnalysisResult = () => {
       if (data) {
         console.log("Status check response:", data);
         
-        // Update progress based on status
         if (data.status === "scraping") {
           setProgressValue(50);
         } else if (data.status === "scraping_completed") {
@@ -144,12 +138,10 @@ const AnalysisResult = () => {
           setProgressValue(100);
           setAnalyzing(false);
           
-          // Refresh the data to get the completed analysis
           fetchAnalysisData();
-          return; // Stop polling once completed
+          return;
         }
 
-        // Continue polling if not completed
         if (data.status !== "completed" && data.status !== "failed") {
           setTimeout(() => checkAnalysisStatus(submissionId), 5000);
         } else {
@@ -158,7 +150,6 @@ const AnalysisResult = () => {
       }
     } catch (err) {
       console.error("Error checking analysis status:", err);
-      // We'll continue showing the current state without stopping the UI
     }
   };
 
@@ -171,7 +162,6 @@ const AnalysisResult = () => {
     fetchAnalysisData();
   };
   
-  // Get property name from analysis data, with fallback to URL
   const getPropertyName = () => {
     if (!analysisData) return "Propriedade";
     
@@ -180,19 +170,16 @@ const AnalysisResult = () => {
            "Sua Propriedade";
   };
   
-  // Get property location with fallback
   const getPropertyLocation = () => {
     if (!analysisData || !analysisData.analysis_result?.property_data) return "Localização Indisponível";
     return analysisData.analysis_result.property_data.location || "Localização Indisponível";
   };
   
-  // Get property type with fallback
   const getPropertyType = () => {
     if (!analysisData || !analysisData.analysis_result?.property_data) return "Alojamento";
     return analysisData.analysis_result.property_data.property_type || "Alojamento";
   };
   
-  // Get property rating with fallback
   const getPropertyRating = () => {
     if (!analysisData || !analysisData.analysis_result?.property_data) return null;
     return analysisData.analysis_result.property_data.rating || null;
@@ -224,7 +211,6 @@ const AnalysisResult = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
-      {/* Header */}
       <header className="w-full py-4 px-6 md:px-8 bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Button variant="ghost" asChild>
@@ -240,7 +226,6 @@ const AnalysisResult = () => {
         </div>
       </header>
 
-      {/* Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="bg-white shadow rounded-xl p-6 mb-8">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{getPropertyName()}</h1>

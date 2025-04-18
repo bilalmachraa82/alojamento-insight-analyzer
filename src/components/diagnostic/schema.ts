@@ -7,22 +7,22 @@ export const createFormSchema = (language: Language) => {
   
   return z.object({
     nome: z.string().min(2, {
-      message: t.nameError,
+      message: t.nameRequired,
     }),
     email: z.string().email({
-      message: t.emailError,
+      message: t.emailInvalid,
     }),
     link: z.string().url({
-      message: t.urlError,
+      message: t.linkInvalid,
     }),
     plataforma: z.string({
-      required_error: t.platformError,
+      required_error: t.platformRequired,
     })
     .refine(val => supportedPlatforms.map(p => p.value).includes(val.toLowerCase()), {
-      message: t.platformError || "Please select a supported platform",
+      message: t.platformRequired || "Please select a supported platform",
     }),
     rgpd: z.boolean().refine((val) => val === true, {
-      message: t.gdprError,
+      message: t.rgpdRequired,
     }),
   });
 };

@@ -21,7 +21,7 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
       <DiagnosticFormField
         form={form}
         name="nome"
-        label={t.name}
+        label={t.nameLabel}
       >
         <Input placeholder={t.namePlaceholder} />
       </DiagnosticFormField>
@@ -29,7 +29,7 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
       <DiagnosticFormField
         form={form}
         name="email"
-        label={t.email}
+        label={t.emailLabel}
       >
         <Input placeholder={t.emailPlaceholder} type="email" />
       </DiagnosticFormField>
@@ -37,7 +37,7 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
       <DiagnosticFormField
         form={form}
         name="link"
-        label={t.link}
+        label={t.linkLabel}
       >
         <Input placeholder={t.linkPlaceholder} type="url" />
       </DiagnosticFormField>
@@ -47,7 +47,7 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
         name="plataforma"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t.platform}</FormLabel>
+            <FormLabel>{t.platformLabel}</FormLabel>
             <Select 
               onValueChange={field.onChange} 
               defaultValue={field.value}
@@ -83,7 +83,7 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
             </FormControl>
             <div className="space-y-1 leading-none">
               <FormLabel>
-                {t.gdpr}
+                {t.rgpdLabel}
               </FormLabel>
               <FormMessage />
             </div>
