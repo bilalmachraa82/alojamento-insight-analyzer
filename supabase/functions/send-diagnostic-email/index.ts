@@ -14,8 +14,8 @@ const corsHeaders = {
 interface EmailRequest {
   email: string;
   name: string;
-  submissionId: string;
-  language: string;
+  submissionId?: string;
+  language?: string;
 }
 
 serve(async (req) => {
@@ -25,50 +25,67 @@ serve(async (req) => {
   }
 
   try {
-    // Debug API key (masked for security)
-    console.log(`DEBUG: Using Resend API key: ${resendApiKey ? "***" + resendApiKey.slice(-5) : "NOT FOUND"}`);
+    // Determine if this is a test email or a diagnostic email
+    const url = new URL(req.url);
+    const isTestEmail = url.pathname.endsWith("/test");
+
+    let emailData: EmailRequest;
     
-    const { email, name, submissionId, language } = await req.json() as EmailRequest;
+    if (isTestEmail) {
+      // For test email, use hardcoded data
+      emailData = {
+        email: "bilal.machraa@gmail.com", // Replace with your test email
+        name: "Test User",
+        submissionId: "TEST_" + Date.now(),
+        language: "en"
+      };
+    } else {
+      // For diagnostic email, parse request body
+      emailData = await req.json() as EmailRequest;
+    }
+
+    console.log(`DEBUG: Sending ${isTestEmail ? 'TEST' : 'DIAGNOSTIC'} email to ${emailData.email}`);
     
-    console.log(`DEBUG: Sending diagnostic email to ${email} for submission ${submissionId}`);
+    const subject = isTestEmail 
+      ? "Maria Faz - Email Test" 
+      : (emailData.language === "en" 
+          ? "Your Property Diagnostic Has Been Submitted" 
+          : "O Seu Diagnóstico de Propriedade Foi Submetido");
     
-    const subject = language === "en" 
-      ? "Your Property Diagnostic Has Been Submitted" 
-      : "O Seu Diagnóstico de Propriedade Foi Submetido";
-    
-    const html = language === "en"
+    const html = isTestEmail 
       ? `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Hello ${name},</h2>
-          <p>Thank you for submitting your property for a diagnostic evaluation.</p>
-          <p>Your submission has been received and is currently being processed.</p>
-          <p><strong>Submission ID:</strong> ${submissionId}</p>
-          <p>We're analyzing your property data and will notify you once the results are ready.</p>
-          <p>You can check your results at any time by visiting:</p>
-          <p><a href="https://mariafaz.com/results/${submissionId}">View Your Diagnostic Results</a></p>
-          <p>Best regards,<br>The Maria Faz Team</p>
+          <h2>Email Test Successful!</h2>
+          <p>This is a test email from Maria Faz.</p>
+          <p>If you're seeing this, the email sending functionality is working correctly.</p>
         </div>
       `
-      : `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Olá ${name},</h2>
-          <p>Obrigado por submeter a sua propriedade para uma avaliação de diagnóstico.</p>
-          <p>A sua submissão foi recebida e está atualmente a ser processada.</p>
-          <p><strong>ID de Submissão:</strong> ${submissionId}</p>
-          <p>Estamos a analisar os dados da sua propriedade e iremos notificá-lo assim que os resultados estiverem prontos.</p>
-          <p>Pode verificar os seus resultados a qualquer momento visitando:</p>
-          <p><a href="https://mariafaz.com/results/${submissionId}">Ver os Resultados do Diagnóstico</a></p>
-          <p>Com os melhores cumprimentos,<br>A Equipa Maria Faz</p>
-        </div>
-      `;
+      : (emailData.language === "en" 
+          ? `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>Hello ${emailData.name},</h2>
+              <p>Thank you for submitting your property for a diagnostic evaluation.</p>
+              <p>Your submission has been received and is currently being processed.</p>
+              <p><strong>Submission ID:</strong> ${emailData.submissionId}</p>
+              <p>We're analyzing your property data and will notify you once the results are ready.</p>
+            </div>
+          `
+          : `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>Olá ${emailData.name},</h2>
+              <p>Obrigado por submeter a sua propriedade para uma avaliação de diagnóstico.</p>
+              <p>A sua submissão foi recebida e está atualmente a ser processada.</p>
+              <p><strong>ID de Submissão:</strong> ${emailData.submissionId}</p>
+              <p>Estamos a analisar os dados da sua propriedade e iremos notificá-lo assim que os resultados estiverem prontos.</p>
+            </div>
+          `);
 
-    console.log(`DEBUG: Preparing to send email to ${email}`);
+    console.log(`DEBUG: Preparing to send email to ${emailData.email}`);
 
     try {
-      // Using the actual API key value from the screenshot for testing
       const { data, error } = await resend.emails.send({
         from: "onboarding@resend.dev", // Using Resend's verified sender
-        to: [email],
+        to: [emailData.email],
         subject: subject,
         html: html,
       });
@@ -99,3 +116,4 @@ serve(async (req) => {
     );
   }
 });
+
