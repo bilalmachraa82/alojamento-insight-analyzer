@@ -25,32 +25,13 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            {React.isValidElement(children)
-              ? React.cloneElement(children as React.ReactElement, {
-                  ...field,
-                  // Special handling for Select components which need different onChange handling
-                  onChange: (() => {
-                    // Store children.type in a constant and perform a strict check
-                    const childType = children.type;
-                    
-                    // First check if childType is defined
-                    if (childType === null || childType === undefined) {
-                      return (e: any) => field.onChange(e?.target?.value !== undefined ? e.target.value : e);
-                    }
-                    
-                    // Then check if it's an object and has the right displayName
-                    // Use type guard to ensure TypeScript knows childType is not null at this point
-                    if (typeof childType === 'object' && childType !== null && 
-                        'displayName' in childType &&
-                        childType.displayName === 'Select') {
-                      return field.onChange;
-                    }
-                    
-                    // Default handler for other components
-                    return (e: any) => field.onChange(e?.target?.value !== undefined ? e.target.value : e);
-                  })()
-                })
-              : children}
+            {React.isValidElement(children) ? 
+              React.cloneElement(children as React.ReactElement, {
+                ...field,
+                // Handle onChange differently based on component type
+                onChange: determineOnChangeHandler(children, field)
+              })
+            : children}
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -58,5 +39,25 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
     />
   );
 };
+
+// Separate function to determine the appropriate onChange handler
+function determineOnChangeHandler(
+  children: React.ReactElement, 
+  field: any
+): ((e: any) => void) {
+  // Safe access to displayName using optional chaining
+  const isSelectComponent = children.type && 
+    typeof children.type === 'object' && 
+    'displayName' in children.type && 
+    children.type.displayName === 'Select';
+  
+  if (isSelectComponent) {
+    // For Select components, use field.onChange directly
+    return field.onChange;
+  }
+  
+  // For all other components, handle both event and direct value cases
+  return (e: any) => field.onChange(e?.target?.value !== undefined ? e.target.value : e);
+}
 
 export default DiagnosticFormField;
