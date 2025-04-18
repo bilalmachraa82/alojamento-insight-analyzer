@@ -120,16 +120,24 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
   
   // Try to extract real data from the analysis result, fall back to mock data if not available
   const result = analysisData?.analysis_result || {};
+  console.log("Analysis result data:", result);
   
   // Format and prepare data
   const performanceMetrics = result.performance_metrics || mockData.performanceMetrics;
   const recommendations = result.recommendations || mockData.recommendations;
   
+  // Check if diagnostico_inicial exists and contains occupancy rate
+  if (result.diagnostico_inicial && typeof result.diagnostico_inicial.taxa_ocupacao_estimada === 'number') {
+    if (!performanceMetrics.occupancyRate) {
+      performanceMetrics.occupancyRate = result.diagnostico_inicial.taxa_ocupacao_estimada;
+    }
+  }
+  
   // Make sure seasonalPricing conforms to the expected format
   let formattedSeasonalPricing: SeasonalPricing[] = [];
-  if (result.pricing_strategy?.seasonal_pricing) {
+  if (result.pricing_strategy?.seasonal_pricing && Array.isArray(result.pricing_strategy.seasonal_pricing)) {
     formattedSeasonalPricing = result.pricing_strategy.seasonal_pricing.map((season: any) => ({
-      season: (season.season.toLowerCase() || "medium") as "high" | "medium" | "low",
+      season: (season.season?.toLowerCase() || "medium") as "high" | "medium" | "low",
       months: season.months || [],
       price: season.price || 0,
       strategy: season.strategy || ""
@@ -155,15 +163,15 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
     <div className="space-y-4">
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="w-full grid grid-cols-1 md:grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing Strategy</TabsTrigger>
-          <TabsTrigger value="competitors">Competitor Analysis</TabsTrigger>
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="recommendations">Recomendações</TabsTrigger>
+          <TabsTrigger value="pricing">Estratégia de Preços</TabsTrigger>
+          <TabsTrigger value="competitors">Análise Competitiva</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="pt-4">
           <div className="space-y-6">
-            <AnalysisSection title="Performance Metrics" initiallyExpanded={true}>
+            <AnalysisSection title="Métricas de Desempenho" initiallyExpanded={true}>
               <PerformanceMetrics 
                 occupancyRate={performanceMetrics.occupancyRate} 
                 averageRating={performanceMetrics.averageRating}
@@ -174,7 +182,7 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
               />
             </AnalysisSection>
             
-            <AnalysisSection title="Key Recommendations" initiallyExpanded={true}>
+            <AnalysisSection title="Recomendações Principais" initiallyExpanded={true}>
               <RecommendationsList recommendations={recommendations} />
             </AnalysisSection>
           </div>

@@ -75,15 +75,21 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
           case "completed":
             setProgressValue(100);
             
-            if (data.analysis_result && !window.localStorage.getItem(`shown-completion-${id}`)) {
-              window.localStorage.setItem(`shown-completion-${id}`, 'true');
+            // Automatically navigate to results page when analysis is complete
+            if (data.analysis_result && !window.localStorage.getItem(`navigated-to-results-${id}`)) {
+              window.localStorage.setItem(`navigated-to-results-${id}`, 'true');
+              
               toast({
                 title: language === "en" ? "Analysis Complete!" : "Análise Concluída!",
                 description: language === "en" 
-                  ? "Your property diagnostic has been completed. You can now view the detailed results." 
-                  : "O diagnóstico da sua propriedade foi concluído. Pode agora ver os resultados detalhados.",
+                  ? "Your property diagnostic has been completed. Redirecting to results..."
+                  : "O diagnóstico da sua propriedade foi concluído. A redirecionar para os resultados...",
                 variant: "default",
               });
+              
+              // Short delay before navigation to let the toast be visible
+              setTimeout(() => navigate(`/results/${id}`), 1500);
+              return;
             }
             break;
           default:
@@ -117,6 +123,11 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
     if (submissionId) {
       checkProcessingStatus(submissionId);
     }
+    
+    // Clean up function to prevent multiple intervals running
+    return () => {
+      // No need to clear any timeout as they're function-scoped in checkProcessingStatus
+    };
   }, [submissionId]);
 
   const handleViewResults = () => {

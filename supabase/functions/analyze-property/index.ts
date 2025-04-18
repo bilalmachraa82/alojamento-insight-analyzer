@@ -45,10 +45,29 @@ serve(async (req: Request) => {
       );
     }
 
+    // Check if we already have scraped data
     if (!submission.scraped_data?.property_data) {
+      console.error("No property data found for submission:", id);
+      
+      // Update status to indicate an issue
+      await supabase
+        .from("diagnostic_submissions")
+        .update({ 
+          status: "pending_manual_review",
+          scraped_data: {
+            ...submission.scraped_data,
+            error_reason: "missing_property_data",
+            error_at: new Date().toISOString()
+          }
+        })
+        .eq("id", id);
+      
       return new Response(
-        JSON.stringify({ error: "No property data found in submission" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          error: "No property data found in submission",
+          message: "The submission has been marked for manual review"
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -72,6 +91,8 @@ serve(async (req: Request) => {
       host: propertyData.host || {},
       similarListings: propertyData.similarListings || []
     };
+
+    console.log("Starting Gemini analysis with property info:", JSON.stringify(propertyInfo));
 
     // Prompt aprimorado com estrutura específica para análise detalhada
     const prompt = `
@@ -102,147 +123,61 @@ serve(async (req: Request) => {
       
       {
         "diagnostico_inicial": {
-          "desempenho_atual": {
-            "pontuacao_visibilidade": number (1-10),
-            "analise_precos": string,
-            "analise_ocupacao": string,
-            "taxa_ocupacao_estimada": number (1-100),
-            "pontuacao_rating": number (1-10),
-            "comparativo_mercado": string
-          },
-          "pontos_fortes": string[],
-          "areas_melhoria": string[],
-          "metricas_chave": {
-            "previsao_receita_anual": string,
-            "preco_medio_noite": number,
-            "preco_otimizado_sugerido": number,
-            "potencial_crescimento": string
+          "pontuacao_visibilidade": number (1-10),
+          "analise_precos": string,
+          "analise_ocupacao": string,
+          "taxa_ocupacao_estimada": number (1-100),
+          "pontuacao_rating": number (1-10),
+          "comparativo_mercado": string
+        },
+        "performance_metrics": {
+          "occupancyRate": number,
+          "averageRating": number,
+          "reviewCount": number,
+          "responseRate": number,
+          "averageDailyRate": string,
+          "revenueGrowth": string
+        },
+        "recommendations": [
+          {
+            "category": string,
+            "items": string[]
           }
-        },
-        "estrategia_melhoria": {
-          "recomendacoes_tecnicas": [
+        ],
+        "pricing_strategy": {
+          "base_price": string,
+          "current_analysis": string,
+          "seasonal_pricing": [
             {
-              "descricao": string,
-              "prioridade": "alta" | "media" | "baixa",
-              "custo_estimado": string,
-              "impacto_esperado": string,
-              "roi_estimado": string,
-              "tempo_implementacao": string
+              "season": "high" | "medium" | "low",
+              "months": string[],
+              "price": number,
+              "strategy": string
             }
           ],
-          "recomendacoes_marketing": [
+          "special_events": object,
+          "discount_policies": object,
+          "weekly_price": string,
+          "monthly_price": string,
+          "min_stay": string
+        },
+        "competitor_analysis": {
+          "directCompetitors": [
             {
-              "descricao": string,
-              "canal": string,
-              "impacto_esperado": string,
-              "recursos_necessarios": string
+              "name": string,
+              "price": string,
+              "rating": number,
+              "strengths": string,
+              "weaknesses": string
             }
           ],
-          "sugestoes_rebranding": string | null
+          "marketInsights": string[]
         },
-        "experiencia_hospede": {
-          "pontos_positivos": string[],
-          "sugestoes_melhoria": [
-            {
-              "descricao": string,
-              "implementacao": string,
-              "custo_estimado": string,
-              "impacto_experiencia": string
-            }
-          ],
-          "ideias_valor_agregado": string[],
-          "analise_comentarios": {
-            "temas_positivos": string[],
-            "temas_negativos": string[],
-            "sentimento_geral": string
-          }
-        },
-        "estrategia_precos": {
-          "analise_atual": string,
-          "recomendacao_preco_base": string,
-          "dados_sazonalidade": {
-            "alta_temporada": {
-              "meses": string[],
-              "preco_recomendado": string,
-              "estrategia": string
-            },
-            "media_temporada": {
-              "meses": string[],
-              "preco_recomendado": string,
-              "estrategia": string
-            },
-            "baixa_temporada": {
-              "meses": string[],
-              "preco_recomendado": string,
-              "estrategia": string
-            }
-          },
-          "eventos_especiais": [
-            {
-              "nome": string,
-              "data": string,
-              "estrategia_preco": string
-            }
-          ],
-          "politica_descontos": string[],
-          "tabela_precos_sugeridos": {
-            "semanal": number,
-            "mensal": number,
-            "minimo_estadia_recomendado": number
-          }
-        },
-        "gestao_canais": {
-          "plataformas_recomendadas": string[],
-          "estrategia_distribuicao": string,
-          "dicas_otimizacao": [
-            {
-              "plataforma": string,
-              "acao": string,
-              "beneficio": string
-            }
-          ],
-          "canais_adicionais_sugeridos": string[]
-        },
-        "monitorizacao_desempenho": {
-          "kpis_principais": [
-            {
-              "metrica": string,
-              "valor_atual": string,
-              "objetivo": string,
-              "frequencia_monitoramento": string
-            }
-          ],
-          "projecoes_financeiras": {
-            "cenario_conservador": {
-              "receita_anual": string,
-              "despesas": string,
-              "lucro_estimado": string
-            },
-            "cenario_otimista": {
-              "receita_anual": string,
-              "despesas": string,
-              "lucro_estimado": string
-            },
-            "retorno_investimento": {
-              "tempo_estimado": string,
-              "roi_percentual": string
-            }
-          }
-        },
-        "analise_concorrencia": {
-          "posicionamento_mercado": string,
-          "vantagens_competitivas": string[],
-          "areas_desvantagem": string[],
-          "oportunidades": string[],
-          "ameacas": string[],
-          "benchmark_concorrentes": [
-            {
-              "nome": string,
-              "preco": string,
-              "pontos_fortes": string[],
-              "diferencial_competitivo": string
-            }
-          ]
+        "property_data": {
+          "property_name": string,
+          "location": string,
+          "property_type": string,
+          "rating": number
         }
       }
       
@@ -250,71 +185,105 @@ serve(async (req: Request) => {
       Inclua números e estimativas sempre que possível. Seja preciso nas estimativas de custos e ROI.
       Foque em sugestões que tragam o melhor retorno sobre investimento possível.
       Todas as seções devem ter dados concretos e mensuráveis, evitando generalidades.
-      Seja direto, pragmático e preciso, mantendo um tom profissional e construtivo.`;
+      Seja direto, pragmático e preciso, mantendo um tom profissional e construtivo.
+      
+      Importante: Responda apenas com o JSON válido, sem texto adicional antes ou depois.`;
 
-    const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-        }
-      })
-    });
-
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      throw new Error(`Failed to analyze with Gemini: ${errorText}`);
-    }
+    console.log("Sending request to Gemini API");
     
-    const geminiData = await geminiResponse.json();
-    const analysisResult = geminiData.candidates[0].content.parts[0].text;
-    
-    // Parse the JSON response to ensure it's valid
-    let parsedAnalysis;
     try {
-      // Limpar o texto para garantir que só temos o JSON válido
-      const jsonString = analysisResult.trim().replace(/```json|```/g, '');
-      parsedAnalysis = JSON.stringify(JSON.parse(jsonString));
-    } catch (error) {
-      console.error("Error parsing Gemini response:", error);
-      throw new Error("Failed to parse analysis result as valid JSON");
-    }
-    
-    await supabase
-      .from("diagnostic_submissions")
-      .update({
-        status: "completed",
-        analysis_result: JSON.parse(parsedAnalysis),
-      })
-      .eq("id", id);
+      const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+          }
+        })
+      });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Property analysis completed successfully",
-        analysisResult: JSON.parse(parsedAnalysis),
-        propertyInfo
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      if (!geminiResponse.ok) {
+        const errorText = await geminiResponse.text();
+        console.error(`Failed to analyze with Gemini (HTTP ${geminiResponse.status}):`, errorText);
+        throw new Error(`Failed to analyze with Gemini: ${errorText}`);
       }
-    );
+      
+      console.log("Received response from Gemini API");
+      const geminiData = await geminiResponse.json();
+      
+      if (!geminiData.candidates || geminiData.candidates.length === 0) {
+        console.error("Empty response from Gemini API:", geminiData);
+        throw new Error("Empty response from Gemini API");
+      }
+      
+      const analysisResult = geminiData.candidates[0].content.parts[0].text;
+      
+      // Parse the JSON response to ensure it's valid
+      let parsedAnalysis;
+      try {
+        // Limpar o texto para garantir que só temos o JSON válido
+        const jsonString = analysisResult.trim().replace(/```json|```/g, '');
+        parsedAnalysis = JSON.parse(jsonString);
+        console.log("Successfully parsed analysis JSON");
+      } catch (error) {
+        console.error("Error parsing Gemini response:", error, "Raw response:", analysisResult);
+        throw new Error("Failed to parse analysis result as valid JSON");
+      }
+      
+      console.log("Updating submission with analysis results");
+      
+      await supabase
+        .from("diagnostic_submissions")
+        .update({
+          status: "completed",
+          analysis_result: parsedAnalysis,
+        })
+        .eq("id", id);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Property analysis completed successfully",
+          analysisResult: parsedAnalysis,
+          propertyInfo
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    } catch (geminiError) {
+      console.error("Error in Gemini analysis:", geminiError);
+      
+      // Update status to indicate an issue with analysis
+      await supabase
+        .from("diagnostic_submissions")
+        .update({ 
+          status: "pending_manual_review",
+          scraped_data: {
+            ...submission.scraped_data,
+            analysis_error: String(geminiError),
+            analysis_error_at: new Date().toISOString()
+          }
+        })
+        .eq("id", id);
+      
+      throw geminiError;
+    }
   } catch (error) {
     console.error("Error analyzing property:", error);
     return new Response(
@@ -326,4 +295,3 @@ serve(async (req: Request) => {
     );
   }
 });
-

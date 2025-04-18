@@ -29,6 +29,8 @@ serve(async (req: Request) => {
       );
     }
 
+    console.log(`Checking status for submission: ${id}`);
+
     // Fetch the submission from Supabase
     const { data: submission, error: fetchError } = await supabase
       .from("diagnostic_submissions")
@@ -46,6 +48,38 @@ serve(async (req: Request) => {
 
     const status = submission.status;
     const analysisResult = submission.analysis_result;
+    
+    console.log(`Current status for submission ${id}: ${status}`);
+    
+    // If the status is "analyzing" and it's been more than 5 minutes, check if we need to retry
+    if (status === "analyzing") {
+      const startedAt = submission.scraped_data?.analysis_started_at;
+      if (startedAt) {
+        const startTime = new Date(startedAt).getTime();
+        const currentTime = new Date().getTime();
+        const elapsedTimeMinutes = (currentTime - startTime) / (1000 * 60);
+        
+        // If analysis has been running for more than 5 minutes, retry it
+        if (elapsedTimeMinutes > 5) {
+          console.log(`Analysis for ${id} has been running for ${elapsedTimeMinutes.toFixed(1)} minutes. Retrying...`);
+          
+          // Invoke the analyze-property function to retry the analysis
+          try {
+            const retryResponse = await supabase.functions.invoke("analyze-property", {
+              body: { id }
+            });
+            
+            if (retryResponse.error) {
+              console.error("Error retrying analysis:", retryResponse.error);
+            } else {
+              console.log("Analysis retry initiated");
+            }
+          } catch (retryError) {
+            console.error("Exception retrying analysis:", retryError);
+          }
+        }
+      }
+    }
     
     // If the analysis is completed or failed, return the current status
     if (status === "completed" || status === "failed") {
