@@ -93,7 +93,7 @@ serve(async (req: Request) => {
       await supabase
         .from("diagnostic_submissions")
         .update({
-          status: "analyzing",
+          status: "scraping_completed",
           scraped_data: {
             ...scraped_data,
             property_data: propertyData,
@@ -102,15 +102,22 @@ serve(async (req: Request) => {
         })
         .eq("id", id);
         
-      // Trigger the analysis function
-      // This would call another edge function to process the data with Gemini API
-      // We'll create this in the next step
+      // Trigger the analyze-property function to process the data with Gemini API
+      try {
+        const analyzeResponse = await supabase.functions.invoke("analyze-property", {
+          body: { id }
+        });
+        
+        console.log("Analysis process started:", analyzeResponse);
+      } catch (analyzeError) {
+        console.error("Error triggering property analysis:", analyzeError);
+      }
       
       return new Response(
         JSON.stringify({
           success: true,
-          status: "completed",
-          message: "Scraping completed successfully",
+          status: "scraping_completed",
+          message: "Scraping completed successfully, analysis started",
           data: propertyData
         }),
         { 

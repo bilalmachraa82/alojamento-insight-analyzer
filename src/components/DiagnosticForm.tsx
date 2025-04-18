@@ -129,7 +129,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
     try {
       const { data, error } = await supabase
         .from("diagnostic_submissions")
-        .select("status")
+        .select("status, analysis_result")
         .eq("id", id)
         .single();
 
@@ -141,12 +141,15 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         // Update progress based on status
         switch (data.status) {
           case "pending":
-            setProgressValue(25);
+            setProgressValue(20);
             break;
           case "processing":
-            setProgressValue(40);
+            setProgressValue(30);
             break;
           case "scraping":
+            setProgressValue(50);
+            break;
+          case "scraping_completed":
             setProgressValue(60);
             break;
           case "analyzing":
@@ -154,9 +157,21 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
             break;
           case "completed":
             setProgressValue(100);
+            
+            // If analysis is complete, show success toast with link to results
+            if (data.analysis_result && !window.localStorage.getItem(`shown-completion-${id}`)) {
+              window.localStorage.setItem(`shown-completion-${id}`, 'true');
+              toast({
+                title: language === "en" ? "Analysis Complete!" : "Análise Concluída!",
+                description: language === "en" 
+                  ? "Your property diagnostic has been completed. We've sent the results to your email." 
+                  : "O diagnóstico da sua propriedade foi concluído. Enviámos os resultados para o seu email.",
+                variant: "success",
+              });
+            }
             break;
           default:
-            setProgressValue(25);
+            setProgressValue(20);
         }
 
         // If not completed, check again in 5 seconds
@@ -238,6 +253,8 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       case "processing":
         return t.statusProcessing;
       case "scraping":
+        return t.statusScraping;
+      case "scraping_completed":
         return t.statusScraping;
       case "analyzing":
         return t.statusAnalyzing;
