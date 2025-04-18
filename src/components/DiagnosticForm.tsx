@@ -64,6 +64,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       nome: "",
       email: "",
       link: "",
+      plataforma: "",
       rgpd: false,
     },
   });
@@ -125,6 +126,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   };
 
   async function onSubmit(data: FormValues) {
+    console.log("Form data being submitted:", data);
     setIsLoading(true);
     try {
       const currentDate = new Date().toISOString();
@@ -165,6 +167,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         description: t.thankYou.replace("{name}", data.nome),
       });
     } catch (error: any) {
+      console.error("Error submitting form:", error);
       toast({
         variant: "destructive",
         title: language === "en" ? "Error" : "Erro",
@@ -172,7 +175,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
           ? "An error occurred while submitting the form. Please try again." 
           : "Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.",
       });
-      console.error("Error submitting form:", error);
     } finally {
       setIsLoading(false);
     }
@@ -213,24 +215,33 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
               <Input placeholder={t.linkPlaceholder} type="url" />
             </DiagnosticFormField>
 
-            <DiagnosticFormField
-              form={form}
+            <FormField
+              control={form.control}
               name="plataforma"
-              label={t.platform}
-            >
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder={language === "en" ? "Select a platform" : "Selecione uma plataforma"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Booking">Booking</SelectItem>
-                  <SelectItem value="Airbnb">Airbnb</SelectItem>
-                  <SelectItem value="Vrbo">Vrbo</SelectItem>
-                  <SelectItem value="Google">Google</SelectItem>
-                  <SelectItem value="Outro">{language === "en" ? "Other" : "Outro"}</SelectItem>
-                </SelectContent>
-              </Select>
-            </DiagnosticFormField>
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.platform}</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === "en" ? "Select a platform" : "Selecione uma plataforma"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Booking">Booking</SelectItem>
+                      <SelectItem value="Airbnb">Airbnb</SelectItem>
+                      <SelectItem value="Vrbo">Vrbo</SelectItem>
+                      <SelectItem value="Google">Google</SelectItem>
+                      <SelectItem value="Outro">{language === "en" ? "Other" : "Outro"}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

@@ -25,7 +25,15 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            {React.cloneElement(children as React.ReactElement, { ...field })}
+            {React.isValidElement(children)
+              ? React.cloneElement(children as React.ReactElement, {
+                  ...field,
+                  // Special handling for Select components which handle onChange differently
+                  onChange: children.type.displayName === 'Select' 
+                    ? field.onChange 
+                    : (e: any) => field.onChange(e?.target?.value !== undefined ? e.target.value : e),
+                })
+              : children}
           </FormControl>
           <FormMessage />
         </FormItem>
