@@ -8,12 +8,31 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
+import { SelectTrigger } from "@/components/ui/select";
 
 interface DiagnosticFormFieldProps {
   form: UseFormReturn<any>;
   name: string;
   label: string;
   children: React.ReactNode;
+}
+
+// A type guard to check if the element is a valid React element
+function isValidReactElement(element: React.ReactNode): element is React.ReactElement {
+  return React.isValidElement(element);
+}
+
+// A type guard to check if an element is likely a Select component
+function isSelectComponent(element: React.ReactElement): boolean {
+  // Check if the element type is an object with a displayName property
+  if (!element || !element.type) return false;
+  
+  // Check for displayName via type object
+  if (typeof element.type === 'object' && element.type !== null) {
+    return (element.type as any)?.displayName === 'Select';
+  }
+  
+  return false;
 }
 
 const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFieldProps) => {
@@ -25,12 +44,21 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            {React.isValidElement(children) ? 
+            {isValidReactElement(children) ? (
+              // Clone the element with properly typed props
               React.cloneElement(children, {
-                ...field,
-                onChange: getAppropriateOnChangeHandler(children, field)
+                ...(field as any), // Cast to any to avoid TypeScript errors with unknown prop types
+                onChange: (e: any) => {
+                  // For Select components, handle differently
+                  if (isSelectComponent(children)) {
+                    field.onChange(e);
+                  } else {
+                    // For standard input components with event objects
+                    field.onChange(e?.target?.value !== undefined ? e.target.value : e);
+                  }
+                }
               })
-            : children}
+            ) : children}
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -38,30 +66,5 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
     />
   );
 };
-
-// Helper function to safely check if an element is a Select component
-function isSelectComponent(element: React.ReactElement): boolean {
-  if (!element.type) return false;
-  
-  if (typeof element.type === 'object') {
-    return element.type?.displayName === 'Select';
-  }
-  
-  return false;
-}
-
-// Get the appropriate onChange handler based on component type
-function getAppropriateOnChangeHandler(
-  element: React.ReactElement,
-  field: any
-): ((e: any) => void) {
-  if (isSelectComponent(element)) {
-    // For Select components, use field.onChange directly
-    return field.onChange;
-  }
-  
-  // For all other components, handle both event and direct value cases
-  return (e: any) => field.onChange(e?.target?.value !== undefined ? e.target.value : e);
-}
 
 export default DiagnosticFormField;
