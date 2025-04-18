@@ -26,10 +26,9 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
           <FormLabel>{label}</FormLabel>
           <FormControl>
             {React.isValidElement(children) ? 
-              React.cloneElement(children as React.ReactElement, {
+              React.cloneElement(children, {
                 ...field,
-                // Handle onChange differently based on component type
-                onChange: determineOnChangeHandler(children, field)
+                onChange: getAppropriateOnChangeHandler(children, field)
               })
             : children}
           </FormControl>
@@ -40,18 +39,23 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
   );
 };
 
-// Separate function to determine the appropriate onChange handler
-function determineOnChangeHandler(
-  children: React.ReactElement, 
+// Helper function to safely check if an element is a Select component
+function isSelectComponent(element: React.ReactElement): boolean {
+  if (!element.type) return false;
+  
+  if (typeof element.type === 'object') {
+    return element.type?.displayName === 'Select';
+  }
+  
+  return false;
+}
+
+// Get the appropriate onChange handler based on component type
+function getAppropriateOnChangeHandler(
+  element: React.ReactElement,
   field: any
 ): ((e: any) => void) {
-  // Safe access to displayName using optional chaining
-  const isSelectComponent = children.type && 
-    typeof children.type === 'object' && 
-    'displayName' in children.type && 
-    children.type.displayName === 'Select';
-  
-  if (isSelectComponent) {
+  if (isSelectComponent(element)) {
     // For Select components, use field.onChange directly
     return field.onChange;
   }
