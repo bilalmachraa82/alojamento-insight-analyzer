@@ -14,12 +14,11 @@ const Index: React.FC = () => {
   useEffect(() => {
     const testSupabaseConnection = async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .limit(1);
-
-        if (error) {
+        // Just test the connection without trying to access a specific table
+        const { data, error } = await supabase.from('_unused_').select('*').limit(0).maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') {
+          // If there's an error that's not just "relation does not exist"
           toast({
             variant: "destructive",
             title: "Supabase Connection Test Failed",
