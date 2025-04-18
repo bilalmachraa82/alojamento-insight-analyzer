@@ -2,12 +2,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
-// Configure Supabase client
 const supabaseUrl = "https://rhrluvhbajdsnmvnpjzk.supabase.co";
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Configure Gemini API
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
@@ -17,13 +15,11 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Parse request body
     const { id } = await req.json();
     
     if (!id) {
@@ -35,7 +31,6 @@ serve(async (req: Request) => {
 
     console.log(`Analyzing property data for submission: ${id}`);
 
-    // Fetch the submission with scraped data from Supabase
     const { data: submission, error: fetchError } = await supabase
       .from("diagnostic_submissions")
       .select("*")
@@ -57,16 +52,13 @@ serve(async (req: Request) => {
       );
     }
 
-    // Update status to "analyzing"
     await supabase
       .from("diagnostic_submissions")
       .update({ status: "analyzing" })
       .eq("id", id);
 
-    // Prepare property data for analysis
     const propertyData = submission.scraped_data.property_data;
     
-    // Extract relevant information from property data
     const propertyInfo = {
       name: propertyData.name || "Unknown property",
       url: submission.link,
@@ -81,43 +73,108 @@ serve(async (req: Request) => {
       similarListings: propertyData.similarListings || []
     };
 
-    // Create prompt for Gemini API
     const prompt = `
-      Analyze this short-term rental property and provide a detailed optimization report:
+      Você é um consultor especialista em alojamento local com anos de experiência em otimização de propriedades no Booking.com, Airbnb e outras plataformas. 
+      Analise detalhadamente esta propriedade e forneça um relatório estratégico completo.
       
-      PROPERTY INFORMATION:
-      Name: ${propertyInfo.name}
-      Platform: ${propertyInfo.platform}
-      Location: ${propertyInfo.location}
-      Rating: ${propertyInfo.rating}
-      Review Count: ${propertyInfo.reviewCount}
-      Price: ${propertyInfo.price}
+      DADOS DA PROPRIEDADE:
+      Nome: ${propertyInfo.name}
+      Plataforma: ${propertyInfo.platform}
+      Localização: ${propertyInfo.location}
+      Avaliação: ${propertyInfo.rating}
+      Número de Avaliações: ${propertyInfo.reviewCount}
+      Preço: ${propertyInfo.price}
       
-      AMENITIES:
+      COMODIDADES:
       ${JSON.stringify(propertyInfo.amenities)}
       
-      DESCRIPTION:
+      DESCRIÇÃO:
       ${propertyInfo.description}
       
-      HOST INFORMATION:
+      INFORMAÇÕES DO ANFITRIÃO:
       ${JSON.stringify(propertyInfo.host)}
       
-      SIMILAR LISTINGS:
+      LISTAGENS SIMILARES:
       ${JSON.stringify(propertyInfo.similarListings.slice(0, 5))}
       
-      Based on this data, please provide:
+      Forneça uma análise detalhada estruturada no seguinte formato JSON:
       
-      1. VISIBILITY SCORE (1-10): How well is this property marketed? What could be improved in the listing?
-      2. PRICING ANALYSIS: Is the price competitive? Suggest optimal pricing strategy.
-      3. GUEST EXPERIENCE: What amenities are missing compared to competitors? How could the guest experience be improved?
-      4. OPTIMIZATION RECOMMENDATIONS: Provide 5 specific, actionable recommendations to improve the property's performance.
-      5. COMPETITIVE ANALYSIS: How does this property compare to similar listings?
-      6. EXPECTED ROI: If the owner implements your recommendations, what ROI could they expect?
+      {
+        "diagnostico_inicial": {
+          "desempenho_atual": {
+            "pontuacao_visibilidade": number (1-10),
+            "analise_precos": string,
+            "analise_ocupacao": string
+          },
+          "pontos_fortes": string[],
+          "areas_melhoria": string[]
+        },
+        "estrategia_melhoria": {
+          "recomendacoes_tecnicas": [
+            {
+              "descricao": string,
+              "prioridade": "alta" | "media" | "baixa",
+              "custo_estimado": string,
+              "impacto_esperado": string
+            }
+          ],
+          "recomendacoes_marketing": string[],
+          "sugestoes_rebranding": string | null
+        },
+        "experiencia_hospede": {
+          "pontos_positivos": string[],
+          "sugestoes_melhoria": [
+            {
+              "descricao": string,
+              "implementacao": string,
+              "custo_estimado": string
+            }
+          ],
+          "ideias_valor_agregado": string[]
+        },
+        "estrategia_precos": {
+          "analise_atual": string,
+          "recomendacao_preco_base": string,
+          "estrategia_sazonalidade": {
+            "alta_temporada": string,
+            "baixa_temporada": string,
+            "eventos_especiais": string[]
+          },
+          "politica_descontos": string[]
+        },
+        "gestao_canais": {
+          "plataformas_recomendadas": string[],
+          "estrategia_distribuicao": string,
+          "dicas_otimizacao": string[]
+        },
+        "monitorizacao_desempenho": {
+          "kpis_principais": [
+            {
+              "metrica": string,
+              "objetivo": string,
+              "frequencia_monitoramento": string
+            }
+          ],
+          "projecoes_financeiras": {
+            "cenario_conservador": string,
+            "cenario_otimista": string,
+            "retorno_investimento": string
+          }
+        },
+        "analise_concorrencia": {
+          "posicionamento_mercado": string,
+          "vantagens_competitivas": string[],
+          "areas_desvantagem": string[],
+          "oportunidades": string[],
+          "ameacas": string[]
+        }
+      }
       
-      Format the response as a well-structured report with clear sections, bullet points, and emphasis on key insights.
-    `;
+      Forneça uma análise crítica e prática com recomendações ESPECÍFICAS e ACIONÁVEIS. 
+      Inclua números e estimativas sempre que possível.
+      Foque em sugestões que tragam o melhor ROI possível.
+      Seja direto e objetivo, mas mantenha um tom profissional e construtivo.`;
 
-    // Call Gemini API
     const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
@@ -150,13 +207,15 @@ serve(async (req: Request) => {
     const geminiData = await geminiResponse.json();
     const analysisResult = geminiData.candidates[0].content.parts[0].text;
     
-    // Store analysis result in Supabase
+    // Parse the JSON response to ensure it's valid
+    const parsedAnalysis = JSON.parse(analysisResult);
+    
     await supabase
       .from("diagnostic_submissions")
       .update({
         status: "completed",
         analysis_result: {
-          full_report: analysisResult,
+          full_report: parsedAnalysis,
           generated_at: new Date().toISOString()
         }
       })
@@ -166,7 +225,7 @@ serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: "Property analysis completed successfully",
-        analysisResult
+        analysisResult: parsedAnalysis
       }),
       { 
         status: 200, 
