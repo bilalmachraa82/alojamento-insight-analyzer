@@ -7,7 +7,7 @@ import { Loader2, ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
 import AnalysisResultsViewer from "@/components/results/AnalysisResultsViewer";
 import { useToast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
-import { Progress } from "@/components/ui/progress";
+import ProcessingStatus from "@/components/diagnostic/ProcessingStatus";
 
 interface AnalysisData {
   id: string;
@@ -177,15 +177,23 @@ const AnalysisResult = () => {
         description: "Seu pedido para análise manual foi registrado. Nossa equipe entrará em contato em breve.",
       });
       
-      // Atualize o banco de dados para marcar esta submissão para revisão por um humano
+      // Fix for the spread operator issue - properly handle scraped_data
+      let updatedScrapedData: any = {};
+      
+      // If scraped_data exists and is an object, copy its properties
+      if (analysisData.scraped_data && typeof analysisData.scraped_data === 'object') {
+        updatedScrapedData = { ...analysisData.scraped_data as object };
+      }
+      
+      // Add the timestamp
+      updatedScrapedData.manual_review_requested_at = new Date().toISOString();
+      
+      // Update the database with proper object handling
       await supabase
         .from("diagnostic_submissions")
         .update({ 
           status: "manual_review_requested",
-          scraped_data: {
-            ...analysisData.scraped_data,
-            manual_review_requested_at: new Date().toISOString()
-          }
+          scraped_data: updatedScrapedData
         })
         .eq("id", analysisData.id);
         
@@ -356,14 +364,12 @@ const AnalysisResult = () => {
               ) : (
                 <>
                   <h2 className="text-xl font-semibold mb-4 text-center">Análise em Andamento</h2>
-                  <Progress value={progressValue} className="h-2 mb-2" />
-                  <p className="text-center text-gray-600 mb-4">
-                    {progressValue < 50 && "Preparando para análise..."}
-                    {progressValue >= 50 && progressValue < 60 && "Coletando dados da propriedade..."}
-                    {progressValue >= 60 && progressValue < 80 && "Processando informações coletadas..."}
-                    {progressValue >= 80 && progressValue < 100 && "Gerando análise inteligente..."}
-                  </p>
-                  <div className="flex justify-center">
+                  <ProcessingStatus 
+                    status={analysisData.status} 
+                    progressValue={progressValue} 
+                    language="pt"
+                  />
+                  <div className="flex justify-center mt-4">
                     <Button onClick={handleRefresh} className="bg-brand-blue">
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Verificar Status
