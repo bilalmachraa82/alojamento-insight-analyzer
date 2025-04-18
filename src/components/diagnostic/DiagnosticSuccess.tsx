@@ -43,13 +43,15 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
         setProcessingStatus(data.status);
         
         // Extract scraping details from the data
-        if (data.scraped_data) {
+        if (data.scraped_data && typeof data.scraped_data === 'object') {
+          const scrapedData = data.scraped_data as Record<string, any>;
+          
           setScrapingDetails({
             platform: data.plataforma,
             actor_id: getActorId(data.plataforma),
-            task_id: data.scraped_data.apify_task_id,
-            run_id: data.scraped_data.apify_run_id,
-            started_at: data.scraped_data.started_at,
+            task_id: scrapedData.apify_task_id,
+            run_id: scrapedData.apify_run_id,
+            started_at: scrapedData.started_at,
             status: data.status
           });
         }

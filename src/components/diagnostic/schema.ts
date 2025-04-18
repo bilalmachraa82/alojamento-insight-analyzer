@@ -19,7 +19,7 @@ export const createFormSchema = (language: Language) => {
       required_error: t.platformError,
     })
     .refine(val => ["airbnb", "booking", "vrbo", "other"].includes(val.toLowerCase()), {
-      message: t.platformSelectionError || "Please select a supported platform",
+      message: t.platformError || "Please select a supported platform",
     }),
     rgpd: z.boolean().refine((val) => val === true, {
       message: t.gdprError,
