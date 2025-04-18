@@ -1,147 +1,153 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import AnalysisResultsViewer from '@/components/results/AnalysisResultsViewer';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Loader2, ArrowLeft } from "lucide-react";
+import AnalysisResultsViewer from "@/components/results/AnalysisResultsViewer";
+import { toast } from "@/components/ui/use-toast";
+
+interface AnalysisData {
+  id: string;
+  nome: string;
+  email: string;
+  link: string;
+  plataforma: string;
+  status: string;
+  analysis_result: {
+    property_data?: {
+      property_name?: string;
+      location?: string;
+      property_type?: string;
+      rating?: number;
+    };
+    [key: string]: any;
+  } | null;
+}
 
 const AnalysisResult = () => {
   const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [submission, setSubmission] = useState<any>(null);
-  const [propertyInfo, setPropertyInfo] = useState<any>(null);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchSubmission = async () => {
-      setLoading(true);
+    const fetchAnalysisData = async () => {
       try {
         if (!id) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Missing submission ID",
-          });
+          setError("No analysis ID provided");
           setLoading(false);
           return;
         }
-        
+
         const { data, error } = await supabase
           .from("diagnostic_submissions")
           .select("*")
           .eq("id", id)
           .single();
 
-        if (error) {
-          console.error("Error fetching submission:", error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to fetch submission data",
-          });
-          setLoading(false);
-          return;
-        }
+        if (error) throw error;
 
         if (!data) {
-          toast({
-            variant: "destructive",
-            title: "Not Found",
-            description: "Submission not found",
-          });
+          setError("Analysis not found");
           setLoading(false);
           return;
         }
 
-        setSubmission(data);
+        setAnalysisData(data);
+        setLoading(false);
+      } catch (err: any) {
+        console.error("Error fetching analysis data:", err);
+        setError(err.message || "An error occurred while fetching the analysis data");
+        setLoading(false);
         
-        // Extract analysis result and property info
-        if (data.analysis_result) {
-          setAnalysisResult(data.analysis_result);
-        } else {
-          toast({
-            variant: "default",
-            title: "Analysis Pending",
-            description: "The analysis is still being processed. Please check back later.",
-          });
-        }
-        
-        if (data.scraped_data && data.scraped_data.property_data) {
-          // Extract the first property from the array if it's an array
-          const propertyData = Array.isArray(data.scraped_data.property_data) 
-            ? data.scraped_data.property_data[0] 
-            : data.scraped_data.property_data;
-          
-          setPropertyInfo({
-            name: propertyData.name || data.nome || "Property",
-            url: data.link,
-            platform: data.plataforma,
-            location: propertyData.location || "Unknown location",
-            rating: propertyData.rating || "No rating",
-            reviewCount: propertyData.reviewCount || 0,
-            amenities: propertyData.amenities || [],
-            price: propertyData.price || "Unknown price",
-            description: propertyData.description || "No description",
-            host: propertyData.host || {},
-            similarListings: propertyData.similarListings || []
-          });
-        } else {
-          // If property data is not available, use submission data
-          setPropertyInfo({
-            name: data.nome || "Property",
-            url: data.link,
-            platform: data.plataforma,
-            location: "Unknown location",
-            rating: "No rating",
-            reviewCount: 0,
-            price: "Unknown price"
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching analysis:", error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "An unexpected error occurred",
+          description: "Failed to load analysis data. Please try again later."
         });
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchSubmission();
-  }, [id, toast]);
+    fetchAnalysisData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-brand-pink mb-4" />
+        <p className="text-lg text-center">Loading analysis results...</p>
+      </div>
+    );
+  }
+
+  if (error || !analysisData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+        <p className="text-lg text-center mb-6">{error || "Failed to load analysis data"}</p>
+        <Button asChild>
+          <Link to="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Return to Home
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+  
+  // Get property name from analysis data, with fallback to URL
+  const propertyName = analysisData.analysis_result?.property_data?.property_name || 
+                        analysisData.link?.split('/').pop() || 
+                        "Your Property";
+  
+  // Get property location with fallback
+  const propertyLocation = analysisData.analysis_result?.property_data?.location || "Location Unavailable";
+  
+  // Get property type with fallback
+  const propertyType = analysisData.analysis_result?.property_data?.property_type || "Accommodation";
+  
+  // Get property rating with fallback
+  const propertyRating = analysisData.analysis_result?.property_data?.rating || null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="w-full py-4 px-6 md:px-8 flex justify-between items-center shadow-sm bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
+    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
+      {/* Header */}
+      <header className="w-full py-4 px-6 md:px-8 bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <Button variant="ghost" asChild>
+            <Link to="/" className="flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Home
-            </Button>
-          </Link>
-          <h1 className="text-xl font-bold">Property Analysis Results</h1>
+            </Link>
+          </Button>
+          <h1 className="text-xl font-bold">Property Analysis</h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-gray-400 mb-4" />
-            <p className="text-gray-600 text-lg">Loading analysis results...</p>
+      {/* Content */}
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+        <div className="bg-white shadow rounded-xl p-6 mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">{propertyName}</h1>
+          <div className="flex flex-col md:flex-row md:items-center text-gray-600 mb-6 gap-2 md:gap-6">
+            <div className="flex items-center">
+              <span className="mr-1">📍</span> 
+              <span>{propertyLocation}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="mr-1">🏠</span> 
+              <span>{propertyType}</span>
+            </div>
+            {propertyRating && (
+              <div className="flex items-center">
+                <span className="mr-1">⭐</span> 
+                <span>{propertyRating} / 5</span>
+              </div>
+            )}
           </div>
-        ) : (
-          <AnalysisResultsViewer 
-            analysis={analysisResult}
-            propertyInfo={propertyInfo}
-            loading={loading}
-          />
-        )}
+          
+          <AnalysisResultsViewer analysisData={analysisData} />
+        </div>
       </main>
     </div>
   );

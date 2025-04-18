@@ -13,7 +13,14 @@ import DiagnosticFormField from "./diagnostic/FormField";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { 
+  Form, 
+  FormItem, 
+  FormLabel, 
+  FormControl, 
+  FormMessage, 
+  FormField 
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
