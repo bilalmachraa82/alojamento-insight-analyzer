@@ -8,7 +8,6 @@ import HeroSection from "@/components/HeroSection";
 import HowItWorks from "@/components/HowItWorks";
 import PricingTable from "@/components/PricingTable";
 import DiagnosticForm from "@/components/DiagnosticForm";
-import EmailTester from "@/components/EmailTester";
 import { Separator } from "@/components/ui/separator";
 
 const Index: React.FC = () => {
@@ -42,7 +41,7 @@ const Index: React.FC = () => {
     testSupabaseConnection();
   }, []);
 
-  const [language, setLanguage] = useState<"en" | "pt">("en");
+  const [language, setLanguage] = useState<"en" | "pt">("pt"); // Changed default to Portuguese
 
   const scrollToForm = () => {
     const form = document.getElementById("diagnosticoForm");
@@ -58,11 +57,6 @@ const Index: React.FC = () => {
       </header>
 
       <main className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
-        {/* Email Tester - For Development Only */}
-        <div className="mb-8">
-          <EmailTester />
-        </div>
-        
         {/* Hero Section */}
         <HeroSection language={language} scrollToForm={scrollToForm} />
         
@@ -79,7 +73,7 @@ const Index: React.FC = () => {
         <Separator className="my-12" />
         
         {/* Diagnostic Form */}
-        <div className="bg-white shadow-sm rounded-xl p-8 mb-8">
+        <div id="diagnosticoForm" className="bg-white shadow-sm rounded-xl p-8 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 text-brand-black font-montserrat">
             {language === "en" ? "Smart Diagnostic" : "Diagnóstico Inteligente"}
           </h2>
