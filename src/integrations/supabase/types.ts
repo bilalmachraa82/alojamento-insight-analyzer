@@ -9,7 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      diagnostic_submissions: {
+        Row: {
+          analysis_result: Json | null
+          data_submissao: string
+          email: string
+          id: string
+          link: string
+          nome: string
+          plataforma: string
+          rgpd: boolean
+          scraped_data: Json | null
+          status: string
+        }
+        Insert: {
+          analysis_result?: Json | null
+          data_submissao?: string
+          email: string
+          id?: string
+          link: string
+          nome: string
+          plataforma: string
+          rgpd: boolean
+          scraped_data?: Json | null
+          status?: string
+        }
+        Update: {
+          analysis_result?: Json | null
+          data_submissao?: string
+          email?: string
+          id?: string
+          link?: string
+          nome?: string
+          plataforma?: string
+          rgpd?: boolean
+          scraped_data?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

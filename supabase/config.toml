@@ -1,1 +1,9 @@
+
 project_id = "rhrluvhbajdsnmvnpjzk"
+
+[functions]
+[functions.process-diagnostic]
+verify_jwt = true
+
+[functions.check-scrape-status]
+verify_jwt = true

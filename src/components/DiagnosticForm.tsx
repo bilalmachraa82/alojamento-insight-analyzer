@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Check, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 interface DiagnosticFormProps {
   language: "en" | "pt";
@@ -33,6 +35,9 @@ interface DiagnosticFormProps {
 const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<string | null>(null);
+  const [progressValue, setProgressValue] = useState(0);
   
   const translations = {
     en: {
@@ -53,7 +58,12 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       nameError: "Name must be at least 2 characters.",
       urlError: "Please enter a valid URL.",
       platformError: "Please select a platform.",
-      gdprError: "You must accept the GDPR policy to continue."
+      gdprError: "You must accept the GDPR policy to continue.",
+      statusPending: "Preparing your diagnostic...",
+      statusProcessing: "Analyzing your property...",
+      statusScraping: "Gathering property data...",
+      statusAnalyzing: "Creating your personalized plan...",
+      statusCompleted: "Analysis complete! Check your email soon."
     },
     pt: {
       name: "Nome",
@@ -73,7 +83,12 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       nameError: "O nome deve ter pelo menos 2 caracteres.",
       urlError: "Por favor insira um URL válido.",
       platformError: "Por favor selecione uma plataforma.",
-      gdprError: "Deve aceitar a política de RGPD para continuar."
+      gdprError: "Deve aceitar a política de RGPD para continuar.",
+      statusPending: "A preparar o seu diagnóstico...",
+      statusProcessing: "A analisar a sua propriedade...",
+      statusScraping: "A recolher dados da propriedade...",
+      statusAnalyzing: "A criar o seu plano personalizado...",
+      statusCompleted: "Análise completa! Verifique o seu email em breve."
     }
   };
   
@@ -109,54 +124,129 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
     },
   });
 
+  // Function to update processing status
+  const checkProcessingStatus = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("diagnostic_submissions")
+        .select("status")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setProcessingStatus(data.status);
+        
+        // Update progress based on status
+        switch (data.status) {
+          case "pending":
+            setProgressValue(25);
+            break;
+          case "processing":
+            setProgressValue(40);
+            break;
+          case "scraping":
+            setProgressValue(60);
+            break;
+          case "analyzing":
+            setProgressValue(80);
+            break;
+          case "completed":
+            setProgressValue(100);
+            break;
+          default:
+            setProgressValue(25);
+        }
+
+        // If not completed, check again in 5 seconds
+        if (data.status !== "completed") {
+          setTimeout(() => checkProcessingStatus(id), 5000);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking status:", error);
+    }
+  };
+
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     try {
       // Current date in ISO format
       const currentDate = new Date().toISOString();
       
-      // Prepare the payload as specified in the requirements
-      const payload = {
-        nome: data.nome,
-        email: data.email,
-        link: data.link,
-        plataforma: data.plataforma,
-        rgpd: data.rgpd,
-        data_submissao: currentDate,
-      };
+      // Insert data into Supabase
+      const { data: submissionData, error } = await supabase
+        .from("diagnostic_submissions")
+        .insert({
+          nome: data.nome,
+          email: data.email,
+          link: data.link,
+          plataforma: data.plataforma,
+          rgpd: data.rgpd,
+          data_submissao: currentDate,
+          status: "pending"
+        })
+        .select();
 
-      // Send the data to the webhook
-      const response = await fetch(
-        "https://teu-n8n-instance.com/webhook/diagnostico-al",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      if (error) throw error;
 
-      if (!response.ok) {
-        throw new Error(language === "en" ? "Failed to submit the form." : "Falha ao enviar o formulário.");
+      // Get the submission ID
+      const newSubmissionId = submissionData[0].id;
+      setSubmissionId(newSubmissionId);
+      
+      // Trigger the processing function
+      const response = await supabase.functions.invoke("process-diagnostic", {
+        body: { id: newSubmissionId }
+      });
+
+      if (!response.data?.success) {
+        throw new Error(response.error?.message || "Failed to start processing");
       }
 
+      // Show success message and start checking status
       setIsSuccess(true);
+      setProcessingStatus("pending");
+      setProgressValue(25);
+      checkProcessingStatus(newSubmissionId);
+
       toast({
-        title: language === "en" ? "Diagnostic sent successfully!" : "Diagnóstico enviado com sucesso!",
+        title: language === "en" ? "Diagnostic submitted successfully!" : "Diagnóstico enviado com sucesso!",
         description: t.thankYou.replace("{name}", data.nome),
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: language === "en" ? "Error" : "Erro",
-        description: language === "en" ? "An error occurred while submitting the form. Please try again." : "Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.",
+        description: language === "en" 
+          ? "An error occurred while submitting the form. Please try again." 
+          : "Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.",
       });
       console.error("Error submitting form:", error);
     } finally {
       setIsLoading(false);
     }
   }
+
+  // Helper function to get status text based on current status
+  const getStatusText = () => {
+    if (!processingStatus) return "";
+    
+    switch (processingStatus) {
+      case "pending":
+        return t.statusPending;
+      case "processing":
+        return t.statusProcessing;
+      case "scraping":
+        return t.statusScraping;
+      case "analyzing":
+        return t.statusAnalyzing;
+      case "completed":
+        return t.statusCompleted;
+      default:
+        return t.statusPending;
+    }
+  };
 
   return (
     <div className="w-full max-w-md mx-auto" id="diagnosticoForm">
@@ -270,15 +360,29 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       ) : (
         <div className="bg-green-50 p-6 rounded-lg border border-green-100 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 mb-4">
-            <Check className="h-6 w-6 text-green-600" />
+            {progressValue < 100 ? (
+              <Loader2 className="h-6 w-6 text-green-600 animate-spin" />
+            ) : (
+              <Check className="h-6 w-6 text-green-600" />
+            )}
           </div>
           <h3 className="text-lg font-medium text-green-800">{t.success}</h3>
+          
+          <div className="mt-4 mb-4">
+            <Progress value={progressValue} className="h-2" />
+            <p className="mt-2 text-sm text-green-600">
+              {getStatusText()}
+            </p>
+          </div>
+          
           <p className="mt-2 text-sm text-green-600">
             {t.thankYou.replace("{name}", form.getValues("nome"))}
           </p>
           <Button 
             onClick={() => {
               setIsSuccess(false);
+              setProcessingStatus(null);
+              setProgressValue(0);
               form.reset();
             }} 
             variant="outline"
