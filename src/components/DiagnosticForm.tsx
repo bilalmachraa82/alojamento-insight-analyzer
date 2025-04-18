@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -8,25 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { translations, Language } from "./diagnostic/translations";
 import SuccessMessage from "./diagnostic/SuccessMessage";
+import DiagnosticFormField from "./diagnostic/FormField";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DiagnosticFormProps {
   language: Language;
@@ -193,72 +182,48 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       {!isSuccess ? (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
+            <DiagnosticFormField
+              form={form}
               name="nome"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.name}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t.namePlaceholder} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              label={t.name}
+            >
+              <Input placeholder={t.namePlaceholder} />
+            </DiagnosticFormField>
 
-            <FormField
-              control={form.control}
+            <DiagnosticFormField
+              form={form}
               name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.email}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t.emailPlaceholder} {...field} type="email" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              label={t.email}
+            >
+              <Input placeholder={t.emailPlaceholder} type="email" />
+            </DiagnosticFormField>
 
-            <FormField
-              control={form.control}
+            <DiagnosticFormField
+              form={form}
               name="link"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.link}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t.linkPlaceholder} {...field} type="url" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              label={t.link}
+            >
+              <Input placeholder={t.linkPlaceholder} type="url" />
+            </DiagnosticFormField>
 
-            <FormField
-              control={form.control}
+            <DiagnosticFormField
+              form={form}
               name="plataforma"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.platform}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={language === "en" ? "Select a platform" : "Selecione uma plataforma"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Booking">Booking</SelectItem>
-                      <SelectItem value="Airbnb">Airbnb</SelectItem>
-                      <SelectItem value="Vrbo">Vrbo</SelectItem>
-                      <SelectItem value="Google">Google</SelectItem>
-                      <SelectItem value="Outro">{language === "en" ? "Other" : "Outro"}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              label={t.platform}
+            >
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "en" ? "Select a platform" : "Selecione uma plataforma"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Booking">Booking</SelectItem>
+                  <SelectItem value="Airbnb">Airbnb</SelectItem>
+                  <SelectItem value="Vrbo">Vrbo</SelectItem>
+                  <SelectItem value="Google">Google</SelectItem>
+                  <SelectItem value="Outro">{language === "en" ? "Other" : "Outro"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </DiagnosticFormField>
 
             <FormField
               control={form.control}

@@ -33,7 +33,32 @@ export const translations = {
     statusProcessing: "Analyzing your property...",
     statusScraping: "Gathering property data...",
     statusAnalyzing: "Creating your personalized plan...",
-    statusCompleted: "Analysis complete! Check your email soon."
+    statusCompleted: "Analysis complete! Check your email soon.",
+    
+    // Results Page
+    resultsTitle: "Property Analysis Results",
+    loadingResults: "Loading analysis results...",
+    backToHome: "Back to Home",
+    
+    // Analysis Sections
+    overviewTab: "Overview",
+    recommendationsTab: "Recommendations",
+    pricingTab: "Pricing Strategy",
+    competitionTab: "Competition",
+    
+    performanceOverview: "Performance Overview",
+    strengthsAndWeaknesses: "Strengths & Improvement Areas",
+    strengths: "Strengths",
+    weaknesses: "Areas for Improvement",
+    guestExperience: "Guest Experience",
+    positiveAspects: "Positive Aspects",
+    reviewSentiment: "Review Sentiment",
+    
+    technicalImprovements: "Technical Improvements",
+    marketingStrategy: "Marketing Strategy",
+    guestExperienceImprovements: "Guest Experience Improvements",
+    rebrandingSuggestions: "Rebranding Suggestions",
+    valueAddedIdeas: "Value-Added Ideas"
   },
   pt: {
     name: "Nome",
@@ -62,6 +87,29 @@ export const translations = {
     statusProcessing: "A analisar a sua propriedade...",
     statusScraping: "A recolher dados da propriedade...",
     statusAnalyzing: "A criar o seu plano personalizado...",
-    statusCompleted: "Análise completa! Verifique o seu email em breve."
+    statusCompleted: "Análise completa! Verifique o seu email em breve.",
+    
+    resultsTitle: "Resultados da Análise da Propriedade",
+    loadingResults: "A carregar os resultados da análise...",
+    backToHome: "Voltar à Página Inicial",
+    
+    overviewTab: "Visão Geral",
+    recommendationsTab: "Recomendações",
+    pricingTab: "Estratégia de Preços",
+    competitionTab: "Concorrência",
+    
+    performanceOverview: "Visão Geral de Desempenho",
+    strengthsAndWeaknesses: "Pontos Fortes & Áreas de Melhoria",
+    strengths: "Pontos Fortes",
+    weaknesses: "Áreas de Melhoria",
+    guestExperience: "Experiência do Hóspede",
+    positiveAspects: "Aspectos Positivos",
+    reviewSentiment: "Sentimento das Avaliações",
+    
+    technicalImprovements: "Melhorias Técnicas",
+    marketingStrategy: "Estratégia de Marketing",
+    guestExperienceImprovements: "Melhorias na Experiência do Hóspede",
+    rebrandingSuggestions: "Sugestões de Rebranding",
+    valueAddedIdeas: "Ideias de Valor Acrescentado"
   }
 };
