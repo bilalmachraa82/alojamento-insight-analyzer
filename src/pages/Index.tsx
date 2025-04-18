@@ -1,5 +1,6 @@
-
-import { useState, useEffect } from "react";
+import React, { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 import MariaFazLogo from "@/components/MariaFazLogo";
 import LanguageToggle from "@/components/LanguageToggle";
 import HeroSection from "@/components/HeroSection";
@@ -8,7 +9,39 @@ import PricingTable from "@/components/PricingTable";
 import DiagnosticForm from "@/components/DiagnosticForm";
 import { Separator } from "@/components/ui/separator";
 
-const Index = () => {
+const Index: React.FC = () => {
+  useEffect(() => {
+    const testSupabaseConnection = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .limit(1);
+
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Supabase Connection Test Failed",
+            description: error.message
+          });
+        } else {
+          toast({
+            title: "Supabase Connected ✓",
+            description: "Successfully connected to Supabase"
+          });
+        }
+      } catch (err) {
+        toast({
+          variant: "destructive", 
+          title: "Supabase Connection Error",
+          description: String(err)
+        });
+      }
+    };
+
+    testSupabaseConnection();
+  }, []);
+
   const [language, setLanguage] = useState<"en" | "pt">("en");
 
   const scrollToForm = () => {
