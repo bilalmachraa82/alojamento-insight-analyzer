@@ -57,20 +57,20 @@ serve(async (req: Request) => {
     
     try {
       // Use the Website Content Crawler actor
-      const directActorUrl = `https://api.apify.com/v2/acts/apify~website-content-crawler/runs?token=${APIFY_API_TOKEN}`;
+      const websiteContentCrawlerUrl = `https://api.apify.com/v2/acts/apify~website-content-crawler/runs?token=${APIFY_API_TOKEN}`;
       
       console.log(`Making request to Website Content Crawler`);
       
       const actorInput = {
         startUrls: [{ url: startUrl }],
         maxCrawlPages: 1, // We only need the property page
-        crawlerType: "stealthy", // Best for avoiding blocks
-        htmlTransformer: "readability", // Clean up the HTML content
+        crawlerType: "playwright:chrome", // Use the Chrome browser for best compatibility
         saveHtml: false,
         saveMarkdown: true,
         waitForDynamicContent: true,
         maxScrollHeight: 5000, // Ensure we get all content
-        removeCustomElements: [
+        htmlTransformer: "readability", // Clean up the HTML content
+        removeElements: [
           ".cookie-banner",
           ".cookie-consent",
           "nav",
@@ -81,7 +81,7 @@ serve(async (req: Request) => {
         ]
       };
       
-      const directRunResponse = await fetch(directActorUrl, {
+      const runResponse = await fetch(websiteContentCrawlerUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,9 +89,9 @@ serve(async (req: Request) => {
         body: JSON.stringify(actorInput),
       });
       
-      if (!directRunResponse.ok) {
-        const errorText = await directRunResponse.text();
-        console.error(`Direct actor run failed: ${errorText}`);
+      if (!runResponse.ok) {
+        const errorText = await runResponse.text();
+        console.error(`Website Content Crawler run failed: ${errorText}`);
         
         await supabase
           .from("diagnostic_submissions")
@@ -120,7 +120,7 @@ serve(async (req: Request) => {
         );
       }
       
-      const runData = await directRunResponse.json();
+      const runData = await runResponse.json();
       const runId = runData.data.id;
       
       console.log(`Successfully started Website Content Crawler run with ID: ${runId}`);

@@ -96,13 +96,24 @@ serve(async (req: Request) => {
         // The Website Content Crawler returns an array of pages, we want the first one
         const mainPageData = propertyData[0];
 
+        // Extract key property information
+        const propertyInfo = {
+          property_name: mainPageData.metadata?.title || '',
+          content: mainPageData.text || mainPageData.markdown || '',
+          location: extractLocation(mainPageData.text || ''),
+          url: mainPageData.url,
+          property_type: detectPropertyType(mainPageData.text || ''),
+          scraped_at: new Date().toISOString()
+        };
+
         await supabase
           .from("diagnostic_submissions")
           .update({
             status: "scraping_completed",
             scraped_data: {
               ...scraped_data,
-              property_data: mainPageData,
+              property_data: propertyInfo,
+              raw_data: mainPageData,
               completed_at: new Date().toISOString(),
             }
           })
@@ -121,7 +132,7 @@ serve(async (req: Request) => {
             success: true,
             status: "scraping_completed",
             message: "Data collection completed, analysis started",
-            data: mainPageData
+            data: propertyInfo
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -155,3 +166,46 @@ serve(async (req: Request) => {
     );
   }
 });
+
+// Helper function to extract location from text
+function extractLocation(text: string): string {
+  // Simple extraction - look for common location patterns
+  const locationPatterns = [
+    /located in ([^,.]+)/i,
+    /in ([^,.]+) area/i,
+    /situated in ([^,.]+)/i,
+    /property in ([^,.]+)/i
+  ];
+  
+  for (const pattern of locationPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  return 'Unknown location';
+}
+
+// Helper function to detect property type
+function detectPropertyType(text: string): string {
+  const lowerText = text.toLowerCase();
+  
+  const propertyTypes = [
+    { type: 'Apartment', keywords: ['apartment', 'flat', 'condo', 'condominium'] },
+    { type: 'House', keywords: ['house', 'home', 'villa', 'cottage', 'bungalow'] },
+    { type: 'Room', keywords: ['room', 'private room', 'shared room', 'bedroom'] },
+    { type: 'Hotel', keywords: ['hotel', 'inn', 'motel', 'suite', 'lodging'] },
+    { type: 'Resort', keywords: ['resort', 'spa', 'retreat'] }
+  ];
+  
+  for (const { type, keywords } of propertyTypes) {
+    for (const keyword of keywords) {
+      if (lowerText.includes(keyword)) {
+        return type;
+      }
+    }
+  }
+  
+  return 'Accommodation';
+}
