@@ -89,10 +89,65 @@ const platformConfigs = {
   }
 };
 
+// Function to expand shortened URLs
+async function expandShortenedUrl(url) {
+  try {
+    console.log(`Attempting to expand shortened URL: ${url}`);
+    
+    const response = await fetch(url, {
+      method: "HEAD",
+      redirect: "follow",
+    });
+    
+    const expandedUrl = response.url;
+    console.log(`Expanded URL: ${expandedUrl}`);
+    return expandedUrl;
+  } catch (error) {
+    console.error(`Error expanding URL: ${error}`);
+    return url; // Return original URL if expansion fails
+  }
+}
+
+// Function to process Booking.com share links
+async function processBookingShareUrl(url) {
+  // Check if it's a Booking.com share URL
+  if (url.includes("booking.com/Share-") || url.includes("booking.com/share-")) {
+    try {
+      // First try to expand the URL to get the actual property URL
+      const expandedUrl = await expandShortenedUrl(url);
+      
+      // If expansion was successful and URL changed
+      if (expandedUrl !== url) {
+        console.log(`Successfully expanded Booking.com share URL to: ${expandedUrl}`);
+        return expandedUrl;
+      }
+      
+      // If direct expansion didn't work, we may need to simulate a browser visit
+      console.log("Direct URL expansion didn't work, may need manual review");
+      return null;
+    } catch (error) {
+      console.error(`Error processing Booking share URL: ${error}`);
+      return null;
+    }
+  }
+  
+  return url; // Not a share URL, return as is
+}
+
 // Utilitário para normalizar URLs de propriedades
-function normalizePropertyUrl(url, platform) {
+async function normalizePropertyUrl(url, platform) {
   // Remove parâmetros de query, exceto os necessários
   try {
+    // Special handling for Booking.com share links
+    if (platform === "booking") {
+      const processedUrl = await processBookingShareUrl(url);
+      if (!processedUrl) {
+        console.log("Could not process Booking.com share URL, needs manual review");
+        return null;
+      }
+      url = processedUrl;
+    }
+    
     const urlObj = new URL(url);
     
     // Limpa parâmetros específicos por plataforma
@@ -123,13 +178,19 @@ function normalizePropertyUrl(url, platform) {
     return urlObj.toString();
   } catch (e) {
     console.error("Error normalizing URL:", e);
-    return url;
+    return null;
   }
 }
 
 // Prepara o input específico para cada plataforma
-function prepareActorInput(url, platform) {
-  const normalizedUrl = normalizePropertyUrl(url, platform);
+async function prepareActorInput(url, platform) {
+  const normalizedUrl = await normalizePropertyUrl(url, platform);
+  
+  if (!normalizedUrl) {
+    console.log(`Failed to normalize URL for ${platform}: ${url}`);
+    return null;
+  }
+  
   console.log(`Normalized URL for ${platform}: ${normalizedUrl}`);
   
   const config = { ...platformConfigs[platform]?.config } || { ...platformConfigs.default.config };
@@ -210,7 +271,38 @@ serve(async (req: Request) => {
     console.log(`Processing URL: ${startUrl}`);
     
     // Preparar o input específico para o ator da plataforma
-    const actorInput = prepareActorInput(startUrl, platform);
+    const actorInput = await prepareActorInput(startUrl, platform);
+    
+    // If URL processing failed, mark for manual review
+    if (!actorInput) {
+      console.log(`URL processing failed for ${platform}: ${startUrl}, marking for manual review`);
+      await supabase
+        .from("diagnostic_submissions")
+        .update({
+          status: "pending_manual_review",
+          scraped_data: {
+            error: "Could not process the URL format. It may be a shortened or share URL that needs manual expansion.",
+            error_at: new Date().toISOString(),
+            reason: "url_processing_error",
+            url: startUrl,
+            platform: platform,
+            actor_id: actorId
+          }
+        })
+        .eq("id", id);
+        
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "We need to process this URL manually. Our team will review your submission soon.",
+          details: "URL format not compatible with automatic processing"
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
     
     console.log(`Actor input prepared:`, JSON.stringify(actorInput, null, 2));
     

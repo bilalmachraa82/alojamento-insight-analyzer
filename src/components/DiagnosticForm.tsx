@@ -83,6 +83,18 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         throw new Error(language === "en" ? "Unsupported platform" : "Plataforma não suportada");
       }
       
+      // Check if it's a Booking.com share URL and show a message
+      if (platformInfo.value === "booking" && 
+          (data.link.includes("booking.com/Share-") || data.link.includes("booking.com/share-"))) {
+        toast({
+          title: language === "en" ? "Booking.com Share Link Detected" : "Link de Partilha do Booking.com Detetado",
+          description: language === "en" 
+            ? "We'll try to process your share link, but for best results consider using a direct property URL." 
+            : "Tentaremos processar o seu link de partilha, mas para melhores resultados considere usar um URL direto da propriedade.",
+          variant: "default",
+        });
+      }
+      
       const { data: submissionData, error } = await supabase
         .from("diagnostic_submissions")
         .insert({
