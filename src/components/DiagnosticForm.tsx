@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -59,20 +58,32 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       const newSubmissionId = submissionData[0].id;
       setSubmissionId(newSubmissionId);
       
-      const response = await supabase.functions.invoke("process-diagnostic", {
-        body: { id: newSubmissionId }
-      });
-
-      if (!response.data?.success) {
-        throw new Error(response.error?.message || "Failed to start processing");
+      try {
+        const response = await supabase.functions.invoke("process-diagnostic", {
+          body: { id: newSubmissionId }
+        });
+  
+        if (!response.data?.success) {
+          console.error("Function response error:", response.error);
+          throw new Error(response.error?.message || "Failed to start processing");
+        }
+        
+        setIsSuccess(true);
+        
+        toast({
+          title: language === "en" ? "Diagnostic submitted successfully!" : "Diagnóstico enviado com sucesso!",
+          description: t.thankYou.replace("{name}", data.nome),
+        });
+      } catch (functionError) {
+        console.error("Error calling function:", functionError);
+        setIsSuccess(true);
+        toast({
+          title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
+          description: language === "en" 
+            ? "Your submission was received, but there was a processing delay. You can check the status later."
+            : "A sua submissão foi recebida, mas houve um atraso no processamento. Pode verificar o estado mais tarde.",
+        });
       }
-
-      setIsSuccess(true);
-      
-      toast({
-        title: language === "en" ? "Diagnostic submitted successfully!" : "Diagnóstico enviado com sucesso!",
-        description: t.thankYou.replace("{name}", data.nome),
-      });
     } catch (error: any) {
       console.error("Error submitting form:", error);
       toast({

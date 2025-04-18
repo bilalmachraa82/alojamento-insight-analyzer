@@ -56,14 +56,13 @@ serve(async (req: Request) => {
       .eq("id", id);
 
     // Determine platform and select appropriate actor ID
-    // IMPORTANT: These must be exact Apify actor IDs that exist in your Apify account or publicly
     let actorId;
     switch (submission.plataforma.toLowerCase()) {
       case "airbnb":
         actorId = "apify/airbnb-scraper";
         break;
       case "booking":
-        actorId = "apify/booking-scraper"; // Fixed: was previously incorrect
+        actorId = "apify/booking-scraper";
         break;
       case "vrbo":
         actorId = "apify/vrbo-scraper";
@@ -84,30 +83,28 @@ serve(async (req: Request) => {
     }
 
     // Call Apify API to start the scraper
-    const apifyUrl = `https://api.apify.com/v2/acts?token=${APIFY_API_TOKEN}`;
+    // Corrected URL and parameter structure for running actors directly
+    const apifyUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
     
-    // Create a new task for the actor by running the actor directly
+    // Run the actor directly with the URL and appropriate input
     const runResponse = await fetch(apifyUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        actId: actorId,
-        runInput: {
-          url: submission.link,
-          maxPages: 1, // Limiting to keep processing time reasonable
-          proxyConfiguration: {
-            useApifyProxy: true
-          }
-        },
-        // Give the task a name based on the submission ID
-        name: `Diagnostic-${id}`,
+        // Input parameters for the actor
+        startUrls: [{ url: submission.link }],
+        maxPages: 1, // Limiting to keep processing time reasonable
+        proxyConfiguration: {
+          useApifyProxy: true
+        }
       }),
     });
     
     if (!runResponse.ok) {
       const errorText = await runResponse.text();
+      console.error(`Failed API response: ${errorText}`);
       throw new Error(`Failed to run actor: ${errorText}`);
     }
     
