@@ -27,9 +27,13 @@ const ProcessingStatus = ({ status, progressValue, language }: ProcessingStatusP
       case "analyzing":
         return t.statusAnalyzing;
       case "pending_manual_review":
-        return "É necessário revisão manual da sua propriedade";
+        return language === "pt" 
+          ? "É necessária revisão manual da sua propriedade" 
+          : "Manual review of your property is needed";
       case "manual_review_requested":
-        return "Análise manual solicitada";
+        return language === "pt" 
+          ? "Análise manual solicitada" 
+          : "Manual review requested";
       case "completed":
         return t.statusCompleted;
       default:

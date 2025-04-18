@@ -84,19 +84,22 @@ serve(async (req: Request) => {
       );
     }
 
-    // Correct API URL format for Apify API v2
-    const actorRunUrl = `https://api.apify.com/v2/actor-tasks/${actorId}/runs?token=${APIFY_API_TOKEN}`;
+    const startUrl = submission.link;
+    console.log(`Processing URL: ${startUrl}`);
     
+    // First try to directly use the actor (skip the task which might not exist)
     try {
-      console.log(`Making request to Apify API: ${actorRunUrl}`);
+      const directActorUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
       
-      const actorRunResponse = await fetch(actorRunUrl, {
+      console.log(`Making direct actor request to: ${directActorUrl}`);
+      
+      const directRunResponse = await fetch(directActorUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          startUrls: [{ url: submission.link }],
+          startUrls: [{ url: startUrl }],
           maxPages: 1, // Limiting to keep processing time reasonable
           proxyConfiguration: {
             useApifyProxy: true
@@ -104,79 +107,39 @@ serve(async (req: Request) => {
         }),
       });
       
-      // Handle task not found error, fallback to direct actor run
-      if (!actorRunResponse.ok) {
-        console.log("Task run failed, attempting direct actor run...");
+      // If direct actor run fails, handle the error
+      if (!directRunResponse.ok) {
+        const errorText = await directRunResponse.text();
+        console.error(`Direct actor run failed: ${errorText}`);
         
-        // Try running the actor directly
-        const directActorUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
-        
-        console.log(`Making direct actor request to: ${directActorUrl}`);
-        
-        const directRunResponse = await fetch(directActorUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            startUrls: [{ url: submission.link }],
-            maxPages: 1, // Limiting to keep processing time reasonable
-            proxyConfiguration: {
-              useApifyProxy: true
-            }
-          }),
-        });
-        
-        if (!directRunResponse.ok) {
-          const errorText = await directRunResponse.text();
-          console.error(`Direct actor run failed: ${errorText}`);
-          
-          // Even if it fails, mark it for manual review and return a 200 to the client
-          await supabase
-            .from("diagnostic_submissions")
-            .update({
-              status: "pending_manual_review",
-              scraped_data: {
-                error: errorText,
-                error_at: new Date().toISOString(),
-              }
-            })
-            .eq("id", id);
-            
-          return new Response(
-            JSON.stringify({
-              success: true, // Return success even though it will need manual review
-              message: "Submission received and will be processed manually"
-            }),
-            { 
-              status: 200, 
-              headers: { ...corsHeaders, "Content-Type": "application/json" } 
-            }
-          );
+        let errorDetails = "Error connecting to data provider";
+        try {
+          // Try to parse the error for better details
+          const errorJson = JSON.parse(errorText);
+          errorDetails = errorJson.error?.message || errorJson.error || errorText;
+        } catch (e) {
+          errorDetails = errorText;
         }
         
-        const runData = await directRunResponse.json();
-        const runId = runData.data.id;
-        
-        console.log(`Successfully started Apify direct actor run with ID: ${runId}`);
-        
-        // Store the Apify run ID in the database
+        // Mark for manual review with details
         await supabase
           .from("diagnostic_submissions")
           .update({
-            status: "scraping",
+            status: "pending_manual_review",
             scraped_data: {
-              apify_run_id: runId,
-              started_at: new Date().toISOString(),
+              error: errorDetails,
+              error_at: new Date().toISOString(),
+              reason: "api_error",
+              url: startUrl
             }
           })
           .eq("id", id);
-        
+          
         return new Response(
           JSON.stringify({
-            success: true,
-            message: "Diagnostic processing started with direct actor run",
-            runId
+            success: false,
+            message: "We encountered an error accessing the property data, but we've noted your submission for manual review.",
+            details: errorDetails
           }),
           { 
             status: 200, 
@@ -185,10 +148,11 @@ serve(async (req: Request) => {
         );
       }
       
-      const runData = await actorRunResponse.json();
+      // If successful, process the run data
+      const runData = await directRunResponse.json();
       const runId = runData.data.id;
       
-      console.log(`Successfully started Apify task run with ID: ${runId}`);
+      console.log(`Successfully started Apify direct actor run with ID: ${runId}`);
       
       // Store the Apify run ID in the database
       await supabase
@@ -198,6 +162,7 @@ serve(async (req: Request) => {
           scraped_data: {
             apify_run_id: runId,
             started_at: new Date().toISOString(),
+            url: startUrl
           }
         })
         .eq("id", id);
@@ -205,7 +170,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: "Diagnostic processing started",
+          message: "Diagnostic processing started with direct actor run",
           runId
         }),
         { 
@@ -214,9 +179,10 @@ serve(async (req: Request) => {
         }
       );
     } catch (apiError) {
+      // Catch any unexpected errors during API calls
       console.error("Apify API error:", apiError);
       
-      // Even if Apify processing fails, we'll update the status to show we attempted
+      // Update with detailed error information
       await supabase
         .from("diagnostic_submissions")
         .update({
@@ -224,17 +190,20 @@ serve(async (req: Request) => {
           scraped_data: {
             error: String(apiError),
             error_at: new Date().toISOString(),
+            reason: "unexpected_error",
+            url: startUrl
           }
         })
         .eq("id", id);
       
       return new Response(
         JSON.stringify({ 
-          success: true, // Return success even though there was an internal error
-          message: "Submission received but needs manual processing"
+          success: false,
+          message: "We encountered an unexpected error, but we've noted your submission for manual review.",
+          error: String(apiError)
         }),
         { 
-          status: 200, // Return 200 to the client even though there was an internal error
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
@@ -248,7 +217,7 @@ serve(async (req: Request) => {
         message: "An error occurred, but your submission was saved" 
       }),
       { 
-        status: 200, // Return 200 even with errors to avoid client-side errors
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
