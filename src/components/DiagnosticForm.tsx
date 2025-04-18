@@ -2,17 +2,18 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { translations, Language } from "./diagnostic/translations";
+import SuccessMessage from "./diagnostic/SuccessMessage";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,10 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 
 interface DiagnosticFormProps {
-  language: "en" | "pt";
+  language: Language;
 }
 
 const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
@@ -40,62 +40,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   const [processingStatus, setProcessingStatus] = useState<string | null>(null);
   const [progressValue, setProgressValue] = useState(0);
   
-  const translations = {
-    en: {
-      name: "Name",
-      namePlaceholder: "Ex: John Smith",
-      email: "Email",
-      emailPlaceholder: "Ex: john@email.com",
-      link: "Property link",
-      linkPlaceholder: "https://www.booking.com/...",
-      platform: "Main platform",
-      gdpr: "I agree that my data can be used for contact and diagnostic purposes",
-      submit: "Generate Analysis",
-      processing: "Processing...",
-      success: "Diagnostic Sent!",
-      thankYou: "Thank you, {name}. We are processing your smart diagnostic. Soon, you will receive your personalized plan in your email.",
-      sendAnother: "Send another diagnostic",
-      viewResults: "View Results",
-      emailError: "Please enter a valid email.",
-      nameError: "Name must be at least 2 characters.",
-      urlError: "Please enter a valid URL.",
-      platformError: "Please select a platform.",
-      gdprError: "You must accept the GDPR policy to continue.",
-      statusPending: "Preparing your diagnostic...",
-      statusProcessing: "Analyzing your property...",
-      statusScraping: "Gathering property data...",
-      statusAnalyzing: "Creating your personalized plan...",
-      statusCompleted: "Analysis complete! Check your email soon."
-    },
-    pt: {
-      name: "Nome",
-      namePlaceholder: "Ex: Ana Costa",
-      email: "Email",
-      emailPlaceholder: "Ex: ana@email.com",
-      link: "Link da propriedade",
-      linkPlaceholder: "https://www.booking.com/...",
-      platform: "Plataforma principal",
-      gdpr: "Aceito que os meus dados sejam usados para contacto e envio do diagnóstico",
-      submit: "Gerar Análise",
-      processing: "A processar...",
-      success: "Diagnóstico Enviado!",
-      thankYou: "Obrigado, {name}. Estamos a processar o teu diagnóstico inteligente. Em breve, receberás o plano personalizado no teu email.",
-      sendAnother: "Enviar outro diagnóstico",
-      viewResults: "Ver Resultados",
-      emailError: "Por favor insira um email válido.",
-      nameError: "O nome deve ter pelo menos 2 caracteres.",
-      urlError: "Por favor insira um URL válido.",
-      platformError: "Por favor selecione uma plataforma.",
-      gdprError: "Deve aceitar a política de RGPD para continuar.",
-      statusPending: "A preparar o seu diagnóstico...",
-      statusProcessing: "A analisar a sua propriedade...",
-      statusScraping: "A recolher dados da propriedade...",
-      statusAnalyzing: "A criar o seu plano personalizado...",
-      statusCompleted: "Análise completa! Verifique o seu email em breve."
-    }
-  };
-  
-  const t = language === "en" ? translations.en : translations.pt;
+  const t = translations[language];
   
   const formSchema = z.object({
     nome: z.string().min(2, {
@@ -237,27 +182,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
     }
   }
 
-  const getStatusText = () => {
-    if (!processingStatus) return "";
-    
-    switch (processingStatus) {
-      case "pending":
-        return t.statusPending;
-      case "processing":
-        return t.statusProcessing;
-      case "scraping":
-        return t.statusScraping;
-      case "scraping_completed":
-        return t.statusScraping;
-      case "analyzing":
-        return t.statusAnalyzing;
-      case "completed":
-        return t.statusCompleted;
-      default:
-        return t.statusPending;
-    }
-  };
-
   const handleViewResults = () => {
     if (submissionId) {
       navigate(`/results/${submissionId}`);
@@ -374,49 +298,19 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
           </form>
         </Form>
       ) : (
-        <div className="bg-green-50 p-6 rounded-lg border border-green-100 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 mb-4">
-            {progressValue < 100 ? (
-              <Loader2 className="h-6 w-6 text-green-600 animate-spin" />
-            ) : (
-              <Check className="h-6 w-6 text-green-600" />
-            )}
-          </div>
-          <h3 className="text-lg font-medium text-green-800">{t.success}</h3>
-          
-          <div className="mt-4 mb-4">
-            <Progress value={progressValue} className="h-2" />
-            <p className="mt-2 text-sm text-green-600">
-              {getStatusText()}
-            </p>
-          </div>
-          
-          <p className="mt-2 text-sm text-green-600">
-            {t.thankYou.replace("{name}", form.getValues("nome"))}
-          </p>
-          
-          <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
-            {progressValue === 100 && (
-              <Button 
-                onClick={handleViewResults} 
-                className="bg-brand-blue hover:bg-opacity-90 text-white"
-              >
-                {t.viewResults}
-              </Button>
-            )}
-            <Button 
-              onClick={() => {
-                setIsSuccess(false);
-                setProcessingStatus(null);
-                setProgressValue(0);
-                form.reset();
-              }} 
-              variant="outline"
-            >
-              {t.sendAnother}
-            </Button>
-          </div>
-        </div>
+        <SuccessMessage
+          userName={form.getValues("nome")}
+          language={language}
+          progressValue={progressValue}
+          processingStatus={processingStatus}
+          onReset={() => {
+            setIsSuccess(false);
+            setProcessingStatus(null);
+            setProgressValue(0);
+            form.reset();
+          }}
+          onViewResults={handleViewResults}
+        />
       )}
     </div>
   );
