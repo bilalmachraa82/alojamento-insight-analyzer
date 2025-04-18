@@ -141,6 +141,7 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
         processingStatus={processingStatus}
         onReset={onReset}
         onViewResults={handleViewResults}
+        submissionId={submissionId}
       />
       
       {scrapingDetails && (

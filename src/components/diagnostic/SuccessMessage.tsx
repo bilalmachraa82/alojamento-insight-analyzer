@@ -1,5 +1,5 @@
 
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { translations, Language } from "./translations";
 import ProcessingStatus from "./ProcessingStatus";
@@ -11,6 +11,7 @@ interface SuccessMessageProps {
   processingStatus: string | null;
   onReset: () => void;
   onViewResults: () => void;
+  submissionId: string;
 }
 
 const SuccessMessage = ({ 
@@ -19,7 +20,8 @@ const SuccessMessage = ({
   progressValue, 
   processingStatus,
   onReset,
-  onViewResults
+  onViewResults,
+  submissionId
 }: SuccessMessageProps) => {
   const t = translations[language];
 
@@ -45,21 +47,27 @@ const SuccessMessage = ({
         {t.thankYou.replace("{name}", userName)}
       </p>
       
-      <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
-        {progressValue === 100 && (
-          <Button 
-            onClick={onViewResults} 
-            className="bg-brand-blue hover:bg-opacity-90 text-white"
-          >
-            {t.viewResults}
-          </Button>
-        )}
+      <div className="mt-4 flex flex-col gap-3 justify-center">
+        <Button 
+          onClick={onViewResults} 
+          className="w-full bg-brand-blue hover:bg-opacity-90 text-white"
+        >
+          {t.viewResults}
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+        
         <Button 
           onClick={onReset}
           variant="outline"
         >
           {t.sendAnother}
         </Button>
+        
+        {submissionId && (
+          <p className="text-xs text-gray-500 mt-2">
+            ID: {submissionId}
+          </p>
+        )}
       </div>
     </div>
   );

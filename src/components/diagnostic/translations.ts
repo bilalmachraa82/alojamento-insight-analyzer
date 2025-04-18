@@ -1,115 +1,99 @@
 
 export type Language = "en" | "pt";
 
-export const translations = {
+interface Translations {
+  title: string;
+  subtitle: string;
+  nameLabel: string;
+  namePlaceholder: string;
+  nameRequired: string;
+  emailLabel: string;
+  emailPlaceholder: string;
+  emailRequired: string;
+  emailInvalid: string;
+  linkLabel: string;
+  linkPlaceholder: string;
+  linkRequired: string;
+  linkInvalid: string;
+  platformLabel: string;
+  platformRequired: string;
+  rgpdLabel: string;
+  rgpdRequired: string;
+  submit: string;
+  processing: string;
+  success: string;
+  thankYou: string;
+  viewResults: string;
+  sendAnother: string;
+  statusPending: string;
+  statusProcessing: string;
+  statusScraping: string;
+  statusAnalyzing: string;
+  statusCompleted: string;
+  checkingStatus: string;
+}
+
+export const translations: Record<Language, Translations> = {
   en: {
-    // Form Labels and Placeholders
-    name: "Name",
-    namePlaceholder: "Ex: John Smith",
-    email: "Email",
-    emailPlaceholder: "Ex: john@email.com",
-    link: "Property link",
-    linkPlaceholder: "https://www.booking.com/...",
-    platform: "Main platform",
-    gdpr: "I agree that my data can be used for contact and diagnostic purposes",
-    submit: "Generate Analysis",
+    title: "Smart Diagnostic",
+    subtitle: "Short-Term Rental",
+    nameLabel: "Your Name",
+    namePlaceholder: "Enter your name",
+    nameRequired: "Name is required",
+    emailLabel: "Email",
+    emailPlaceholder: "Enter your email",
+    emailRequired: "Email is required",
+    emailInvalid: "Invalid email format",
+    linkLabel: "Property URL",
+    linkPlaceholder: "Paste your property URL from Airbnb, Booking, etc.",
+    linkRequired: "Property URL is required",
+    linkInvalid: "Invalid URL format",
+    platformLabel: "Platform",
+    platformRequired: "Platform selection is required",
+    rgpdLabel: "I agree with the processing of my data for this service",
+    rgpdRequired: "You must agree to the terms",
+    submit: "Submit Diagnostic",
     processing: "Processing...",
-
-    // Messages
-    success: "Diagnostic Sent!",
-    thankYou: "Thank you, {name}. We are processing your smart diagnostic. Soon, you will receive your personalized plan in your email.",
-    sendAnother: "Send another diagnostic",
+    success: "Diagnostic Submitted!",
+    thankYou: "Thank you, {name}! We're processing your smart diagnostic. You'll receive your personalized plan by email soon.",
     viewResults: "View Results",
-
-    // Form Validation
-    emailError: "Please enter a valid email.",
-    nameError: "Name must be at least 2 characters.",
-    urlError: "Please enter a valid URL.",
-    platformError: "Please select a platform.",
-    gdprError: "You must accept the GDPR policy to continue.",
-
-    // Status Messages
+    sendAnother: "Submit Another Diagnostic",
     statusPending: "Preparing your diagnostic...",
-    statusProcessing: "Analyzing your property...",
-    statusScraping: "Gathering property data...",
-    statusAnalyzing: "Creating your personalized plan...",
-    statusCompleted: "Analysis complete! Check your email soon.",
-    
-    // Results Page
-    resultsTitle: "Property Analysis Results",
-    loadingResults: "Loading analysis results...",
-    backToHome: "Back to Home",
-    
-    // Analysis Sections
-    overviewTab: "Overview",
-    recommendationsTab: "Recommendations",
-    pricingTab: "Pricing Strategy",
-    competitionTab: "Competition",
-    
-    performanceOverview: "Performance Overview",
-    strengthsAndWeaknesses: "Strengths & Improvement Areas",
-    strengths: "Strengths",
-    weaknesses: "Areas for Improvement",
-    guestExperience: "Guest Experience",
-    positiveAspects: "Positive Aspects",
-    reviewSentiment: "Review Sentiment",
-    
-    technicalImprovements: "Technical Improvements",
-    marketingStrategy: "Marketing Strategy",
-    guestExperienceImprovements: "Guest Experience Improvements",
-    rebrandingSuggestions: "Rebranding Suggestions",
-    valueAddedIdeas: "Value-Added Ideas"
+    statusProcessing: "Starting data collection...",
+    statusScraping: "Collecting property data...",
+    statusAnalyzing: "Analyzing property information...",
+    statusCompleted: "Analysis completed!",
+    checkingStatus: "Checking status...",
   },
   pt: {
-    name: "Nome",
-    namePlaceholder: "Ex: Ana Costa",
-    email: "Email",
-    emailPlaceholder: "Ex: ana@email.com",
-    link: "Link da propriedade",
-    linkPlaceholder: "https://www.booking.com/...",
-    platform: "Plataforma principal",
-    gdpr: "Aceito que os meus dados sejam usados para contacto e envio do diagnóstico",
-    submit: "Gerar Análise",
-    processing: "A processar...",
-
+    title: "Diagnóstico Inteligente",
+    subtitle: "Alojamento Local",
+    nameLabel: "Seu Nome",
+    namePlaceholder: "Digite seu nome",
+    nameRequired: "Nome é obrigatório",
+    emailLabel: "Email",
+    emailPlaceholder: "Digite seu email",
+    emailRequired: "Email é obrigatório",
+    emailInvalid: "Formato de email inválido",
+    linkLabel: "URL da Propriedade",
+    linkPlaceholder: "Cole o URL da sua propriedade do Airbnb, Booking, etc.",
+    linkRequired: "URL da propriedade é obrigatório",
+    linkInvalid: "Formato de URL inválido",
+    platformLabel: "Plataforma",
+    platformRequired: "Seleção da plataforma é obrigatória",
+    rgpdLabel: "Concordo com o processamento dos meus dados para este serviço",
+    rgpdRequired: "Você deve concordar com os termos",
+    submit: "Enviar Diagnóstico",
+    processing: "Processando...",
     success: "Diagnóstico Enviado!",
-    thankYou: "Obrigado, {name}. Estamos a processar o teu diagnóstico inteligente. Em breve, receberás o plano personalizado no teu email.",
-    sendAnother: "Enviar outro diagnóstico",
+    thankYou: "Obrigado, {name}! Estamos a processar o seu diagnóstico inteligente. Em breve, receberá o plano personalizado no seu email.",
     viewResults: "Ver Resultados",
-
-    emailError: "Por favor insira um email válido.",
-    nameError: "O nome deve ter pelo menos 2 caracteres.",
-    urlError: "Por favor insira um URL válido.",
-    platformError: "Por favor selecione uma plataforma.",
-    gdprError: "Deve aceitar a política de RGPD para continuar.",
-
+    sendAnother: "Enviar outro diagnóstico",
     statusPending: "A preparar o seu diagnóstico...",
-    statusProcessing: "A analisar a sua propriedade...",
+    statusProcessing: "A iniciar recolha de dados...",
     statusScraping: "A recolher dados da propriedade...",
-    statusAnalyzing: "A criar o seu plano personalizado...",
-    statusCompleted: "Análise completa! Verifique o seu email em breve.",
-    
-    resultsTitle: "Resultados da Análise da Propriedade",
-    loadingResults: "A carregar os resultados da análise...",
-    backToHome: "Voltar à Página Inicial",
-    
-    overviewTab: "Visão Geral",
-    recommendationsTab: "Recomendações",
-    pricingTab: "Estratégia de Preços",
-    competitionTab: "Concorrência",
-    
-    performanceOverview: "Visão Geral de Desempenho",
-    strengthsAndWeaknesses: "Pontos Fortes & Áreas de Melhoria",
-    strengths: "Pontos Fortes",
-    weaknesses: "Áreas de Melhoria",
-    guestExperience: "Experiência do Hóspede",
-    positiveAspects: "Aspectos Positivos",
-    reviewSentiment: "Sentimento das Avaliações",
-    
-    technicalImprovements: "Melhorias Técnicas",
-    marketingStrategy: "Estratégia de Marketing",
-    guestExperienceImprovements: "Melhorias na Experiência do Hóspede",
-    rebrandingSuggestions: "Sugestões de Rebranding",
-    valueAddedIdeas: "Ideias de Valor Acrescentado"
+    statusAnalyzing: "A analisar informações da propriedade...",
+    statusCompleted: "Análise concluída!",
+    checkingStatus: "A verificar estado...",
   }
 };
