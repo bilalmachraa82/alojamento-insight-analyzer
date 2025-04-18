@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +12,25 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 type AnalysisResultProps = {};
+
+interface PropertyData {
+  name?: string;
+  location?: string;
+  rating?: string | number;
+  reviewCount?: number;
+}
+
+interface ScrapedData {
+  property_data?: PropertyData;
+}
+
+interface DiagnosticSubmission {
+  id: string;
+  analysis_result: any;
+  scraped_data?: ScrapedData | null;
+  plataforma?: string;
+  link?: string;
+}
 
 const AnalysisResult: React.FC<AnalysisResultProps> = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,15 +69,17 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
         
         setAnalysis(data.analysis_result);
         
-        // Extrair informações básicas da propriedade
-        if (data.scraped_data?.property_data) {
+        const submissionData = data as DiagnosticSubmission;
+        if (submissionData.scraped_data && typeof submissionData.scraped_data === 'object' && submissionData.scraped_data.property_data) {
+          const propertyData = submissionData.scraped_data.property_data;
+          
           setPropertyInfo({
-            name: data.scraped_data.property_data.name || 'Propriedade',
-            location: data.scraped_data.property_data.location || 'Localização não disponível',
-            platform: data.plataforma || 'Plataforma não especificada',
-            rating: data.scraped_data.property_data.rating || 'N/A',
-            reviewCount: data.scraped_data.property_data.reviewCount || 0,
-            url: data.link
+            name: propertyData.name || 'Propriedade',
+            location: propertyData.location || 'Localização não disponível',
+            platform: submissionData.plataforma || 'Plataforma não especificada',
+            rating: propertyData.rating || 'N/A',
+            reviewCount: propertyData.reviewCount || 0,
+            url: submissionData.link
           });
         }
         
@@ -169,7 +189,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
@@ -188,7 +207,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
         </div>
       </header>
 
-      {/* Property Overview */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6">
@@ -213,7 +231,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
           </div>
         </div>
 
-        {/* Overall Score Card */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="md:col-span-1">
             <CardHeader className="pb-2">
@@ -260,9 +277,7 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
           </Card>
         </div>
 
-        {/* Main Analysis Content */}
         <div className="mt-8">
-          {/* Diagnóstico Inicial */}
           <Collapsible
             open={expandedSections.diagnostico}
             onOpenChange={() => toggleSection('diagnostico')}
@@ -279,7 +294,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
               <div className="px-6 pb-6">
                 <Separator className="my-4" />
                 
-                {/* Análise de Desempenho */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <h3 className="font-medium text-lg text-gray-800 mb-3">Desempenho Atual</h3>
@@ -361,7 +375,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
             </CollapsibleContent>
           </Collapsible>
           
-          {/* Estratégia de Melhoria */}
           <Collapsible
             open={expandedSections.estrategia}
             onOpenChange={() => toggleSection('estrategia')}
@@ -445,7 +458,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
             </CollapsibleContent>
           </Collapsible>
           
-          {/* Experiência do Hóspede */}
           <Collapsible
             open={expandedSections.experiencia}
             onOpenChange={() => toggleSection('experiencia')}
@@ -553,7 +565,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
             </CollapsibleContent>
           </Collapsible>
           
-          {/* Estratégia de Preços */}
           <Collapsible
             open={expandedSections.precos}
             onOpenChange={() => toggleSection('precos')}
@@ -685,10 +696,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = () => {
             </CollapsibleContent>
           </Collapsible>
           
-          {/* Os demais módulos (Gestão de Canais, Monitorização de Desempenho, Análise de Concorrência) 
-          seguiriam o mesmo padrão de componentes Collapsible, foquei nos principais para o exemplo */}
-          
-          {/* Botões de ação */}
           <div className="flex gap-4 justify-end mt-8">
             <Button variant="outline">
               Baixar Relatório PDF
