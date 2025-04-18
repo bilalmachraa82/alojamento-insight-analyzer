@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -59,13 +60,36 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       setSubmissionId(newSubmissionId);
       
       try {
-        const response = await supabase.functions.invoke("process-diagnostic", {
+        const { data: functionData, error: functionError } = await supabase.functions.invoke("process-diagnostic", {
           body: { id: newSubmissionId }
         });
   
-        if (!response.data?.success) {
-          console.error("Function response error:", response.error);
-          throw new Error(response.error?.message || "Failed to start processing");
+        if (functionError) {
+          console.error("Function error:", functionError);
+          // Even if processing fails, show success for the form submission
+          setIsSuccess(true);
+          toast({
+            title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
+            description: language === "en" 
+              ? "Your submission was received, but there was a processing delay. Our team will review it shortly."
+              : "A sua submissão foi recebida, mas houve um atraso no processamento. A nossa equipa irá analisá-la em breve.",
+            variant: "default",
+          });
+          return;
+        }
+        
+        if (!functionData?.success) {
+          console.error("Function response error:", functionError);
+          // Show success but with a notification that processing will be manual
+          setIsSuccess(true);
+          toast({
+            title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
+            description: language === "en" 
+              ? "Your submission was received and will be processed manually by our team."
+              : "A sua submissão foi recebida e será processada manualmente pela nossa equipa.",
+            variant: "default",
+          });
+          return;
         }
         
         setIsSuccess(true);
@@ -73,6 +97,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         toast({
           title: language === "en" ? "Diagnostic submitted successfully!" : "Diagnóstico enviado com sucesso!",
           description: t.thankYou.replace("{name}", data.nome),
+          variant: "default",
         });
       } catch (functionError) {
         console.error("Error calling function:", functionError);
@@ -80,8 +105,9 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         toast({
           title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
           description: language === "en" 
-            ? "Your submission was received, but there was a processing delay. You can check the status later."
-            : "A sua submissão foi recebida, mas houve um atraso no processamento. Pode verificar o estado mais tarde.",
+            ? "Your submission was received successfully. You can check the status later."
+            : "A sua submissão foi recebida com sucesso. Pode verificar o estado mais tarde.",
+          variant: "default",
         });
       }
     } catch (error: any) {

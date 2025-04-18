@@ -82,84 +82,37 @@ serve(async (req: Request) => {
       );
     }
 
-    // Call Apify API to start the scraper with fixed URL format and input structure
-    // Using the actor name format instead of the full path with actor ID
-    const actorName = actorId.split('/')[1]; // Extract just the actor name part
-    const apifyUrl = `https://api.apify.com/v2/actor-tasks/${actorName}/runs?token=${APIFY_API_TOKEN}`;
+    // Direct actor run - using the correct URL format for Apify API v2
+    const directActorUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
     
     try {
-      // Run the actor task with the URL
-      const runResponse = await fetch(apifyUrl, {
+      console.log(`Making request to Apify API: ${directActorUrl}`);
+      
+      const directRunResponse = await fetch(directActorUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          "startUrls": [{ "url": submission.link }]
+          // Use correct input format based on Apify actor requirements
+          startUrls: [{ url: submission.link }],
+          maxPages: 1, // Limiting to keep processing time reasonable
+          proxyConfiguration: {
+            useApifyProxy: true
+          }
         }),
       });
       
-      if (!runResponse.ok) {
-        const errorText = await runResponse.text();
-        console.error(`Failed API response: ${errorText}`);
-        
-        // Fallback to using the actor directly if task doesn't exist
-        console.log("Attempting fallback to direct actor run...");
-        
-        // Direct actor run URL
-        const directActorUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
-        
-        const directRunResponse = await fetch(directActorUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            startUrls: [{ url: submission.link }],
-            maxPages: 1, // Limiting to keep processing time reasonable
-            proxyConfiguration: {
-              useApifyProxy: true
-            }
-          }),
-        });
-        
-        if (!directRunResponse.ok) {
-          const directErrorText = await directRunResponse.text();
-          console.error(`Direct actor run failed: ${directErrorText}`);
-          throw new Error(`Failed to run actor: ${directErrorText}`);
-        }
-        
-        const runData = await directRunResponse.json();
-        const runId = runData.data.id;
-        
-        // Store the Apify run ID in the database
-        await supabase
-          .from("diagnostic_submissions")
-          .update({
-            status: "scraping",
-            scraped_data: {
-              apify_run_id: runId,
-              started_at: new Date().toISOString(),
-            }
-          })
-          .eq("id", id);
-        
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "Diagnostic processing started with direct actor run",
-            runId
-          }),
-          { 
-            status: 200, 
-            headers: { ...corsHeaders, "Content-Type": "application/json" } 
-          }
-        );
+      if (!directRunResponse.ok) {
+        const directErrorText = await directRunResponse.text();
+        console.error(`Direct actor run failed: ${directErrorText}`);
+        throw new Error(`Failed to run actor: ${directErrorText}`);
       }
       
-      // If task run successful, process the response
-      const runData = await runResponse.json();
+      const runData = await directRunResponse.json();
       const runId = runData.data.id;
+      
+      console.log(`Successfully started Apify run with ID: ${runId}`);
       
       // Store the Apify run ID in the database
       await supabase
@@ -172,11 +125,11 @@ serve(async (req: Request) => {
           }
         })
         .eq("id", id);
-
+      
       return new Response(
         JSON.stringify({
           success: true,
-          message: "Diagnostic processing started successfully",
+          message: "Diagnostic processing started with direct actor run",
           runId
         }),
         { 
