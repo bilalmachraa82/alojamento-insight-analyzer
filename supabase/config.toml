@@ -54,40 +54,6 @@ double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 
-# Use a custom JWT secret for signing JWTs.
-# jwt_secret = "your-super-secret-jwt-token-with-at-least-32-characters-long"
-
-# Uncomment to customize email template
-# [auth.email]
-# Enable email confirmations
-# enable_confirmations = false
-# Custom email template for all auth emails
-# template_directory = "path/to/email/templates"
-
-# Use an existing generatable JWT secret.
-# enable_remember_me = true
-
-# Configure emails
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
-
-# Configure SMS OTP (One-Time Password) login.
-# [auth.sms]
-# enable = true
-# template = "Your code is {{ .Code }} ."
-# twilio_account_sid = ""
-# twilio_auth_token = ""
-# twilio_message_service_sid = ""
-
-# Configure external OAuth providers.
-# [auth.external.github]
-# enabled = true
-# client_id = ""
-# client_secret = ""
-# url = ""
-# redirect_uri = ""
-
 [functions]
 [functions.process-diagnostic]
 verify_jwt = false
@@ -97,3 +63,6 @@ verify_jwt = false
 verify_jwt = false
 [functions.check-status]
 verify_jwt = false
+[functions.send-diagnostic-email]
+verify_jwt = false
+

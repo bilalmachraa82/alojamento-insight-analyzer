@@ -35,6 +35,30 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
     },
   });
 
+  const sendConfirmationEmail = async (email: string, name: string, submissionId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("send-diagnostic-email", {
+        body: {
+          email,
+          name,
+          submissionId,
+          language
+        }
+      });
+
+      if (error) {
+        console.error("Error sending confirmation email:", error);
+        return false;
+      }
+
+      console.log("Confirmation email sent:", data);
+      return true;
+    } catch (err) {
+      console.error("Exception sending confirmation email:", err);
+      return false;
+    }
+  };
+
   async function onSubmit(data: FormValues) {
     console.log("Form data being submitted:", data);
     setIsLoading(true);
@@ -66,6 +90,9 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
 
       const newSubmissionId = submissionData[0].id;
       setSubmissionId(newSubmissionId);
+      
+      // Send confirmation email
+      await sendConfirmationEmail(data.email, data.nome, newSubmissionId);
       
       try {
         const { data: functionData, error: functionError } = await supabase.functions.invoke("process-diagnostic", {
