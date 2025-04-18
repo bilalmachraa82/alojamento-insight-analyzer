@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -7,6 +8,7 @@ import HeroSection from "@/components/HeroSection";
 import HowItWorks from "@/components/HowItWorks";
 import PricingTable from "@/components/PricingTable";
 import DiagnosticForm from "@/components/DiagnosticForm";
+import EmailTester from "@/components/EmailTester";
 import { Separator } from "@/components/ui/separator";
 
 const Index: React.FC = () => {
@@ -56,6 +58,11 @@ const Index: React.FC = () => {
       </header>
 
       <main className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
+        {/* Email Tester - For Development Only */}
+        <div className="mb-8">
+          <EmailTester />
+        </div>
+        
         {/* Hero Section */}
         <HeroSection language={language} scrollToForm={scrollToForm} />
         
