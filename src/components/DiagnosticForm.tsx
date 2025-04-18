@@ -10,7 +10,7 @@ import DiagnosticSuccess from "./diagnostic/DiagnosticSuccess";
 import DiagnosticFormFields from "./diagnostic/DiagnosticFormFields";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { createFormSchema, FormValues } from "./diagnostic/schema";
+import { createFormSchema, FormValues, supportedPlatforms } from "./diagnostic/schema";
 
 interface DiagnosticFormProps {
   language: Language;
@@ -41,13 +41,21 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
     try {
       const currentDate = new Date().toISOString();
       
+      // Normalize platform to lowercase to prevent case issues
+      const normalizedPlatform = data.plataforma.toLowerCase();
+      const platformInfo = supportedPlatforms.find(p => p.value === normalizedPlatform);
+      
+      if (!platformInfo) {
+        throw new Error(language === "en" ? "Unsupported platform" : "Plataforma não suportada");
+      }
+      
       const { data: submissionData, error } = await supabase
         .from("diagnostic_submissions")
         .insert({
           nome: data.nome,
           email: data.email,
           link: data.link,
-          plataforma: data.plataforma,
+          plataforma: platformInfo.value, // Use the standardized platform value
           rgpd: data.rgpd,
           data_submissao: currentDate,
           status: "pending"
@@ -79,7 +87,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         }
         
         if (!functionData?.success) {
-          console.error("Function response error:", functionError);
+          console.error("Function response error:", functionData);
           // Show success but with a notification that processing will be manual
           setIsSuccess(true);
           toast({
@@ -161,6 +169,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       </form>
     </Form>
   );
-};
+}
 
 export default DiagnosticForm;

@@ -18,7 +18,7 @@ export const createFormSchema = (language: Language) => {
     plataforma: z.string({
       required_error: t.platformError,
     })
-    .refine(val => ["airbnb", "booking", "vrbo", "other"].includes(val.toLowerCase()), {
+    .refine(val => supportedPlatforms.map(p => p.value).includes(val.toLowerCase()), {
       message: t.platformError || "Please select a supported platform",
     }),
     rgpd: z.boolean().refine((val) => val === true, {
