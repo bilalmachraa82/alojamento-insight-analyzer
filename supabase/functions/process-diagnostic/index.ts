@@ -56,20 +56,22 @@ serve(async (req: Request) => {
     console.log(`Processing URL: ${startUrl}`);
     
     try {
-      // Use the Website Content Crawler actor
+      // Use the Website Content Crawler actor with corrected options
       const websiteContentCrawlerUrl = `https://api.apify.com/v2/acts/apify~website-content-crawler/runs?token=${APIFY_API_TOKEN}`;
       
       console.log(`Making request to Website Content Crawler`);
       
+      // Fixed actor input with correct parameters
       const actorInput = {
         startUrls: [{ url: startUrl }],
         maxCrawlPages: 1, // We only need the property page
-        crawlerType: "playwright:chrome", // Use the Chrome browser for best compatibility
+        crawlerType: "browser:playwright:firefox", // Use Firefox browser with stealthy mode
         saveHtml: false,
-        saveMarkdown: true,
+        saveMarkdown: true, 
+        saveScreenshots: false,
         waitForDynamicContent: true,
         maxScrollHeight: 5000, // Ensure we get all content
-        htmlTransformer: "readability", // Clean up the HTML content
+        htmlTransformer: "readableText", // Use valid value: "readableText" instead of "readability"
         removeElements: [
           ".cookie-banner",
           ".cookie-consent",
