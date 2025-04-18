@@ -25,7 +25,7 @@ serve(async (req) => {
   try {
     const { email, name, submissionId, language } = await req.json() as EmailRequest;
     
-    console.log(`Sending diagnostic email to ${email} for submission ${submissionId}`);
+    console.log(`DEBUG: Sending diagnostic email to ${email} for submission ${submissionId}`);
     
     const subject = language === "en" 
       ? "Your Property Diagnostic Has Been Submitted" 
@@ -57,6 +57,8 @@ serve(async (req) => {
         </div>
       `;
 
+    console.log(`DEBUG: Preparing to send email to ${email}`);
+
     const { data, error } = await resend.emails.send({
       from: "Maria Faz <noreply@mariafaz.com>",
       to: [email],
@@ -69,7 +71,7 @@ serve(async (req) => {
       throw error;
     }
 
-    console.log("Email sent successfully:", data);
+    console.log("DEBUG: Email sent successfully:", data);
     
     return new Response(JSON.stringify({ success: true, data }), {
       status: 200,
