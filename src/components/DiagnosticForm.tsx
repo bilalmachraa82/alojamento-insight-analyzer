@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -124,7 +123,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
     },
   });
 
-  // Function to update processing status
   const checkProcessingStatus = async (id: string) => {
     try {
       const { data, error } = await supabase
@@ -138,7 +136,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       if (data) {
         setProcessingStatus(data.status);
         
-        // Update progress based on status
         switch (data.status) {
           case "pending":
             setProgressValue(20);
@@ -158,7 +155,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
           case "completed":
             setProgressValue(100);
             
-            // If analysis is complete, show success toast with link to results
             if (data.analysis_result && !window.localStorage.getItem(`shown-completion-${id}`)) {
               window.localStorage.setItem(`shown-completion-${id}`, 'true');
               toast({
@@ -166,7 +162,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
                 description: language === "en" 
                   ? "Your property diagnostic has been completed. We've sent the results to your email." 
                   : "O diagnóstico da sua propriedade foi concluído. Enviámos os resultados para o seu email.",
-                variant: "success",
+                variant: "default",
               });
             }
             break;
@@ -174,7 +170,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
             setProgressValue(20);
         }
 
-        // If not completed, check again in 5 seconds
         if (data.status !== "completed") {
           setTimeout(() => checkProcessingStatus(id), 5000);
         }
@@ -187,10 +182,8 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     try {
-      // Current date in ISO format
       const currentDate = new Date().toISOString();
       
-      // Insert data into Supabase
       const { data: submissionData, error } = await supabase
         .from("diagnostic_submissions")
         .insert({
@@ -206,11 +199,9 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
 
       if (error) throw error;
 
-      // Get the submission ID
       const newSubmissionId = submissionData[0].id;
       setSubmissionId(newSubmissionId);
       
-      // Trigger the processing function
       const response = await supabase.functions.invoke("process-diagnostic", {
         body: { id: newSubmissionId }
       });
@@ -219,7 +210,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         throw new Error(response.error?.message || "Failed to start processing");
       }
 
-      // Show success message and start checking status
       setIsSuccess(true);
       setProcessingStatus("pending");
       setProgressValue(25);
@@ -243,7 +233,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
     }
   }
 
-  // Helper function to get status text based on current status
   const getStatusText = () => {
     if (!processingStatus) return "";
     
