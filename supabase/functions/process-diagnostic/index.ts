@@ -15,6 +15,142 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Configurações específicas para cada plataforma baseadas na documentação da Apify
+const platformConfigs = {
+  airbnb: {
+    actorId: "apify/airbnb-scraper",
+    config: {
+      maxPages: 1,
+      maxListings: 0,
+      includeReviews: true,
+      dateFrom: "",
+      dateTo: "",
+      currency: "EUR",
+      propertyUrls: [], // Será preenchido no momento da execução
+      proxyConfig: {
+        useApifyProxy: true,
+      },
+      extendOutputFunction: `async ({ page, item, customData, request }) => {
+        return item;
+      }`,
+    }
+  },
+  booking: {
+    actorId: "apify/booking-scraper",
+    config: {
+      maxPages: 1,
+      simple: false,
+      includeHotelFacilities: true,
+      includeRooms: true,
+      includeReviews: true,
+      maxReviews: 10,
+      currency: "EUR",
+      language: "pt-pt",
+      minScore: 0,
+      startUrls: [], // Será preenchido no momento da execução
+      proxyConfiguration: {
+        useApifyProxy: true
+      }
+    }
+  },
+  vrbo: {
+    actorId: "apify/vrbo-scraper",
+    config: {
+      startUrls: [], // Será preenchido no momento da execução
+      minPrice: 0,
+      maxPrice: 0,
+      currency: "EUR",
+      proxyConfiguration: {
+        useApifyProxy: true
+      }
+    }
+  },
+  default: {
+    actorId: "apify/web-scraper",
+    config: {
+      startUrls: [], // Será preenchido no momento da execução
+      pseudoUrls: [{ purl: "[(https|http)://.+]" }],
+      linkSelector: "a",
+      pageFunction: `async function pageFunction(context) {
+        const { page, request, log } = context;
+        const title = await page.title();
+        const url = request.url;
+        log.info('Page scraped', { title, url });
+        return {
+          title,
+          url,
+          html: await page.content()
+        };
+      }`,
+      proxyConfiguration: {
+        useApifyProxy: true
+      }
+    }
+  }
+};
+
+// Utilitário para normalizar URLs de propriedades
+function normalizePropertyUrl(url, platform) {
+  // Remove parâmetros de query, exceto os necessários
+  try {
+    const urlObj = new URL(url);
+    
+    // Limpa parâmetros específicos por plataforma
+    switch (platform) {
+      case "airbnb":
+        // Manter apenas parâmetros essenciais para Airbnb
+        const essentialAirbnbParams = ["check_in", "check_out", "guests"];
+        for (const param of [...urlObj.searchParams.keys()]) {
+          if (!essentialAirbnbParams.includes(param)) {
+            urlObj.searchParams.delete(param);
+          }
+        }
+        break;
+      case "booking":
+        // Manter apenas parâmetros essenciais para Booking
+        const essentialBookingParams = ["checkin", "checkout", "group_adults"];
+        for (const param of [...urlObj.searchParams.keys()]) {
+          if (!essentialBookingParams.includes(param)) {
+            urlObj.searchParams.delete(param);
+          }
+        }
+        break;
+      default:
+        // Para outras plataformas, remover todos os parâmetros
+        urlObj.search = "";
+    }
+    
+    return urlObj.toString();
+  } catch (e) {
+    console.error("Error normalizing URL:", e);
+    return url;
+  }
+}
+
+// Prepara o input específico para cada plataforma
+function prepareActorInput(url, platform) {
+  const normalizedUrl = normalizePropertyUrl(url, platform);
+  console.log(`Normalized URL for ${platform}: ${normalizedUrl}`);
+  
+  const config = { ...platformConfigs[platform]?.config } || { ...platformConfigs.default.config };
+  
+  switch (platform) {
+    case "airbnb":
+      config.propertyUrls = [normalizedUrl];
+      break;
+    case "booking":
+      config.startUrls = [{ url: normalizedUrl }];
+      break;
+    case "vrbo":
+      config.startUrls = [{ url: normalizedUrl }];
+      break;
+    default:
+      config.startUrls = [{ url: normalizedUrl }];
+  }
+  
+  return config;
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -57,23 +193,9 @@ serve(async (req: Request) => {
 
     // Determine actor ID based on platform
     const platform = submission.plataforma.toLowerCase();
-    let actorId;
+    const platformConfig = platformConfigs[platform] || platformConfigs.default;
+    const actorId = platformConfig.actorId;
     
-    switch (platform) {
-      case "airbnb":
-        actorId = "apify/airbnb-scraper";
-        break;
-      case "booking":
-        actorId = "apify/booking-scraper";
-        break;
-      case "vrbo":
-        actorId = "apify/vrbo-scraper";
-        break;
-      default:
-        // Default to a generic web scraper
-        actorId = "apify/web-scraper";
-    }
-
     console.log(`Using actor ${actorId} for platform ${platform}`);
 
     if (!APIFY_API_TOKEN) {
@@ -87,7 +209,12 @@ serve(async (req: Request) => {
     const startUrl = submission.link;
     console.log(`Processing URL: ${startUrl}`);
     
-    // First try to directly use the actor (skip the task which might not exist)
+    // Preparar o input específico para o ator da plataforma
+    const actorInput = prepareActorInput(startUrl, platform);
+    
+    console.log(`Actor input prepared:`, JSON.stringify(actorInput, null, 2));
+    
+    // Executar o ator diretamente
     try {
       const directActorUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
       
@@ -98,30 +225,24 @@ serve(async (req: Request) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          startUrls: [{ url: startUrl }],
-          maxPages: 1, // Limiting to keep processing time reasonable
-          proxyConfiguration: {
-            useApifyProxy: true
-          }
-        }),
+        body: JSON.stringify(actorInput),
       });
       
-      // If direct actor run fails, handle the error
+      // Se a execução direta do ator falhar, trate o erro
       if (!directRunResponse.ok) {
         const errorText = await directRunResponse.text();
         console.error(`Direct actor run failed: ${errorText}`);
         
         let errorDetails = "Error connecting to data provider";
         try {
-          // Try to parse the error for better details
+          // Tentar analisar o erro para obter mais detalhes
           const errorJson = JSON.parse(errorText);
           errorDetails = errorJson.error?.message || errorJson.error || errorText;
         } catch (e) {
           errorDetails = errorText;
         }
         
-        // Mark for manual review with details
+        // Marcar para revisão manual com detalhes
         await supabase
           .from("diagnostic_submissions")
           .update({
@@ -130,7 +251,10 @@ serve(async (req: Request) => {
               error: errorDetails,
               error_at: new Date().toISOString(),
               reason: "api_error",
-              url: startUrl
+              url: startUrl,
+              platform: platform,
+              actor_id: actorId,
+              actor_input: actorInput
             }
           })
           .eq("id", id);
@@ -148,13 +272,13 @@ serve(async (req: Request) => {
         );
       }
       
-      // If successful, process the run data
+      // Se bem-sucedido, processar os dados da execução
       const runData = await directRunResponse.json();
       const runId = runData.data.id;
       
       console.log(`Successfully started Apify direct actor run with ID: ${runId}`);
       
-      // Store the Apify run ID in the database
+      // Armazenar o ID de execução do Apify no banco de dados
       await supabase
         .from("diagnostic_submissions")
         .update({
@@ -162,7 +286,10 @@ serve(async (req: Request) => {
           scraped_data: {
             apify_run_id: runId,
             started_at: new Date().toISOString(),
-            url: startUrl
+            url: startUrl,
+            platform: platform,
+            actor_id: actorId,
+            actor_input: actorInput
           }
         })
         .eq("id", id);
@@ -179,10 +306,10 @@ serve(async (req: Request) => {
         }
       );
     } catch (apiError) {
-      // Catch any unexpected errors during API calls
+      // Capturar quaisquer erros inesperados durante as chamadas de API
       console.error("Apify API error:", apiError);
       
-      // Update with detailed error information
+      // Atualizar com informações detalhadas do erro
       await supabase
         .from("diagnostic_submissions")
         .update({
@@ -191,7 +318,10 @@ serve(async (req: Request) => {
             error: String(apiError),
             error_at: new Date().toISOString(),
             reason: "unexpected_error",
-            url: startUrl
+            url: startUrl,
+            platform: platform,
+            actor_id: actorId,
+            actor_input: actorInput
           }
         })
         .eq("id", id);

@@ -23,25 +23,24 @@ const ProcessingStatus = ({ status, progressValue, language }: ProcessingStatusP
       case "scraping":
         return t.statusScraping;
       case "scraping_completed":
-        return t.statusScraping;
+        return t.statusScrapingCompleted;
       case "analyzing":
         return t.statusAnalyzing;
       case "pending_manual_review":
-        return language === "pt" 
-          ? "É necessária revisão manual da sua propriedade" 
-          : "Manual review of your property is needed";
+        return t.statusManualReviewNeeded;
       case "manual_review_requested":
-        return language === "pt" 
-          ? "Análise manual solicitada" 
-          : "Manual review requested";
+        return t.statusManualReviewRequested;
       case "completed":
         return t.statusCompleted;
+      case "failed":
+        return t.statusFailed;
       default:
         return t.statusPending;
     }
   };
 
   const isManualReview = status === "pending_manual_review" || status === "manual_review_requested";
+  const isFailed = status === "failed";
 
   return (
     <div className="mt-4 mb-4">
@@ -49,10 +48,18 @@ const ProcessingStatus = ({ status, progressValue, language }: ProcessingStatusP
       <div className="flex items-center gap-2 mt-2">
         {isManualReview ? (
           <AlertTriangle className="h-4 w-4 text-amber-500" />
+        ) : isFailed ? (
+          <AlertTriangle className="h-4 w-4 text-red-500" />
         ) : progressValue < 100 ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : null}
-        <p className={`text-sm ${isManualReview ? "text-amber-600" : "text-muted-foreground"}`}>
+        <p className={`text-sm ${
+          isManualReview 
+            ? "text-amber-600" 
+            : isFailed 
+              ? "text-red-600" 
+              : "text-muted-foreground"
+        }`}>
           {getStatusText()}
         </p>
       </div>
