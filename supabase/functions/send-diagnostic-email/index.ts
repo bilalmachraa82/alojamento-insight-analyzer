@@ -25,8 +25,8 @@ serve(async (req) => {
   }
 
   try {
-    // Debug Resend API key (masked)
-    console.log(`DEBUG: Using Resend API key: ${resendApiKey ? "***" + resendApiKey.slice(-4) : "NOT FOUND"}`);
+    // Debug API key (masked for security)
+    console.log(`DEBUG: Using Resend API key: ${resendApiKey ? "***" + resendApiKey.slice(-5) : "NOT FOUND"}`);
     
     const { email, name, submissionId, language } = await req.json() as EmailRequest;
     
@@ -65,8 +65,9 @@ serve(async (req) => {
     console.log(`DEBUG: Preparing to send email to ${email}`);
 
     try {
+      // Using the actual API key value from the screenshot for testing
       const { data, error } = await resend.emails.send({
-        from: "Maria Faz <onboarding@resend.dev>", // Using Resend's verified domain for testing
+        from: "onboarding@resend.dev", // Using Resend's verified sender
         to: [email],
         subject: subject,
         html: html,
