@@ -17,22 +17,31 @@ interface Competitor {
   differentiator: string;
 }
 
-interface CompetitorAnalysisProps {
-  marketPosition: string;
-  advantages: string[];
-  disadvantages: string[];
-  opportunities: string[];
-  threats: string[];
-  competitors: Competitor[];
+export interface CompetitorAnalysisProps {
+  directCompetitors: {
+    name: string;
+    price: string;
+    rating: number;
+    strengths: string;
+    weaknesses: string;
+  }[];
+  marketInsights: string[];
+  marketPosition?: string;
+  advantages?: string[];
+  disadvantages?: string[];
+  opportunities?: string[];
+  threats?: string[];
+  competitors?: Competitor[];
 }
 
 const CompetitorAnalysis = ({
-  marketPosition,
-  advantages,
-  disadvantages,
-  opportunities,
-  threats,
-  competitors
+  directCompetitors,
+  marketInsights,
+  marketPosition = "Your property is positioned in the mid-to-high range of the local market.",
+  advantages = ["Prime location", "Modern amenities", "Recent renovations"],
+  disadvantages = ["Limited parking", "Smaller size than competitors", "No pool access"],
+  opportunities = ["Growing demand for workspaces", "Increasing tourism", "Local events"],
+  threats = ["New properties in development", "Seasonal fluctuations", "Increasing regulation"]
 }: CompetitorAnalysisProps) => {
   // Prepare data for radar chart
   const radarData = [
@@ -126,25 +135,30 @@ const CompetitorAnalysis = ({
       <div>
         <h3 className="text-lg font-medium mb-3">Top Competitors</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {competitors.map((competitor, index) => (
+          {directCompetitors.map((competitor, index) => (
             <div key={index} className="border rounded-md p-4">
               <h4 className="font-medium text-lg mb-1">{competitor.name}</h4>
               <p className="text-sm text-gray-600 mb-2">Price: {competitor.price}</p>
               
               <h5 className="text-sm font-medium mb-1">Key Strengths</h5>
-              <ul className="list-disc list-inside text-sm space-y-1 mb-3">
-                {competitor.strengths.map((strength, idx) => (
-                  <li key={idx} className="text-gray-700">{strength}</li>
-                ))}
-              </ul>
+              <p className="text-sm text-gray-700 mb-3">{competitor.strengths}</p>
               
               <div className="mt-2">
-                <h5 className="text-sm font-medium">Competitive Edge</h5>
-                <p className="text-sm text-gray-700">{competitor.differentiator}</p>
+                <h5 className="text-sm font-medium">Weaknesses</h5>
+                <p className="text-sm text-gray-700">{competitor.weaknesses}</p>
               </div>
             </div>
           ))}
         </div>
+      </div>
+      
+      <div>
+        <h3 className="text-lg font-medium mb-3">Market Insights</h3>
+        <ul className="list-disc list-inside space-y-2">
+          {marketInsights.map((insight, index) => (
+            <li key={index} className="text-gray-700">{insight}</li>
+          ))}
+        </ul>
       </div>
     </div>
   );

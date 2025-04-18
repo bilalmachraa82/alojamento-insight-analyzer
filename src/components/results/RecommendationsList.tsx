@@ -20,9 +20,10 @@ interface Recommendation {
   timeframe: string;
 }
 
-interface RecommendationsListProps {
+export interface RecommendationsListProps {
   recommendations: Recommendation[];
   title?: string;
+  expanded?: boolean;
 }
 
 const getPriorityColor = (priority: string) => {
@@ -38,7 +39,7 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-const RecommendationsList = ({ recommendations, title = "Recommendations" }: RecommendationsListProps) => {
+const RecommendationsList = ({ recommendations, title = "Recommendations", expanded = false }: RecommendationsListProps) => {
   return (
     <div className="space-y-4">
       {title && <h3 className="text-lg font-medium">{title}</h3>}

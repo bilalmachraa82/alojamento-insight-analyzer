@@ -27,69 +27,83 @@ const Metric = ({ label, value, suffix = "", color = "text-blue-600" }: MetricPr
   </div>
 );
 
-interface PerformanceMetricsProps {
-  metrics: {
-    visibilityScore: number;
-    occupancyRate: number;
-    ratingScore: number;
-    avgPrice: number;
-    suggestedPrice: number;
-    annualRevenue: string;
-    growthPotential: string;
-  };
-  comparativeData: Array<{
-    name: string;
-    current: number;
-    suggested: number;
-    benchmark: number;
-  }>;
+export interface PerformanceMetricsProps {
+  occupancyRate: number | string;
+  averageRating: number | string;
+  reviewCount: number | string;
+  responseRate: number | string;
+  averageDailyRate: string;
+  revenueGrowth: string;
 }
 
-const PerformanceMetrics = ({ metrics, comparativeData }: PerformanceMetricsProps) => {
+const PerformanceMetrics = ({ 
+  occupancyRate, 
+  averageRating,
+  reviewCount, 
+  responseRate, 
+  averageDailyRate,
+  revenueGrowth 
+}: PerformanceMetricsProps) => {
+  
+  // Sample comparative data for the chart
+  const comparativeData = [
+    {
+      name: "Weekdays",
+      current: typeof occupancyRate === 'number' ? occupancyRate - 5 : 65,
+      suggested: typeof occupancyRate === 'number' ? occupancyRate + 5 : 75,
+      benchmark: typeof occupancyRate === 'number' ? occupancyRate : 70,
+    },
+    {
+      name: "Weekends",
+      current: typeof occupancyRate === 'number' ? occupancyRate : 70,
+      suggested: typeof occupancyRate === 'number' ? occupancyRate + 10 : 85,
+      benchmark: typeof occupancyRate === 'number' ? occupancyRate + 5 : 80,
+    },
+    {
+      name: "Holidays",
+      current: typeof occupancyRate === 'number' ? occupancyRate + 5 : 75,
+      suggested: typeof occupancyRate === 'number' ? occupancyRate + 15 : 90,
+      benchmark: typeof occupancyRate === 'number' ? occupancyRate + 10 : 85,
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Metric 
-          label="Visibility Score" 
-          value={metrics.visibilityScore} 
-          suffix="/10"
-          color="text-blue-600" 
-        />
-        <Metric 
           label="Occupancy Rate" 
-          value={metrics.occupancyRate} 
+          value={occupancyRate} 
           suffix="%" 
           color="text-green-600"
         />
         <Metric 
-          label="Rating Score" 
-          value={metrics.ratingScore} 
-          suffix="/10" 
+          label="Average Rating" 
+          value={averageRating} 
+          suffix="/5" 
           color="text-amber-600"
         />
         <Metric 
-          label="Growth Potential" 
-          value={metrics.growthPotential}
-          color="text-purple-600" 
+          label="Review Count" 
+          value={reviewCount}
+          color="text-blue-600" 
+        />
+        <Metric 
+          label="Response Rate" 
+          value={responseRate} 
+          suffix="%" 
+          color="text-purple-600"
         />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Metric 
-          label="Current Avg. Price" 
-          value={metrics.avgPrice} 
-          suffix="€" 
-          color="text-gray-700"
-        />
-        <Metric 
-          label="Suggested Price" 
-          value={metrics.suggestedPrice} 
-          suffix="€" 
+          label="Average Daily Rate" 
+          value={averageDailyRate}
           color="text-brand-pink"
         />
         <Metric 
-          label="Est. Annual Revenue" 
-          value={metrics.annualRevenue}
+          label="Revenue Growth" 
+          value={revenueGrowth}
           color="text-brand-blue" 
         />
       </div>

@@ -11,13 +11,13 @@ export type SeasonalPricing = {
 
 export interface PricingStrategyProps {
   basePrice: string;
-  currentAnalysis: any;
+  currentAnalysis: string;
   seasonalPricing: SeasonalPricing[];
-  specialEvents: any;
-  discountPolicies: any;
-  weeklyPrice: any;
-  monthlyPrice: any;
-  minStay: any;
+  specialEvents: Record<string, string> | null;
+  discountPolicies: Record<string, string> | null;
+  weeklyPrice: string;
+  monthlyPrice: string;
+  minStay: string;
 }
 
 const PricingStrategy = ({
@@ -101,9 +101,12 @@ const PricingStrategy = ({
               {specialEvents && Object.entries(specialEvents).map(([event, price], index) => (
                 <div key={index} className="flex justify-between">
                   <span>{event}</span>
-                  <span className="font-medium">{price}</span>
+                  <span className="font-medium">{String(price)}</span>
                 </div>
               ))}
+              {(!specialEvents || Object.keys(specialEvents).length === 0) && (
+                <p className="text-sm text-muted-foreground">No special events configured.</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -115,9 +118,12 @@ const PricingStrategy = ({
               {discountPolicies && Object.entries(discountPolicies).map(([policy, discount], index) => (
                 <div key={index} className="flex justify-between">
                   <span>{policy}</span>
-                  <span className="font-medium">{discount}</span>
+                  <span className="font-medium">{String(discount)}</span>
                 </div>
               ))}
+              {(!discountPolicies || Object.keys(discountPolicies).length === 0) && (
+                <p className="text-sm text-muted-foreground">No discount policies configured.</p>
+              )}
             </div>
           </CardContent>
         </Card>

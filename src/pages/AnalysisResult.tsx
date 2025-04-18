@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft } from "lucide-react";
 import AnalysisResultsViewer from "@/components/results/AnalysisResultsViewer";
 import { toast } from "@/components/ui/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 interface AnalysisData {
   id: string;
@@ -23,6 +24,9 @@ interface AnalysisData {
     };
     [key: string]: any;
   } | null;
+  data_submissao: string;
+  rgpd: boolean;
+  scraped_data: Json | null;
 }
 
 const AnalysisResult = () => {
@@ -54,7 +58,21 @@ const AnalysisResult = () => {
           return;
         }
 
-        setAnalysisData(data);
+        // Convert data to the expected AnalysisData type
+        const processedData: AnalysisData = {
+          id: data.id,
+          nome: data.nome,
+          email: data.email,
+          link: data.link,
+          plataforma: data.plataforma,
+          status: data.status,
+          analysis_result: data.analysis_result as AnalysisData['analysis_result'],
+          data_submissao: data.data_submissao,
+          rgpd: data.rgpd,
+          scraped_data: data.scraped_data
+        };
+        
+        setAnalysisData(processedData);
         setLoading(false);
       } catch (err: any) {
         console.error("Error fetching analysis data:", err);
