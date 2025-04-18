@@ -28,8 +28,12 @@ interface Translations {
   statusPending: string;
   statusProcessing: string;
   statusScraping: string;
+  statusScrapingCompleted: string;
   statusAnalyzing: string;
+  statusManualReviewNeeded: string;
+  statusManualReviewRequested: string;
   statusCompleted: string;
+  statusFailed: string;
   checkingStatus: string;
 }
 
@@ -61,8 +65,12 @@ export const translations: Record<Language, Translations> = {
     statusPending: "Preparing your diagnostic...",
     statusProcessing: "Starting data collection...",
     statusScraping: "Collecting property data...",
+    statusScrapingCompleted: "Property data collected, analyzing...",
     statusAnalyzing: "Analyzing property information...",
+    statusManualReviewNeeded: "Manual review needed for better results",
+    statusManualReviewRequested: "Manual review requested, our team will contact you",
     statusCompleted: "Analysis completed!",
+    statusFailed: "Analysis failed. Please try again or contact support.",
     checkingStatus: "Checking status...",
   },
   pt: {
@@ -92,8 +100,12 @@ export const translations: Record<Language, Translations> = {
     statusPending: "A preparar o seu diagnóstico...",
     statusProcessing: "A iniciar recolha de dados...",
     statusScraping: "A recolher dados da propriedade...",
+    statusScrapingCompleted: "Dados da propriedade recolhidos, a analisar...",
     statusAnalyzing: "A analisar informações da propriedade...",
+    statusManualReviewNeeded: "Análise manual necessária para melhores resultados",
+    statusManualReviewRequested: "Análise manual solicitada, nossa equipe entrará em contato",
     statusCompleted: "Análise concluída!",
+    statusFailed: "Análise falhou. Por favor, tente novamente ou contacte o suporte.",
     checkingStatus: "A verificar estado...",
   }
 };
