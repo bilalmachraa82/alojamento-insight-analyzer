@@ -13,16 +13,27 @@ interface DiagnosticSuccessProps {
   onReset: () => void;
 }
 
+interface ScrapingDetails {
+  platform?: string;
+  actor_id?: string;
+  task_id?: string;
+  run_id?: string;
+  started_at?: string;
+  status?: string;
+}
+
 const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: DiagnosticSuccessProps) => {
   const navigate = useNavigate();
   const [processingStatus, setProcessingStatus] = useState<string | null>(null);
   const [progressValue, setProgressValue] = useState(0);
+  const [scrapingDetails, setScrapingDetails] = useState<ScrapingDetails | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const checkProcessingStatus = async (id: string) => {
     try {
       const { data, error } = await supabase
         .from("diagnostic_submissions")
-        .select("status, analysis_result")
+        .select("status, analysis_result, plataforma, scraped_data")
         .eq("id", id)
         .single();
 
@@ -30,6 +41,18 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
 
       if (data) {
         setProcessingStatus(data.status);
+        
+        // Extract scraping details from the data
+        if (data.scraped_data) {
+          setScrapingDetails({
+            platform: data.plataforma,
+            actor_id: getActorId(data.plataforma),
+            task_id: data.scraped_data.apify_task_id,
+            run_id: data.scraped_data.apify_run_id,
+            started_at: data.scraped_data.started_at,
+            status: data.status
+          });
+        }
         
         switch (data.status) {
           case "pending":
@@ -74,6 +97,20 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
     }
   };
 
+  // Helper function to get the actor ID based on platform
+  const getActorId = (platform: string): string => {
+    switch (platform.toLowerCase()) {
+      case "airbnb":
+        return "apify/airbnb-scraper";
+      case "booking":
+        return "apify/booking-hotels-scraper";
+      case "vrbo":
+        return "apify/vrbo-scraper";
+      default:
+        return "apify/web-scraper";
+    }
+  };
+
   useEffect(() => {
     if (submissionId) {
       checkProcessingStatus(submissionId);
@@ -84,15 +121,55 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
     navigate(`/results/${submissionId}`);
   };
 
+  const toggleDetails = () => {
+    setShowDetails(!showDetails);
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleString();
+  };
+
   return (
-    <SuccessMessage
-      userName={userName}
-      language={language}
-      progressValue={progressValue}
-      processingStatus={processingStatus}
-      onReset={onReset}
-      onViewResults={handleViewResults}
-    />
+    <div>
+      <SuccessMessage
+        userName={userName}
+        language={language}
+        progressValue={progressValue}
+        processingStatus={processingStatus}
+        onReset={onReset}
+        onViewResults={handleViewResults}
+      />
+      
+      {scrapingDetails && (
+        <div className="mt-4">
+          <button 
+            onClick={toggleDetails} 
+            className="text-sm text-brand-blue hover:underline flex items-center"
+          >
+            {showDetails ? (
+              <span>{language === "en" ? "Hide Technical Details" : "Ocultar Detalhes Técnicos"}</span>
+            ) : (
+              <span>{language === "en" ? "Show Technical Details" : "Mostrar Detalhes Técnicos"}</span>
+            )}
+          </button>
+          
+          {showDetails && (
+            <div className="mt-2 p-4 bg-gray-50 border border-gray-200 rounded-md text-xs font-mono">
+              <h4 className="font-semibold mb-2">{language === "en" ? "Scraping Details" : "Detalhes de Scraping"}</h4>
+              <ul className="space-y-1">
+                <li><span className="text-gray-500">Platform:</span> {scrapingDetails.platform}</li>
+                <li><span className="text-gray-500">Apify Actor:</span> {scrapingDetails.actor_id}</li>
+                <li><span className="text-gray-500">Task ID:</span> {scrapingDetails.task_id || "Not started"}</li>
+                <li><span className="text-gray-500">Run ID:</span> {scrapingDetails.run_id || "Not started"}</li>
+                <li><span className="text-gray-500">Started at:</span> {formatDate(scrapingDetails.started_at)}</li>
+                <li><span className="text-gray-500">Status:</span> {scrapingDetails.status}</li>
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
