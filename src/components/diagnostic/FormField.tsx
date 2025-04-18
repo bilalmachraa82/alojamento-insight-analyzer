@@ -30,15 +30,21 @@ const DiagnosticFormField = ({ form, name, label, children }: DiagnosticFormFiel
                   ...field,
                   // Special handling for Select components which need different onChange handling
                   onChange: (() => {
+                    // Store children.type in a constant and perform a strict check
                     const childType = children.type;
-                    // Check if childType exists and is an object before accessing its properties
-                    if (childType && 
-                        typeof childType === 'object' && 
-                        childType !== null &&
+                    
+                    // First check if childType is defined
+                    if (childType === null || childType === undefined) {
+                      return (e: any) => field.onChange(e?.target?.value !== undefined ? e.target.value : e);
+                    }
+                    
+                    // Then check if it's an object and has the right displayName
+                    if (typeof childType === 'object' && 
                         'displayName' in childType &&
                         childType.displayName === 'Select') {
                       return field.onChange;
                     }
+                    
                     // Default handler for other components
                     return (e: any) => field.onChange(e?.target?.value !== undefined ? e.target.value : e);
                   })()
