@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
@@ -180,7 +179,6 @@ serve(async (req: Request) => {
   }
 });
 
-// Updated function to process data from the voyager/booking-reviews-scraper
 function processVoyagerBookingData(data: any[]): any {
   console.log("Processing Voyager Booking Reviews data");
   
@@ -190,26 +188,24 @@ function processVoyagerBookingData(data: any[]): any {
   }
   
   try {
-    // Log the first item to see its structure
-    console.log("Voyager Booking data structure sample:", JSON.stringify(data[0], null, 2).substring(0, 500) + "...");
+    // Log the structure of the data for debugging
+    console.log("Voyager Booking data structure:", JSON.stringify(data.slice(0, 1), null, 2));
     
-    // The Voyager Booking Reviews Scraper format has hotel information at the top level
-    // Each item in the data array is a property with reviews
+    // The Voyager Booking Reviews Scraper format has each property as a separate item
     const propertyData = data[0] || {};
     
-    // Extract property information
+    // Extract property information based on the format from the documentation
     const property = {
       name: propertyData.hotelName || propertyData.name || 'Unknown Property',
       address: propertyData.hotelAddress || propertyData.address || 'Unknown location',
-      rating: propertyData.hotelRating || propertyData.rating || 0,
       url: propertyData.hotelUrl || propertyData.url || '',
-      location: propertyData.location || '',
+      rating: propertyData.hotelRating || propertyData.rating || 0,
       reviewsCount: propertyData.reviewsCount || 0,
-      otherInfo: propertyData.otherInfo || {},
-      facilities: propertyData.facilities || []
+      facilities: propertyData.facilities || [],
+      location: propertyData.location || ''
     };
     
-    // Extract reviews
+    // Extract reviews - the format from Voyager puts them in reviewsList
     const reviews = propertyData.reviewsList || [];
     const formattedReviews = (reviews || []).map((review: any) => ({
       author: review.authorName || 'Anonymous',
@@ -233,7 +229,6 @@ function processVoyagerBookingData(data: any[]): any {
       reviews: formattedReviews.slice(0, 10), // Take first 10 reviews for analysis
       amenities: property.facilities || [],
       images: propertyData.images || [],
-      is_voyager_format: true  // Flag to identify this specific format
     };
   } catch (e) {
     console.error("Error processing Voyager Booking data:", e);

@@ -33,6 +33,5 @@ export type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
 export const supportedPlatforms = [
   { value: "airbnb", label: "Airbnb", actorId: "apify/airbnb-scraper" },
   { value: "booking", label: "Booking", actorId: "voyager/booking-reviews-scraper" },
-  { value: "vrbo", label: "VRBO", actorId: "apify/vrbo-scraper" },
-  { value: "other", label: "Other", actorId: "apify/website-content-crawler" }
+  { value: "vrbo", label: "VRBO", actorId: "apify/vrbo-scraper" }
 ];

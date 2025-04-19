@@ -63,7 +63,6 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
                     {platform.label}
                   </SelectItem>
                 ))}
-                <SelectItem value="other">{language === "en" ? "Other" : "Outro"}</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />

@@ -91,14 +91,14 @@ serve(async (req: Request) => {
     try {
       console.log("Starting Apify scraping process");
       
-      // Determine which actor to use based on the platform
-      let actorId = "apify/website-content-crawler";
-      let actorInput = {};
-      
       // Get platform from submission and normalize it
       const platform = (submission.plataforma || "").toLowerCase();
       console.log(`Detected platform: ${platform}`);
-      
+
+      // Determine which actor to use based on the platform
+      let actorId;
+      let actorInput = {};
+
       if (platform === "booking") {
         // Using the voyager/booking-reviews-scraper actor with the correct input schema
         console.log("Using Voyager Booking Reviews Scraper");
@@ -106,17 +106,13 @@ serve(async (req: Request) => {
         
         // Format the input according to the voyager/booking-reviews-scraper input schema
         actorInput = {
-          "startUrls": [
-            {
-              "url": startUrl
-            }
-          ],
-          "maxReviews": 100,
-          "proxyConfiguration": {
-            "useApifyProxy": true,
-            "apifyProxyGroups": ["RESIDENTIAL"]
+          startUrls: [{ url: startUrl }],  // Correct format as per documentation
+          maxReviews: 100,
+          proxyConfiguration: {
+            useApifyProxy: true,
+            apifyProxyGroups: ["RESIDENTIAL"]
           },
-          "language": "en-US"
+          language: "en-US"  // Default language
         };
         
         // Log the formatted input for debugging
@@ -143,6 +139,7 @@ serve(async (req: Request) => {
       } else {
         // Fallback to website content crawler for other platforms
         console.log("Using generic Website Content Crawler for platform:", platform);
+        actorId = "apify/website-content-crawler";
         actorInput = {
           startUrls: [{ url: startUrl }],
           maxCrawlPages: 1,
