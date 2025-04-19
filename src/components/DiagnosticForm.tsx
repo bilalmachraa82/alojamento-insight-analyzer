@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,7 +11,6 @@ import { Form } from "@/components/ui/form";
 import { createFormSchema, FormValues } from "./diagnostic/schema";
 import { BookingWarning } from "./diagnostic/BookingWarning";
 import { useFormSubmission } from "./diagnostic/useFormSubmission";
-import { toast } from "@/components/ui/use-toast";
 
 interface DiagnosticFormProps {
   language: Language;
@@ -66,9 +66,8 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         userName={form.getValues("nome")}
         language={language}
         onReset={() => {
-          // These were incorrectly referencing non-existent setState functions
-          // We need to use the result handler from the custom hook
-          // The hook doesn't provide a reset function, so we'll keep the toast and form reset
+          setIsSuccess(false);
+          setSubmissionId(null);
           form.reset();
         }}
       />
