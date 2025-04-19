@@ -27,7 +27,23 @@ interface AnalysisData {
   } | null;
   data_submissao: string;
   rgpd: boolean;
-  scraped_data: Json | null;
+  scraped_data: ScrapedData | null;
+}
+
+// Define the structure of the scraped_data field
+interface ScrapedData {
+  property_data?: {
+    name?: string;
+    location?: string;
+    type?: string;
+    rating?: number;
+  };
+  error?: string;
+  reason?: string;
+  message?: string;
+  url?: string;
+  manual_review_requested_at?: string;
+  [key: string]: any;
 }
 
 const AnalysisResult = () => {
@@ -61,6 +77,9 @@ const AnalysisResult = () => {
         return;
       }
 
+      // Type casting the scraped_data as our defined ScrapedData interface
+      const scrapedData = data.scraped_data as ScrapedData | null;
+      
       const processedData: AnalysisData = {
         id: data.id,
         nome: data.nome,
@@ -71,7 +90,7 @@ const AnalysisResult = () => {
         analysis_result: data.analysis_result as AnalysisData['analysis_result'],
         data_submissao: data.data_submissao,
         rgpd: data.rgpd,
-        scraped_data: data.scraped_data
+        scraped_data: scrapedData
       };
       
       setAnalysisData(processedData);
@@ -178,11 +197,11 @@ const AnalysisResult = () => {
       });
       
       // Fix for the spread operator issue - properly handle scraped_data
-      let updatedScrapedData: any = {};
+      let updatedScrapedData: ScrapedData = {};
       
       // If scraped_data exists and is an object, copy its properties
       if (analysisData.scraped_data && typeof analysisData.scraped_data === 'object') {
-        updatedScrapedData = { ...analysisData.scraped_data as object };
+        updatedScrapedData = { ...analysisData.scraped_data };
       }
       
       // Add the timestamp
@@ -213,7 +232,7 @@ const AnalysisResult = () => {
     if (!analysisData) return "Propriedade";
     
     return analysisData.analysis_result?.property_data?.property_name || 
-           analysisData.scraped_data?.property_data?.name ||
+           (analysisData.scraped_data?.property_data?.name) ||
            analysisData.link?.split('/').pop() || 
            "Sua Propriedade";
   };
@@ -223,7 +242,7 @@ const AnalysisResult = () => {
       return "Localização Indisponível";
     }
     return analysisData.analysis_result?.property_data?.location || 
-           analysisData.scraped_data?.property_data?.location ||
+           (analysisData.scraped_data?.property_data?.location) ||
            "Localização Indisponível";
   };
   
@@ -232,7 +251,7 @@ const AnalysisResult = () => {
       return "Alojamento";
     }
     return analysisData.analysis_result?.property_data?.property_type || 
-           analysisData.scraped_data?.property_data?.type ||
+           (analysisData.scraped_data?.property_data?.type) ||
            "Alojamento";
   };
   
@@ -241,7 +260,7 @@ const AnalysisResult = () => {
       return null;
     }
     return analysisData.analysis_result?.property_data?.rating || 
-           analysisData.scraped_data?.property_data?.rating ||
+           (analysisData.scraped_data?.property_data?.rating) ||
            null;
   };
 
@@ -249,7 +268,7 @@ const AnalysisResult = () => {
   const getScrapingErrorDetails = () => {
     if (!analysisData || !analysisData.scraped_data) return null;
     
-    const scraped_data = analysisData.scraped_data as Record<string, any>;
+    const scraped_data = analysisData.scraped_data;
     
     if (scraped_data.error) {
       try {
@@ -274,7 +293,7 @@ const AnalysisResult = () => {
   const getScrapingErrorReason = () => {
     if (!analysisData || !analysisData.scraped_data) return null;
     
-    const scraped_data = analysisData.scraped_data as Record<string, any>;
+    const scraped_data = analysisData.scraped_data;
     
     if (scraped_data.reason === "incompatible_url") {
       return "URL incompatível";
