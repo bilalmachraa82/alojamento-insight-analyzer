@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { createFormSchema, FormValues, supportedPlatforms } from "./diagnostic/schema";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import React from "react";
 
 interface DiagnosticFormProps {
   language: Language;
