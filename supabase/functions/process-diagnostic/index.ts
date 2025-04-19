@@ -42,14 +42,14 @@ serve(async (req: Request) => {
         error_at: new Date().toISOString(),
         reason: "incompatible_url",
         url: startUrl,
-        message: "Share URLs from Booking.com are not supported. Please use the complete property URL."
+        message: "Os URLs de compartilhamento do Booking.com não são suportados. Por favor, use o URL completo da propriedade."
       });
         
       return new Response(
         JSON.stringify({
           success: false,
-          message: "We need to process your submission manually. Our team will review it soon.",
-          details: "Booking.com share URLs are not supported. Please use the complete property URL next time."
+          message: "Precisamos processar sua submissão manualmente. Nossa equipe irá analisá-la em breve.",
+          details: "URLs de compartilhamento do Booking.com não são suportados. Por favor, use o URL completo da propriedade na próxima vez."
         }),
         { 
           status: 200, 
@@ -69,6 +69,7 @@ serve(async (req: Request) => {
         error_at: new Date().toISOString(),
         reason: "api_error",
         url: startUrl,
+        message: "Não foi possível acessar os dados da propriedade automaticamente.",
         actor_id: platform,
         api_urls_tried: apifyResult.endpoints
       });
@@ -76,8 +77,8 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "We need to process your submission manually. Our team will review it soon.",
-          details: "Error accessing property data"
+          message: "Precisamos processar sua submissão manualmente. Nossa equipe irá analisá-la em breve.",
+          details: "Erro ao acessar dados da propriedade"
         }),
         { 
           status: 200, 

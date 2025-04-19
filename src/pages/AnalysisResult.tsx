@@ -213,23 +213,36 @@ const AnalysisResult = () => {
     if (!analysisData) return "Propriedade";
     
     return analysisData.analysis_result?.property_data?.property_name || 
+           analysisData.scraped_data?.property_data?.name ||
            analysisData.link?.split('/').pop() || 
            "Sua Propriedade";
   };
   
   const getPropertyLocation = () => {
-    if (!analysisData || !analysisData.analysis_result?.property_data) return "Localização Indisponível";
-    return analysisData.analysis_result.property_data.location || "Localização Indisponível";
+    if (!analysisData || (!analysisData.analysis_result?.property_data && !analysisData.scraped_data?.property_data)) {
+      return "Localização Indisponível";
+    }
+    return analysisData.analysis_result?.property_data?.location || 
+           analysisData.scraped_data?.property_data?.location ||
+           "Localização Indisponível";
   };
   
   const getPropertyType = () => {
-    if (!analysisData || !analysisData.analysis_result?.property_data) return "Alojamento";
-    return analysisData.analysis_result.property_data.property_type || "Alojamento";
+    if (!analysisData || (!analysisData.analysis_result?.property_data && !analysisData.scraped_data?.property_data)) {
+      return "Alojamento";
+    }
+    return analysisData.analysis_result?.property_data?.property_type || 
+           analysisData.scraped_data?.property_data?.type ||
+           "Alojamento";
   };
   
   const getPropertyRating = () => {
-    if (!analysisData || !analysisData.analysis_result?.property_data) return null;
-    return analysisData.analysis_result.property_data.rating || null;
+    if (!analysisData || (!analysisData.analysis_result?.property_data && !analysisData.scraped_data?.property_data)) {
+      return null;
+    }
+    return analysisData.analysis_result?.property_data?.rating || 
+           analysisData.scraped_data?.property_data?.rating ||
+           null;
   };
 
   // Função para mostrar detalhes do erro de coleta de dados
@@ -245,13 +258,33 @@ const AnalysisResult = () => {
           ? JSON.parse(scraped_data.error)
           : scraped_data.error;
           
-        return errorJson.error?.message || "Erro ao coletar dados da propriedade";
+        return errorJson.error?.message || scraped_data.error.toString() || "Erro ao coletar dados da propriedade";
       } catch (e) {
-        return "Erro ao processar os dados da propriedade";
+        return typeof scraped_data.error === 'string' ? scraped_data.error : "Erro ao processar os dados da propriedade";
       }
     }
     
+    if (scraped_data.reason) {
+      return `Motivo: ${scraped_data.reason}${scraped_data.message ? ` - ${scraped_data.message}` : ''}`;
+    }
+    
     return null;
+  };
+
+  const getScrapingErrorReason = () => {
+    if (!analysisData || !analysisData.scraped_data) return null;
+    
+    const scraped_data = analysisData.scraped_data as Record<string, any>;
+    
+    if (scraped_data.reason === "incompatible_url") {
+      return "URL incompatível";
+    } else if (scraped_data.reason === "api_error") {
+      return "Erro na API";
+    } else if (scraped_data.error) {
+      return "Erro técnico";
+    }
+    
+    return "Erro desconhecido";
   };
 
   if (loading) {
@@ -313,11 +346,18 @@ const AnalysisResult = () => {
                 <span>{getPropertyRating()} / 5</span>
               </div>
             )}
+            
+            {analysisData.status === "pending_manual_review" && (
+              <div className="flex items-center text-amber-600 font-medium">
+                <span className="mr-1">⚠️</span> 
+                <span>Revisão manual necessária</span>
+              </div>
+            )}
           </div>
           
           {analyzing ? (
             <div className="p-6 border rounded-lg bg-gray-50">
-              {analysisData.status === "pending_manual_review" ? (
+              {analysisData.status === "pending_manual_review" || analysisData.status === "manual_review_requested" ? (
                 <>
                   <div className="flex items-center gap-2 mb-4 text-amber-600">
                     <AlertTriangle className="h-5 w-5" />
@@ -337,29 +377,36 @@ const AnalysisResult = () => {
                     
                     {getScrapingErrorDetails() && (
                       <div className="bg-gray-100 p-3 rounded-md text-sm mb-4 overflow-auto">
-                        <p className="font-medium text-gray-700">Detalhes técnicos:</p>
+                        <p className="font-medium text-gray-700">Detalhes técnicos: {getScrapingErrorReason()}</p>
                         <p className="text-gray-600 font-mono">{getScrapingErrorDetails()}</p>
+                        {analysisData.scraped_data?.url && (
+                          <p className="text-gray-600 mt-2">URL processada: <span className="font-mono">{analysisData.scraped_data.url}</span></p>
+                        )}
                       </div>
                     )}
                     
                     <p className="text-gray-700">
-                      Você pode solicitar uma análise manual pela nossa equipe ou tentar novamente com um link diferente.
+                      {analysisData.status === "manual_review_requested" ? 
+                        "Seu pedido de análise manual foi registrado. Nossa equipe entrará em contato em breve." :
+                        "Você pode solicitar uma análise manual pela nossa equipe ou tentar novamente com um link diferente."}
                     </p>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button 
-                      onClick={requestManualAnalysis}
-                      className="bg-brand-blue hover:bg-blue-700"
-                    >
-                      Solicitar análise manual
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link to="/">
-                        Tentar com outro link
-                      </Link>
-                    </Button>
-                  </div>
+                  {analysisData.status !== "manual_review_requested" && (
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button 
+                        onClick={requestManualAnalysis}
+                        className="bg-brand-blue hover:bg-blue-700"
+                      >
+                        Solicitar análise manual
+                      </Button>
+                      <Button variant="outline" asChild>
+                        <Link to="/">
+                          Tentar com outro link
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
