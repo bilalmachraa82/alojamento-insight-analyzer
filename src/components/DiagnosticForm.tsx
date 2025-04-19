@@ -11,7 +11,7 @@ import { Form } from "@/components/ui/form";
 import { createFormSchema, FormValues } from "./diagnostic/schema";
 import { BookingWarning } from "./diagnostic/BookingWarning";
 import { useFormSubmission } from "./diagnostic/useFormSubmission";
-import { toast } from "@/components/ui/use-toast";  // Ensure this import is present
+import { useToast } from "@/components/ui/use-toast";
 
 interface DiagnosticFormProps {
   language: Language;
@@ -20,6 +20,7 @@ interface DiagnosticFormProps {
 const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   const [showBookingWarning, setShowBookingWarning] = useState(false);
   const { isLoading, isSuccess, submissionId, handleSubmit } = useFormSubmission(language);
+  const { toast } = useToast();
   
   const t = translations[language];
   const formSchema = createFormSchema(language);
@@ -58,7 +59,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         duration: 10000,
       });
     }
-  }, [propertyLink, language]);
+  }, [propertyLink, language, toast]);
 
   if (isSuccess && submissionId) {
     return (
@@ -67,7 +68,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         userName={form.getValues("nome")}
         language={language}
         onReset={() => {
-          // Simply reset the form
           form.reset();
         }}
       />

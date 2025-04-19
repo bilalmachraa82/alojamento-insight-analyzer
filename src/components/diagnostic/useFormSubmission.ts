@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FormValues, supportedPlatforms } from "./schema";  // Added supportedPlatforms import
-import { toast } from "@/components/ui/use-toast";
+import { FormValues, supportedPlatforms } from "./schema";
+import { useToast } from "@/components/ui/use-toast";
 import { Language } from "./translations";
 
 export const useFormSubmission = (language: Language) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const sendConfirmationEmail = async (email: string, name: string, submissionId: string) => {
     try {
