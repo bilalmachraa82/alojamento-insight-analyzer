@@ -63,6 +63,18 @@ serve(async (req: Request) => {
         if (elapsedTimeMinutes > 5) {
           console.log(`Analysis for ${id} has been running for ${elapsedTimeMinutes.toFixed(1)} minutes. Retrying...`);
           
+          // Update the scraped data to include this retry attempt
+          const updatedScrapedData = {
+            ...(submission.scraped_data || {}),
+            retry_attempts: ((submission.scraped_data?.retry_attempts || 0) + 1),
+            last_retry_at: new Date().toISOString()
+          };
+          
+          await supabase
+            .from("diagnostic_submissions")
+            .update({ scraped_data: updatedScrapedData })
+            .eq("id", id);
+          
           // Invoke the analyze-property function to retry the analysis
           try {
             const retryResponse = await supabase.functions.invoke("analyze-property", {

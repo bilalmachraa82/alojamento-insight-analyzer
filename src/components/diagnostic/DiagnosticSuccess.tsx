@@ -28,35 +28,75 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
   const [progressValue, setProgressValue] = useState(0);
   const [scrapingDetails, setScrapingDetails] = useState<ScrapingDetails | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  // Use this flag to track if we've shown the completion toast
+  const [completionToastShown, setCompletionToastShown] = useState(false);
 
   const checkProcessingStatus = async (id: string) => {
+    if (checkingStatus) return; // Prevent multiple simultaneous checks
+    
     try {
-      const { data, error } = await supabase
+      setCheckingStatus(true);
+      
+      console.log("Checking status for submission:", id);
+      
+      // First, check from database directly (faster response)
+      const { data: dbData, error: dbError } = await supabase
         .from("diagnostic_submissions")
         .select("status, analysis_result, plataforma, scraped_data")
         .eq("id", id)
         .single();
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
-      if (data) {
-        setProcessingStatus(data.status);
+      if (dbData) {
+        setProcessingStatus(dbData.status);
         
         // Extract scraping details from the data
-        if (data.scraped_data && typeof data.scraped_data === 'object') {
-          const scrapedData = data.scraped_data as Record<string, any>;
+        if (dbData.scraped_data && typeof dbData.scraped_data === 'object') {
+          const scrapedData = dbData.scraped_data as Record<string, any>;
           
           setScrapingDetails({
-            platform: data.plataforma,
-            actor_id: getActorId(data.plataforma),
+            platform: dbData.plataforma,
+            actor_id: getActorId(dbData.plataforma),
             task_id: scrapedData.apify_task_id,
             run_id: scrapedData.apify_run_id,
             started_at: scrapedData.started_at,
-            status: data.status
+            status: dbData.status
           });
         }
+
+        // Handle immediate completed state from database
+        if (dbData.status === "completed" && !completionToastShown) {
+          setProgressValue(100);
+          setCompletionToastShown(true);
+          
+          toast({
+            title: language === "en" ? "Analysis Complete!" : "Análise Concluída!",
+            description: language === "en" 
+              ? "Your property diagnostic has been completed. Redirecting to results..."
+              : "O diagnóstico da sua propriedade foi concluído. A redirecionar para os resultados...",
+            variant: "default",
+          });
+          
+          // Short delay before navigation to let the toast be visible
+          setTimeout(() => navigate(`/results/${id}`), 2000);
+          return;
+        }
+      }
+
+      // If not completed, also check with the status function for more detailed status information
+      const { data: statusData, error: statusError } = await supabase.functions.invoke("check-status", {
+        body: { id }
+      });
+
+      if (statusError) throw statusError;
+
+      if (statusData) {
+        console.log("Status check response:", statusData);
+        setProcessingStatus(statusData.status);
         
-        switch (data.status) {
+        switch (statusData.status) {
           case "pending":
             setProgressValue(20);
             break;
@@ -76,8 +116,8 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
             setProgressValue(100);
             
             // Automatically navigate to results page when analysis is complete
-            if (data.analysis_result && !window.localStorage.getItem(`navigated-to-results-${id}`)) {
-              window.localStorage.setItem(`navigated-to-results-${id}`, 'true');
+            if (!completionToastShown) {
+              setCompletionToastShown(true);
               
               toast({
                 title: language === "en" ? "Analysis Complete!" : "Análise Concluída!",
@@ -87,8 +127,8 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
                 variant: "default",
               });
               
-              // Short delay before navigation to let the toast be visible
-              setTimeout(() => navigate(`/results/${id}`), 1500);
+              // Longer delay for edge function completion
+              setTimeout(() => navigate(`/results/${id}`), 2000);
               return;
             }
             break;
@@ -96,18 +136,27 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
             setProgressValue(20);
         }
 
-        if (data.status !== "completed") {
-          setTimeout(() => checkProcessingStatus(id), 5000);
+        // Continue checking status at regular intervals if not completed
+        if (statusData.status !== "completed" && statusData.status !== "failed") {
+          setTimeout(() => {
+            setCheckingStatus(false);
+            checkProcessingStatus(id);
+          }, 5000);
+        } else {
+          setCheckingStatus(false);
         }
       }
     } catch (error) {
       console.error("Error checking status:", error);
+      setCheckingStatus(false);
+      // Still continue checking on error, but with a longer delay
+      setTimeout(() => checkProcessingStatus(id), 10000);
     }
   };
 
   // Helper function to get the actor ID based on platform
   const getActorId = (platform: string): string => {
-    switch (platform.toLowerCase()) {
+    switch (platform?.toLowerCase()) {
       case "airbnb":
         return "apify/airbnb-scraper";
       case "booking":
@@ -124,7 +173,7 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
       checkProcessingStatus(submissionId);
     }
     
-    // Clean up function to prevent multiple intervals running
+    // Clean up function to prevent memory leaks
     return () => {
       // No need to clear any timeout as they're function-scoped in checkProcessingStatus
     };
