@@ -31,9 +31,11 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
   const [checkingStatus, setCheckingStatus] = useState(false);
   // Use this flag to track if we've shown the completion toast
   const [completionToastShown, setCompletionToastShown] = useState(false);
+  // Add state to track if we're navigating to prevent multiple redirects
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const checkProcessingStatus = async (id: string) => {
-    if (checkingStatus) return; // Prevent multiple simultaneous checks
+    if (checkingStatus || isNavigating) return; // Prevent multiple simultaneous checks or checks during navigation
     
     try {
       setCheckingStatus(true);
@@ -67,9 +69,10 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
         }
 
         // Handle immediate completed state from database
-        if (dbData.status === "completed" && !completionToastShown) {
+        if (dbData.status === "completed" && !completionToastShown && !isNavigating) {
           setProgressValue(100);
           setCompletionToastShown(true);
+          setIsNavigating(true);
           
           toast({
             title: language === "en" ? "Analysis Complete!" : "Análise Concluída!",
@@ -80,7 +83,9 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
           });
           
           // Short delay before navigation to let the toast be visible
-          setTimeout(() => navigate(`/results/${id}`), 2000);
+          setTimeout(() => {
+            navigate(`/results/${id}`);
+          }, 2000);
           return;
         }
       }
@@ -116,8 +121,9 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
             setProgressValue(100);
             
             // Automatically navigate to results page when analysis is complete
-            if (!completionToastShown) {
+            if (!completionToastShown && !isNavigating) {
               setCompletionToastShown(true);
+              setIsNavigating(true);
               
               toast({
                 title: language === "en" ? "Analysis Complete!" : "Análise Concluída!",
@@ -128,7 +134,9 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
               });
               
               // Longer delay for edge function completion
-              setTimeout(() => navigate(`/results/${id}`), 2000);
+              setTimeout(() => {
+                navigate(`/results/${id}`);
+              }, 2000);
               return;
             }
             break;
@@ -136,8 +144,8 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
             setProgressValue(20);
         }
 
-        // Continue checking status at regular intervals if not completed
-        if (statusData.status !== "completed" && statusData.status !== "failed") {
+        // Continue checking status at regular intervals if not completed and not navigating
+        if (statusData.status !== "completed" && statusData.status !== "failed" && !isNavigating) {
           setTimeout(() => {
             setCheckingStatus(false);
             checkProcessingStatus(id);
@@ -149,8 +157,10 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
     } catch (error) {
       console.error("Error checking status:", error);
       setCheckingStatus(false);
-      // Still continue checking on error, but with a longer delay
-      setTimeout(() => checkProcessingStatus(id), 10000);
+      // Still continue checking on error, but with a longer delay (unless navigating)
+      if (!isNavigating) {
+        setTimeout(() => checkProcessingStatus(id), 10000);
+      }
     }
   };
 
@@ -180,6 +190,7 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
   }, [submissionId]);
 
   const handleViewResults = () => {
+    setIsNavigating(true);
     navigate(`/results/${submissionId}`);
   };
 
