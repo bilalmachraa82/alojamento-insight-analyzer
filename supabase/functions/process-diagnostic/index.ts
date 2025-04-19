@@ -100,14 +100,36 @@ serve(async (req: Request) => {
       console.log(`Detected platform: ${platform}`);
       
       if (platform === "booking") {
-        // Using the voyager/booking-reviews-scraper actor
+        // Using the voyager/booking-reviews-scraper actor with the correct input schema
         console.log("Using Voyager Booking Reviews Scraper");
         actorId = "voyager/booking-reviews-scraper";
+        
+        // Extract the hotel ID from the URL if possible
+        let hotelId = null;
+        const hotelIdMatch = startUrl.match(/\/hotel\/[^/]+\/([^/?.]+)/);
+        if (hotelIdMatch && hotelIdMatch[1]) {
+          hotelId = hotelIdMatch[1];
+          console.log(`Extracted hotel ID from URL: ${hotelId}`);
+        }
+        
+        // Format the input according to the voyager/booking-reviews-scraper input schema
         actorInput = {
-          startUrls: [{ url: startUrl }],
-          proxyConfiguration: { useApifyProxy: true },
-          maxReviews: 100
+          "mode": "hotelPage",
+          "input": [
+            {
+              "url": startUrl
+            }
+          ],
+          "maxReviews": 100,
+          "proxy": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": ["RESIDENTIAL"]
+          },
+          "language": "en-US"
         };
+        
+        // Log the formatted input for debugging
+        console.log("Booking scraper input:", JSON.stringify(actorInput, null, 2));
       } else if (platform === "airbnb") {
         console.log("Using Airbnb Scraper");
         actorId = "apify/airbnb-scraper";

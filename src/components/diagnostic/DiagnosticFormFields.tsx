@@ -6,7 +6,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FormValues } from "./schema";
+import { FormValues, supportedPlatforms } from "./schema";
 
 interface DiagnosticFormFieldsProps {
   form: UseFormReturn<FormValues>;
@@ -58,11 +58,13 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="Booking">Booking</SelectItem>
-                <SelectItem value="Airbnb">Airbnb</SelectItem>
-                <SelectItem value="Vrbo">Vrbo</SelectItem>
-                <SelectItem value="Google">Google</SelectItem>
-                <SelectItem value="Outro">{language === "en" ? "Other" : "Outro"}</SelectItem>
+                {supportedPlatforms.map((platform) => (
+                  <SelectItem key={platform.value} value={platform.value}>
+                    {platform.label}
+                  </SelectItem>
+                ))}
+                <SelectItem value="google">Google</SelectItem>
+                <SelectItem value="outro">{language === "en" ? "Other" : "Outro"}</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />
