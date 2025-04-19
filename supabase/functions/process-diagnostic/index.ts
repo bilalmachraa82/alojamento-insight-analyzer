@@ -23,6 +23,7 @@ serve(async (req: Request) => {
     const { id } = await req.json();
     
     if (!id) {
+      console.error("Missing submission ID");
       return new Response(
         JSON.stringify({ error: "Missing submission ID" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -87,10 +88,10 @@ serve(async (req: Request) => {
     }
     
     try {
+      console.log("Starting Apify Website Content Crawler");
+      
       // Use the Website Content Crawler actor with corrected options
       const websiteContentCrawlerUrl = `https://api.apify.com/v2/acts/apify~website-content-crawler/runs?token=${APIFY_API_TOKEN}`;
-      
-      console.log(`Making request to Website Content Crawler`);
       
       // Actor input with valid parameters
       const actorInput = {
@@ -102,7 +103,7 @@ serve(async (req: Request) => {
         saveScreenshots: false,
         waitForDynamicContent: true,
         maxScrollHeight: 5000,
-        htmlTransformer: "readableText", // Using valid value from the API
+        htmlTransformer: "readableText",
         removeElements: [
           ".cookie-banner",
           ".cookie-consent",
@@ -114,7 +115,7 @@ serve(async (req: Request) => {
         ]
       };
       
-      console.log("Actor input:", JSON.stringify(actorInput));
+      console.log("Making request to Apify with input:", JSON.stringify(actorInput));
       
       const runResponse = await fetch(websiteContentCrawlerUrl, {
         method: "POST",
@@ -126,7 +127,7 @@ serve(async (req: Request) => {
       
       if (!runResponse.ok) {
         const errorText = await runResponse.text();
-        console.error(`Website Content Crawler run failed: ${errorText}`);
+        console.error(`Apify API request failed: ${errorText}`);
         
         await supabase
           .from("diagnostic_submissions")
@@ -158,7 +159,7 @@ serve(async (req: Request) => {
       const runData = await runResponse.json();
       const runId = runData.data.id;
       
-      console.log(`Successfully started Website Content Crawler run with ID: ${runId}`);
+      console.log(`Successfully started Apify run with ID: ${runId}`);
       
       await supabase
         .from("diagnostic_submissions")
