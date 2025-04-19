@@ -11,6 +11,7 @@ import DiagnosticFormFields from "./diagnostic/DiagnosticFormFields";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { createFormSchema, FormValues, supportedPlatforms } from "./diagnostic/schema";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DiagnosticFormProps {
   language: Language;
@@ -20,6 +21,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [showBookingWarning, setShowBookingWarning] = useState(false);
   
   const t = translations[language];
   const formSchema = createFormSchema(language);
@@ -34,6 +36,33 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       rgpd: false,
     },
   });
+
+  // Watch for platform changes to show warnings
+  const selectedPlatform = form.watch("plataforma");
+  const propertyLink = form.watch("link");
+  
+  // Show warning for Booking.com links when platform is selected
+  React.useEffect(() => {
+    if (selectedPlatform?.toLowerCase() === "booking") {
+      setShowBookingWarning(true);
+    } else {
+      setShowBookingWarning(false);
+    }
+  }, [selectedPlatform]);
+  
+  // Check for shortened links
+  React.useEffect(() => {
+    if (propertyLink && (propertyLink.includes("booking.com/share-") || propertyLink.includes("booking.com/Share-"))) {
+      toast({
+        title: language === "en" ? "⚠️ Shortened Link Detected" : "⚠️ Link Encurtado Detectado",
+        description: language === "en" 
+          ? "Please use the complete URL from the property page, not a shortened link. Shortened links may cause errors." 
+          : "Por favor, use o URL completo da página da propriedade, não um link encurtado. Links encurtados podem causar erros.",
+        variant: "destructive",
+        duration: 10000,
+      });
+    }
+  }, [propertyLink, language]);
 
   const sendConfirmationEmail = async (email: string, name: string, submissionId: string) => {
     try {
@@ -71,6 +100,20 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
 
   async function onSubmit(data: FormValues) {
     console.log("Form data being submitted:", data);
+    
+    // Check for shortened links
+    if (data.link.includes("booking.com/share-") || data.link.includes("booking.com/Share-")) {
+      toast({
+        title: language === "en" ? "⚠️ Shortened Link Detected" : "⚠️ Link Encurtado Detectado",
+        description: language === "en" 
+          ? "Please use the complete URL from the property page, not a shortened link. Shortened links may cause errors." 
+          : "Por favor, use o URL completo da página da propriedade, não um link encurtado. Links encurtados podem causar erros.",
+        variant: "destructive",
+        duration: 10000,
+      });
+      return; // Prevent submission with shortened link
+    }
+    
     setIsLoading(true);
     try {
       const currentDate = new Date().toISOString();
@@ -83,16 +126,18 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         throw new Error(language === "en" ? "Unsupported platform" : "Plataforma não suportada");
       }
       
-      // Check if it's a Booking.com share URL and show a message
+      // Check if it's a Booking.com share URL and show a message - this is now blocked above but kept for safety
       if (platformInfo.value === "booking" && 
           (data.link.includes("booking.com/Share-") || data.link.includes("booking.com/share-"))) {
         toast({
-          title: language === "en" ? "Booking.com Share Link Detected" : "Link de Partilha do Booking.com Detetado",
+          title: language === "en" ? "❌ Booking.com Share Link Not Supported" : "❌ Link de Partilha do Booking.com Não Suportado",
           description: language === "en" 
-            ? "We'll try to process your share link, but for best results consider using a direct property URL." 
-            : "Tentaremos processar o seu link de partilha, mas para melhores resultados considere usar um URL direto da propriedade.",
-          variant: "default",
+            ? "Please use the complete property URL from Booking.com instead of a share link." 
+            : "Por favor, use o URL completo da propriedade no Booking.com em vez de um link de partilha.",
+          variant: "destructive",
         });
+        setIsLoading(false);
+        return; // Prevent submission with share link
       }
       
       const { data: submissionData, error } = await supabase
@@ -207,6 +252,19 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {showBookingWarning && (
+          <Alert variant="destructive" className="bg-amber-50 text-amber-800 border-amber-200">
+            <AlertTitle>
+              {language === "en" ? "Important: Use Complete Booking.com URL" : "Importante: Use o URL Completo do Booking.com"}
+            </AlertTitle>
+            <AlertDescription>
+              {language === "en" 
+                ? "Please use the full URL from your browser address bar (starting with https://www.booking.com/hotel/). Shortened links (booking.com/Share-XXXX) will not work correctly."
+                : "Por favor, use o URL completo da barra de endereço do navegador (começando com https://www.booking.com/hotel/). Links encurtados (booking.com/Share-XXXX) não funcionarão corretamente."}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <DiagnosticFormFields form={form} language={language} />
         
         <Button 

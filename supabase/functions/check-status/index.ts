@@ -48,12 +48,31 @@ serve(async (req: Request) => {
 
     const status = submission.status;
     const analysisResult = submission.analysis_result;
+    const scraped_data = submission.scraped_data || {};
     
     console.log(`Current status for submission ${id}: ${status}`);
     
+    // If there's an error with a Booking.com Share URL, notify the user
+    if (status === "pending_manual_review" && 
+        scraped_data.reason === "incompatible_url" && 
+        (submission.link.includes("booking.com/Share-") || submission.link.includes("booking.com/share-"))) {
+      
+      return new Response(
+        JSON.stringify({
+          status: "error_shortened_link",
+          message: "Booking.com share URLs are not supported. Please use the complete property URL.",
+          suggestion: "Try submitting again with the full URL from your browser's address bar that starts with https://www.booking.com/hotel/"
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+    
     // If the status is "analyzing" and it's been more than 5 minutes, check if we need to retry
     if (status === "analyzing") {
-      const startedAt = submission.scraped_data?.analysis_started_at;
+      const startedAt = scraped_data.analysis_started_at;
       if (startedAt) {
         const startTime = new Date(startedAt).getTime();
         const currentTime = new Date().getTime();
@@ -65,10 +84,38 @@ serve(async (req: Request) => {
           
           // Update the scraped data to include this retry attempt
           const updatedScrapedData = {
-            ...(submission.scraped_data || {}),
-            retry_attempts: ((submission.scraped_data?.retry_attempts || 0) + 1),
+            ...scraped_data,
+            retry_attempts: ((scraped_data.retry_attempts || 0) + 1),
             last_retry_at: new Date().toISOString()
           };
+          
+          // If we've retried too many times, move to manual review
+          if (updatedScrapedData.retry_attempts > 3) {
+            console.log(`Too many retry attempts (${updatedScrapedData.retry_attempts}) for submission ${id}. Moving to manual review.`);
+            
+            await supabase
+              .from("diagnostic_submissions")
+              .update({
+                status: "pending_manual_review",
+                scraped_data: {
+                  ...updatedScrapedData,
+                  manual_review_reason: "too_many_retries",
+                  manual_review_at: new Date().toISOString()
+                }
+              })
+              .eq("id", id);
+              
+            return new Response(
+              JSON.stringify({
+                status: "pending_manual_review",
+                message: "Your property analysis requires manual review for best results. Our team will contact you soon."
+              }),
+              { 
+                status: 200, 
+                headers: { ...corsHeaders, "Content-Type": "application/json" } 
+              }
+            );
+          }
           
           await supabase
             .from("diagnostic_submissions")
@@ -122,7 +169,7 @@ serve(async (req: Request) => {
     }
     
     // If the status is "scraping", check the status of the Apify run
-    if (status === "scraping" && submission.scraped_data?.apify_run_id) {
+    if (status === "scraping" && scraped_data.apify_run_id) {
       try {
         // Invoke the check-scrape-status function to get the latest status
         const checkResponse = await supabase.functions.invoke("check-scrape-status", {

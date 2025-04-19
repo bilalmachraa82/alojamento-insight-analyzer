@@ -35,6 +35,9 @@ interface Translations {
   statusCompleted: string;
   statusFailed: string;
   checkingStatus: string;
+  bookingUrlWarning: string;
+  shortenedLinkWarning: string;
+  fullUrlRequired: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -72,6 +75,9 @@ export const translations: Record<Language, Translations> = {
     statusCompleted: "Analysis completed!",
     statusFailed: "Analysis failed. Please try again or contact support.",
     checkingStatus: "Checking status...",
+    bookingUrlWarning: "Important: For Booking.com, use the complete URL from your browser's address bar",
+    shortenedLinkWarning: "Shortened links (booking.com/Share-*) are not supported",
+    fullUrlRequired: "Please use the full URL that starts with https://www.booking.com/hotel/"
   },
   pt: {
     title: "Diagnóstico Inteligente",
@@ -107,5 +113,8 @@ export const translations: Record<Language, Translations> = {
     statusCompleted: "Análise concluída!",
     statusFailed: "Análise falhou. Por favor, tente novamente ou contacte o suporte.",
     checkingStatus: "A verificar estado...",
+    bookingUrlWarning: "Importante: Para o Booking.com, use o URL completo da barra de endereço do seu navegador",
+    shortenedLinkWarning: "Links encurtados (booking.com/Share-*) não são suportados",
+    fullUrlRequired: "Por favor, use o URL completo que começa com https://www.booking.com/hotel/"
   }
 };

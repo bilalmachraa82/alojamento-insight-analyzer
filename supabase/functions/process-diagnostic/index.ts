@@ -52,8 +52,39 @@ serve(async (req: Request) => {
       .update({ status: "processing" })
       .eq("id", id);
 
-    const startUrl = submission.link;
+    let startUrl = submission.link;
     console.log(`Processing URL: ${startUrl}`);
+    
+    // Check if the URL is a Booking.com Share URL
+    if (startUrl.includes("booking.com/Share-") || startUrl.includes("booking.com/share-")) {
+      console.log("Detected Booking.com share URL. These URLs are not recommended.");
+      
+      await supabase
+        .from("diagnostic_submissions")
+        .update({
+          status: "pending_manual_review",
+          scraped_data: {
+            error: "Booking.com share URL detected",
+            error_at: new Date().toISOString(),
+            reason: "incompatible_url",
+            url: startUrl,
+            message: "Share URLs from Booking.com are not supported. Please use the complete property URL."
+          }
+        })
+        .eq("id", id);
+        
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "We need to process your submission manually. Our team will review it soon.",
+          details: "Booking.com share URLs are not supported. Please use the complete property URL next time."
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
     
     try {
       // Use the Website Content Crawler actor with corrected options
