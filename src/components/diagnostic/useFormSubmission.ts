@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FormValues } from "./schema";
+import { FormValues, supportedPlatforms } from "./schema";
 import { toast } from "@/components/ui/use-toast";
 import { Language } from "./translations";
 
