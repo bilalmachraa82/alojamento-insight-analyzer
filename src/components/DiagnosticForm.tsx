@@ -1,27 +1,24 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { translations, Language } from "./diagnostic/translations";
 import DiagnosticSuccess from "./diagnostic/DiagnosticSuccess";
 import DiagnosticFormFields from "./diagnostic/DiagnosticFormFields";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { createFormSchema, FormValues, supportedPlatforms } from "./diagnostic/schema";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { createFormSchema, FormValues } from "./diagnostic/schema";
+import { BookingWarning } from "./diagnostic/BookingWarning";
+import { useFormSubmission } from "./diagnostic/useFormSubmission";
 
 interface DiagnosticFormProps {
   language: Language;
 }
 
 const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [showBookingWarning, setShowBookingWarning] = useState(false);
+  const { isLoading, isSuccess, submissionId, handleSubmit } = useFormSubmission(language);
   
   const t = translations[language];
   const formSchema = createFormSchema(language);
@@ -41,8 +38,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   const selectedPlatform = form.watch("plataforma");
   const propertyLink = form.watch("link");
   
-  // Show warning for Booking.com links when platform is selected
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedPlatform?.toLowerCase() === "booking") {
       setShowBookingWarning(true);
     } else {
@@ -50,8 +46,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
     }
   }, [selectedPlatform]);
   
-  // Check for shortened links
-  React.useEffect(() => {
+  useEffect(() => {
     if (propertyLink && (propertyLink.includes("booking.com/share-") || propertyLink.includes("booking.com/Share-"))) {
       toast({
         title: language === "en" ? "⚠️ Shortened Link Detected" : "⚠️ Link Encurtado Detectado",
@@ -63,176 +58,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       });
     }
   }, [propertyLink, language]);
-
-  const sendConfirmationEmail = async (email: string, name: string, submissionId: string) => {
-    try {
-      console.log("Sending confirmation email to:", email);
-      const { data, error } = await supabase.functions.invoke("send-diagnostic-email", {
-        body: {
-          email,
-          name,
-          submissionId,
-          language
-        }
-      });
-
-      if (error) {
-        console.error("Error sending confirmation email:", error);
-        // We'll continue with the form submission even if email fails
-        toast({
-          variant: "destructive",
-          title: language === "en" ? "Email notification failed" : "Falha na notificação por e-mail",
-          description: language === "en" 
-            ? "We couldn't send you a confirmation email, but your submission was processed successfully." 
-            : "Não conseguimos enviar-lhe um e-mail de confirmação, mas a sua submissão foi processada com sucesso.",
-        });
-        return false;
-      }
-
-      console.log("Confirmation email sent:", data);
-      return true;
-    } catch (err) {
-      console.error("Exception sending confirmation email:", err);
-      // We'll continue with the form submission even if email fails
-      return false;
-    }
-  };
-
-  async function onSubmit(data: FormValues) {
-    console.log("Form data being submitted:", data);
-    
-    // Check for shortened links
-    if (data.link.includes("booking.com/share-") || data.link.includes("booking.com/Share-")) {
-      toast({
-        title: language === "en" ? "⚠️ Shortened Link Detected" : "⚠️ Link Encurtado Detectado",
-        description: language === "en" 
-          ? "Please use the complete URL from the property page, not a shortened link. Shortened links may cause errors." 
-          : "Por favor, use o URL completo da página da propriedade, não um link encurtado. Links encurtados podem causar erros.",
-        variant: "destructive",
-        duration: 10000,
-      });
-      return; // Prevent submission with shortened link
-    }
-    
-    setIsLoading(true);
-    try {
-      const currentDate = new Date().toISOString();
-      
-      // Normalize platform to lowercase to prevent case issues
-      const normalizedPlatform = data.plataforma.toLowerCase();
-      const platformInfo = supportedPlatforms.find(p => p.value === normalizedPlatform);
-      
-      if (!platformInfo) {
-        throw new Error(language === "en" ? "Unsupported platform" : "Plataforma não suportada");
-      }
-      
-      // Check if it's a Booking.com share URL and show a message - this is now blocked above but kept for safety
-      if (platformInfo.value === "booking" && 
-          (data.link.includes("booking.com/Share-") || data.link.includes("booking.com/share-"))) {
-        toast({
-          title: language === "en" ? "❌ Booking.com Share Link Not Supported" : "❌ Link de Partilha do Booking.com Não Suportado",
-          description: language === "en" 
-            ? "Please use the complete property URL from Booking.com instead of a share link." 
-            : "Por favor, use o URL completo da propriedade no Booking.com em vez de um link de partilha.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return; // Prevent submission with share link
-      }
-      
-      const { data: submissionData, error } = await supabase
-        .from("diagnostic_submissions")
-        .insert({
-          nome: data.nome,
-          email: data.email,
-          link: data.link,
-          plataforma: platformInfo.value, // Use the standardized platform value
-          rgpd: data.rgpd,
-          data_submissao: currentDate,
-          status: "pending"
-        })
-        .select();
-
-      if (error) throw error;
-
-      const newSubmissionId = submissionData[0].id;
-      setSubmissionId(newSubmissionId);
-      
-      // Send confirmation email (but don't wait for it to complete the main flow)
-      sendConfirmationEmail(data.email, data.nome, newSubmissionId)
-        .then(emailSuccess => {
-          if (emailSuccess) {
-            console.log("Email sent successfully");
-          }
-        })
-        .catch(e => {
-          console.error("Email sending error caught:", e);
-        });
-      
-      try {
-        const { data: functionData, error: functionError } = await supabase.functions.invoke("process-diagnostic", {
-          body: { id: newSubmissionId }
-        });
-  
-        if (functionError) {
-          console.error("Function error:", functionError);
-          // Even if processing fails, show success for the form submission
-          setIsSuccess(true);
-          toast({
-            title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
-            description: language === "en" 
-              ? "Your submission was received, but there was a processing delay. Our team will review it shortly."
-              : "A sua submissão foi recebida, mas houve um atraso no processamento. A nossa equipa irá analisá-la em breve.",
-            variant: "default",
-          });
-          return;
-        }
-        
-        if (!functionData?.success) {
-          console.error("Function response error:", functionData);
-          // Show success but with a notification that processing will be manual
-          setIsSuccess(true);
-          toast({
-            title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
-            description: language === "en" 
-              ? "Your submission was received and will be processed manually by our team."
-              : "A sua submissão foi recebida e será processada manualmente pela nossa equipa.",
-            variant: "default",
-          });
-          return;
-        }
-        
-        setIsSuccess(true);
-        
-        toast({
-          title: language === "en" ? "Diagnostic submitted successfully!" : "Diagnóstico enviado com sucesso!",
-          description: t.thankYou.replace("{name}", data.nome),
-          variant: "default",
-        });
-      } catch (functionError) {
-        console.error("Error calling function:", functionError);
-        setIsSuccess(true);
-        toast({
-          title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
-          description: language === "en" 
-            ? "Your submission was received successfully. You can check the status later."
-            : "A sua submissão foi recebida com sucesso. Pode verificar o estado mais tarde.",
-          variant: "default",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error submitting form:", error);
-      toast({
-        variant: "destructive",
-        title: language === "en" ? "Error" : "Erro",
-        description: language === "en" 
-          ? "An error occurred while submitting the form. Please try again." 
-          : "Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   if (isSuccess && submissionId) {
     return (
@@ -251,19 +76,11 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {showBookingWarning && (
-          <Alert variant="destructive" className="bg-amber-50 text-amber-800 border-amber-200">
-            <AlertTitle>
-              {language === "en" ? "Important: Use Complete Booking.com URL" : "Importante: Use o URL Completo do Booking.com"}
-            </AlertTitle>
-            <AlertDescription>
-              {language === "en" 
-                ? "Please use the full URL from your browser address bar (starting with https://www.booking.com/hotel/). Shortened links (booking.com/Share-XXXX) will not work correctly."
-                : "Por favor, use o URL completo da barra de endereço do navegador (começando com https://www.booking.com/hotel/). Links encurtados (booking.com/Share-XXXX) não funcionarão corretamente."}
-            </AlertDescription>
-          </Alert>
-        )}
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <BookingWarning 
+          show={showBookingWarning} 
+          language={language}
+        />
         
         <DiagnosticFormFields form={form} language={language} />
         
@@ -284,6 +101,6 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
       </form>
     </Form>
   );
-}
+};
 
 export default DiagnosticForm;
