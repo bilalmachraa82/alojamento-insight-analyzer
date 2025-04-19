@@ -100,19 +100,19 @@ serve(async (req: Request) => {
       let actorInput = {};
 
       if (platform === "booking") {
-        // Using the voyager/booking-reviews-scraper actor with the correct input schema
+        // Using the correct actor ID for Voyager Booking Reviews Scraper
         console.log("Using Voyager Booking Reviews Scraper");
         actorId = "voyager/booking-reviews-scraper";
         
         // Format the input according to the voyager/booking-reviews-scraper input schema
         actorInput = {
-          startUrls: [{ url: startUrl }],  // Correct format as per documentation
-          maxReviews: 100,
-          proxyConfiguration: {
-            useApifyProxy: true,
-            apifyProxyGroups: ["RESIDENTIAL"]
+          "startUrls": [{ "url": startUrl }],  // Correct format as per documentation
+          "maxReviews": 100,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": ["RESIDENTIAL"]
           },
-          language: "en-US"  // Default language
+          "language": "en-US"  // Default language
         };
         
         // Log the formatted input for debugging
@@ -166,8 +166,8 @@ serve(async (req: Request) => {
       console.log(`Using Apify actor: ${actorId}`);
       console.log("Actor input:", JSON.stringify(actorInput));
       
-      // Make the API request to Apify
-      const apiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
+      // Make the API request to Apify - Using the correct API format
+      const apiUrl = `https://api.apify.com/v2/actor-tasks/${actorId}/run-sync?token=${APIFY_API_TOKEN}`;
       console.log("Making request to Apify at URL:", apiUrl);
       
       const runResponse = await fetch(apiUrl, {
@@ -182,26 +182,79 @@ serve(async (req: Request) => {
         const errorText = await runResponse.text();
         console.error(`Apify API request failed: ${errorText}`);
         
+        // Try the alternative API endpoint format
+        const altApiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
+        console.log("Trying alternative Apify URL:", altApiUrl);
+        
+        const altRunResponse = await fetch(altApiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(actorInput),
+        });
+        
+        if (!altRunResponse.ok) {
+          const altErrorText = await altRunResponse.text();
+          console.error(`Alternative Apify API request also failed: ${altErrorText}`);
+          
+          await supabase
+            .from("diagnostic_submissions")
+            .update({
+              status: "pending_manual_review",
+              scraped_data: {
+                error: `${errorText}\nAlternative endpoint error: ${altErrorText}`,
+                error_at: new Date().toISOString(),
+                reason: "api_error",
+                url: startUrl,
+                actor_id: actorId,
+                actor_input: actorInput,
+                api_urls_tried: [apiUrl, altApiUrl]
+              }
+            })
+            .eq("id", id);
+            
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "We need to process your submission manually. Our team will review it soon.",
+              details: "Error accessing property data"
+            }),
+            { 
+              status: 200, 
+              headers: { ...corsHeaders, "Content-Type": "application/json" } 
+            }
+          );
+        }
+        
+        // Continue with the alternative response
+        const runData = await altRunResponse.json();
+        const runId = runData.data.id;
+        
+        console.log(`Successfully started Apify run with ID: ${runId} using alternative endpoint`);
+        
         await supabase
           .from("diagnostic_submissions")
           .update({
-            status: "pending_manual_review",
+            status: "scraping",
             scraped_data: {
-              error: errorText,
-              error_at: new Date().toISOString(),
-              reason: "api_error",
-              url: startUrl,
+              apify_run_id: runId,
               actor_id: actorId,
-              actor_input: actorInput
+              started_at: new Date().toISOString(),
+              url: startUrl,
+              platform: platform,
+              actor_input: actorInput,
+              endpoint_used: "alternative"
             }
           })
           .eq("id", id);
-          
+        
         return new Response(
           JSON.stringify({
-            success: false,
-            message: "We need to process your submission manually. Our team will review it soon.",
-            details: "Error accessing property data"
+            success: true,
+            message: "Property data collection started",
+            runId,
+            actorId
           }),
           { 
             status: 200, 
@@ -225,7 +278,8 @@ serve(async (req: Request) => {
             started_at: new Date().toISOString(),
             url: startUrl,
             platform: platform,
-            actor_input: actorInput
+            actor_input: actorInput,
+            endpoint_used: "primary"
           }
         })
         .eq("id", id);
