@@ -1,17 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-
-const supabaseUrl = "https://rhrluvhbajdsnmvnpjzk.supabase.co";
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from "./cors.ts";
+import { startApifyRun } from "./apify-service.ts";
+import { getSubmission, updateSubmissionStatus } from "./db-service.ts";
 
 serve(async (req: Request) => {
   // Handle CORS preflight requests
@@ -32,48 +23,27 @@ serve(async (req: Request) => {
 
     console.log(`Processing diagnostic submission: ${id}`);
 
-    // Fetch the submission from Supabase
-    const { data: submission, error: fetchError } = await supabase
-      .from("diagnostic_submissions")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !submission) {
-      console.error("Error fetching submission:", fetchError);
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch submission", details: fetchError }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // Fetch the submission
+    const submission = await getSubmission(id);
+    
     // Update status to "processing"
-    await supabase
-      .from("diagnostic_submissions")
-      .update({ status: "processing" })
-      .eq("id", id);
+    await updateSubmissionStatus(id, "processing");
 
     // Trim any whitespace from the URL
-    let startUrl = submission.link.trim();
+    const startUrl = submission.link.trim();
     console.log(`Processing URL: ${startUrl}`);
     
     // Check if the URL is a Booking.com Share URL
     if (startUrl.includes("booking.com/Share-") || startUrl.includes("booking.com/share-")) {
       console.log("Detected Booking.com share URL. These URLs are not recommended.");
       
-      await supabase
-        .from("diagnostic_submissions")
-        .update({
-          status: "pending_manual_review",
-          scraped_data: {
-            error: "Booking.com share URL detected",
-            error_at: new Date().toISOString(),
-            reason: "incompatible_url",
-            url: startUrl,
-            message: "Share URLs from Booking.com are not supported. Please use the complete property URL."
-          }
-        })
-        .eq("id", id);
+      await updateSubmissionStatus(id, "pending_manual_review", {
+        error: "Booking.com share URL detected",
+        error_at: new Date().toISOString(),
+        reason: "incompatible_url",
+        url: startUrl,
+        message: "Share URLs from Booking.com are not supported. Please use the complete property URL."
+      });
         
       return new Response(
         JSON.stringify({
@@ -88,243 +58,57 @@ serve(async (req: Request) => {
       );
     }
     
-    try {
-      console.log("Starting Apify scraping process");
-      
-      // Get platform from submission and normalize it
-      const platform = (submission.plataforma || "").toLowerCase();
-      console.log(`Detected platform: ${platform}`);
-
-      // Determine which actor to use based on the platform
-      let actorId;
-      let actorInput = {};
-
-      if (platform === "booking") {
-        // Using the correct actor ID for Voyager Booking Reviews Scraper
-        console.log("Using Voyager Booking Reviews Scraper");
-        actorId = "voyager/booking-reviews-scraper";
-        
-        // Format the input according to the voyager/booking-reviews-scraper input schema
-        actorInput = {
-          "startUrls": [{ "url": startUrl }],  // Correct format as per documentation
-          "maxReviews": 100,
-          "proxyConfiguration": {
-            "useApifyProxy": true,
-            "apifyProxyGroups": ["RESIDENTIAL"]
-          },
-          "language": "en-US"  // Default language
-        };
-        
-        // Log the formatted input for debugging
-        console.log("Booking scraper input:", JSON.stringify(actorInput, null, 2));
-      } else if (platform === "airbnb") {
-        console.log("Using Airbnb Scraper");
-        actorId = "apify/airbnb-scraper";
-        actorInput = {
-          startUrls: [{ url: startUrl }],
-          proxyConfiguration: { useApifyProxy: true },
-          maxListings: 1,
-          includeReviews: true,
-          maxReviews: 100
-        };
-      } else if (platform === "vrbo") {
-        console.log("Using VRBO Scraper");
-        actorId = "apify/vrbo-scraper";
-        actorInput = {
-          startUrls: [{ url: startUrl }],
-          proxyConfiguration: { useApifyProxy: true },
-          maxListings: 1,
-          includeReviews: true
-        };
-      } else {
-        // Fallback to website content crawler for other platforms
-        console.log("Using generic Website Content Crawler for platform:", platform);
-        actorId = "apify/website-content-crawler";
-        actorInput = {
-          startUrls: [{ url: startUrl }],
-          maxCrawlPages: 1,
-          crawlerType: "playwright:chrome",
-          saveHtml: false,
-          saveMarkdown: true,
-          saveScreenshots: false,
-          waitForDynamicContent: true,
-          maxScrollHeight: 5000,
-          htmlTransformer: "readableText",
-          removeElements: [
-            ".cookie-banner",
-            ".cookie-consent",
-            "nav",
-            "header",
-            "footer",
-            ".advertisement",
-            ".ad-container"
-          ]
-        };
-      }
-      
-      // Log which actor we're using and with what input
-      console.log(`Using Apify actor: ${actorId}`);
-      console.log("Actor input:", JSON.stringify(actorInput));
-      
-      // Make the API request to Apify - Using the correct API format
-      const apiUrl = `https://api.apify.com/v2/actor-tasks/${actorId}/run-sync?token=${APIFY_API_TOKEN}`;
-      console.log("Making request to Apify at URL:", apiUrl);
-      
-      const runResponse = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(actorInput),
+    // Start Apify run
+    console.log("Starting Apify scraping process");
+    const platform = submission.plataforma.toLowerCase();
+    const apifyResult = await startApifyRun(platform, startUrl);
+    
+    if (!apifyResult.success) {
+      await updateSubmissionStatus(id, "pending_manual_review", {
+        error: apifyResult.error,
+        error_at: new Date().toISOString(),
+        reason: "api_error",
+        url: startUrl,
+        actor_id: platform,
+        api_urls_tried: apifyResult.endpoints
       });
-      
-      if (!runResponse.ok) {
-        const errorText = await runResponse.text();
-        console.error(`Apify API request failed: ${errorText}`);
-        
-        // Try the alternative API endpoint format
-        const altApiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
-        console.log("Trying alternative Apify URL:", altApiUrl);
-        
-        const altRunResponse = await fetch(altApiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(actorInput),
-        });
-        
-        if (!altRunResponse.ok) {
-          const altErrorText = await altRunResponse.text();
-          console.error(`Alternative Apify API request also failed: ${altErrorText}`);
-          
-          await supabase
-            .from("diagnostic_submissions")
-            .update({
-              status: "pending_manual_review",
-              scraped_data: {
-                error: `${errorText}\nAlternative endpoint error: ${altErrorText}`,
-                error_at: new Date().toISOString(),
-                reason: "api_error",
-                url: startUrl,
-                actor_id: actorId,
-                actor_input: actorInput,
-                api_urls_tried: [apiUrl, altApiUrl]
-              }
-            })
-            .eq("id", id);
-            
-          return new Response(
-            JSON.stringify({
-              success: false,
-              message: "We need to process your submission manually. Our team will review it soon.",
-              details: "Error accessing property data"
-            }),
-            { 
-              status: 200, 
-              headers: { ...corsHeaders, "Content-Type": "application/json" } 
-            }
-          );
-        }
-        
-        // Continue with the alternative response
-        const runData = await altRunResponse.json();
-        const runId = runData.data.id;
-        
-        console.log(`Successfully started Apify run with ID: ${runId} using alternative endpoint`);
-        
-        await supabase
-          .from("diagnostic_submissions")
-          .update({
-            status: "scraping",
-            scraped_data: {
-              apify_run_id: runId,
-              actor_id: actorId,
-              started_at: new Date().toISOString(),
-              url: startUrl,
-              platform: platform,
-              actor_input: actorInput,
-              endpoint_used: "alternative"
-            }
-          })
-          .eq("id", id);
-        
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "Property data collection started",
-            runId,
-            actorId
-          }),
-          { 
-            status: 200, 
-            headers: { ...corsHeaders, "Content-Type": "application/json" } 
-          }
-        );
-      }
-      
-      const runData = await runResponse.json();
-      const runId = runData.data.id;
-      
-      console.log(`Successfully started Apify run with ID: ${runId}`);
-      
-      await supabase
-        .from("diagnostic_submissions")
-        .update({
-          status: "scraping",
-          scraped_data: {
-            apify_run_id: runId,
-            actor_id: actorId,
-            started_at: new Date().toISOString(),
-            url: startUrl,
-            platform: platform,
-            actor_input: actorInput,
-            endpoint_used: "primary"
-          }
-        })
-        .eq("id", id);
       
       return new Response(
         JSON.stringify({
-          success: true,
-          message: "Property data collection started",
-          runId,
-          actorId
+          success: false,
+          message: "We need to process your submission manually. Our team will review it soon.",
+          details: "Error accessing property data"
         }),
         { 
           status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
-      
-    } catch (apiError) {
-      console.error("Apify API error:", apiError);
-      
-      await supabase
-        .from("diagnostic_submissions")
-        .update({
-          status: "pending_manual_review",
-          scraped_data: {
-            error: String(apiError),
-            error_at: new Date().toISOString(),
-            reason: "unexpected_error",
-            url: startUrl
-          }
-        })
-        .eq("id", id);
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          message: "We encountered an unexpected error, but we've noted your submission for manual review.",
-          error: String(apiError)
-        }),
-        { 
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
     }
+
+    // Update submission with successful run data
+    const runId = apifyResult.data.data.id;
+    await updateSubmissionStatus(id, "scraping", {
+      apify_run_id: runId,
+      actor_id: platform,
+      started_at: new Date().toISOString(),
+      url: startUrl,
+      platform: platform,
+      endpoint_used: apifyResult.endpoint || "primary"
+    });
+    
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Property data collection started",
+        runId,
+        actorId: platform
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
+    );
   } catch (error) {
     console.error("Error processing diagnostic:", error);
     return new Response(
@@ -340,4 +124,3 @@ serve(async (req: Request) => {
     );
   }
 });
-
