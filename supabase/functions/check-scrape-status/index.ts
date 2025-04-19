@@ -55,6 +55,7 @@ serve(async (req: Request) => {
 
     const scraped_data = submission.scraped_data || {};
     const runId = scraped_data.apify_run_id;
+    const actorId = scraped_data.actor_id || "apify/website-content-crawler";
 
     if (!runId) {
       return new Response(
@@ -92,24 +93,31 @@ serve(async (req: Request) => {
           throw new Error(`Failed to fetch dataset: ${await datasetResponse.text()}`);
         }
 
-        const propertyData = await datasetResponse.json();
+        const scrapedData = await datasetResponse.json();
         
-        // The Website Content Crawler returns an array of pages, we want the first one
-        const mainPageData = propertyData[0];
+        // Process the data based on which actor was used
+        let propertyInfo;
         
-        if (!mainPageData) {
-          throw new Error("No data returned from the crawler");
+        if (actorId.includes("booking-reviews-scraper")) {
+          // Handle Booking Reviews Scraper format
+          propertyInfo = processBookingReviewsData(scrapedData);
+        } else if (actorId.includes("airbnb-scraper")) {
+          // Handle Airbnb Scraper format
+          propertyInfo = processAirbnbData(scrapedData);
+        } else if (actorId.includes("vrbo-scraper")) {
+          // Handle VRBO Scraper format
+          propertyInfo = processVrboData(scrapedData);
+        } else {
+          // Default Website Content Crawler processing
+          propertyInfo = processWebsiteContentData(scrapedData);
         }
-
-        // Extract key property information from Website Content Crawler output
-        const propertyInfo = {
-          property_name: extractPropertyName(mainPageData),
-          content: mainPageData.text || mainPageData.markdown || '',
-          location: extractLocation(mainPageData.text || mainPageData.markdown || ''),
-          url: mainPageData.url,
-          property_type: detectPropertyType(mainPageData.text || mainPageData.markdown || ''),
-          scraped_at: new Date().toISOString()
-        };
+        
+        // Add common fields
+        propertyInfo.scraped_at = new Date().toISOString();
+        propertyInfo.actor_id = actorId;
+        propertyInfo.run_id = runId;
+        
+        console.log("Processed property info:", JSON.stringify(propertyInfo, null, 2));
 
         await supabase
           .from("diagnostic_submissions")
@@ -118,7 +126,7 @@ serve(async (req: Request) => {
             scraped_data: {
               ...scraped_data,
               property_data: propertyInfo,
-              raw_data: mainPageData,
+              raw_data: scrapedData,
               completed_at: new Date().toISOString(),
             }
           })
@@ -172,7 +180,145 @@ serve(async (req: Request) => {
   }
 });
 
-// Helper function to extract property name from data
+// Process data from Booking Reviews Scraper
+function processBookingReviewsData(data: any[]): any {
+  console.log("Processing Booking Reviews data");
+  
+  if (!data || data.length === 0) {
+    console.log("No Booking Reviews data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    // The Booking Reviews Scraper returns information about the property and its reviews
+    const property = data[0] || {};
+    
+    return {
+      property_name: property.propertyName || property.hotelName || 'Unknown Property',
+      location: property.location || property.address || 'Unknown location',
+      url: property.url || '',
+      property_type: property.propertyType || 'Accommodation',
+      rating: property.rating || property.overallRating || null,
+      review_count: property.reviewCount || property.totalReviewCount || 0,
+      reviews: (data[0]?.reviews || []).slice(0, 10), // Take first 10 reviews for analysis
+      amenities: property.amenities || [],
+      images: property.images || [],
+      room_types: property.roomTypes || []
+    };
+  } catch (e) {
+    console.error("Error processing Booking review data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
+
+// Process data from Airbnb Scraper
+function processAirbnbData(data: any[]): any {
+  console.log("Processing Airbnb data");
+  
+  if (!data || data.length === 0) {
+    console.log("No Airbnb data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    const property = data[0] || {};
+    
+    return {
+      property_name: property.name || property.title || 'Unknown Property',
+      location: property.address || property.location?.address || 'Unknown location',
+      url: property.url || '',
+      property_type: property.roomType || property.type || 'Accommodation',
+      rating: property.rating || property.star_rating || null,
+      review_count: property.numberOfReviews || property.review_count || 0,
+      reviews: (property.reviews || []).slice(0, 10),
+      amenities: property.amenities || [],
+      images: property.images || [],
+      price: property.price || property.pricing
+    };
+  } catch (e) {
+    console.error("Error processing Airbnb data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
+
+// Process data from VRBO Scraper
+function processVrboData(data: any[]): any {
+  console.log("Processing VRBO data");
+  
+  if (!data || data.length === 0) {
+    console.log("No VRBO data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    const property = data[0] || {};
+    
+    return {
+      property_name: property.name || property.title || 'Unknown Property',
+      location: property.location || property.address || 'Unknown location',
+      url: property.url || '',
+      property_type: property.propertyType || property.type || 'Accommodation',
+      rating: property.averageRating || property.rating || null,
+      review_count: property.reviewCount || property.numberOfReviews || 0,
+      reviews: (property.reviews || []).slice(0, 10),
+      amenities: property.amenities || [],
+      images: property.images || [],
+      price: property.price || property.pricing
+    };
+  } catch (e) {
+    console.error("Error processing VRBO data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
+
+// Process data from Website Content Crawler (original implementation)
+function processWebsiteContentData(pageData: any[]): any {
+  console.log("Processing Website Content Crawler data");
+  
+  if (!pageData || pageData.length === 0) {
+    console.log("No Website Content Crawler data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    // Get the first page data
+    const mainPageData = pageData[0];
+    
+    // Extract key property information from Website Content Crawler output
+    return {
+      property_name: extractPropertyName(mainPageData),
+      content: mainPageData.text || mainPageData.markdown || '',
+      location: extractLocation(mainPageData.text || mainPageData.markdown || ''),
+      url: mainPageData.url,
+      property_type: detectPropertyType(mainPageData.text || mainPageData.markdown || '')
+    };
+  } catch (e) {
+    console.error("Error processing Website Content Crawler data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
+
+// Helper function to extract property name from data (from original implementation)
 function extractPropertyName(pageData: any): string {
   // Try to get the title from metadata first
   if (pageData.metadata && pageData.metadata.title) {
@@ -201,7 +347,7 @@ function extractPropertyName(pageData: any): string {
   return 'Unknown Property';
 }
 
-// Helper function to extract location from text
+// Helper function to extract location from text (from original implementation)
 function extractLocation(text: string): string {
   // Simple extraction - look for common location patterns
   const locationPatterns = [
@@ -227,7 +373,7 @@ function extractLocation(text: string): string {
   return 'Unknown location';
 }
 
-// Helper function to detect property type
+// Helper function to detect property type (from original implementation)
 function detectPropertyType(text: string): string {
   const lowerText = text.toLowerCase();
   

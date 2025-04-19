@@ -88,36 +88,77 @@ serve(async (req: Request) => {
     }
     
     try {
-      console.log("Starting Apify Website Content Crawler");
+      console.log("Starting Apify scraping process");
       
-      // Use the Website Content Crawler actor with corrected options
-      const websiteContentCrawlerUrl = `https://api.apify.com/v2/acts/apify~website-content-crawler/runs?token=${APIFY_API_TOKEN}`;
+      // Determine which actor to use based on the platform
+      let actorId = "apify/website-content-crawler";
+      let actorInput = {};
       
-      // Actor input with valid parameters
-      const actorInput = {
-        startUrls: [{ url: startUrl }],
-        maxCrawlPages: 1,
-        crawlerType: "playwright:chrome",
-        saveHtml: false,
-        saveMarkdown: true,
-        saveScreenshots: false,
-        waitForDynamicContent: true,
-        maxScrollHeight: 5000,
-        htmlTransformer: "readableText",
-        removeElements: [
-          ".cookie-banner",
-          ".cookie-consent",
-          "nav",
-          "header",
-          "footer",
-          ".advertisement",
-          ".ad-container"
-        ]
-      };
+      // Get platform from submission
+      const platform = submission.plataforma?.toLowerCase();
       
-      console.log("Making request to Apify with input:", JSON.stringify(actorInput));
+      if (platform === "booking") {
+        console.log("Using Booking Reviews Scraper");
+        actorId = "maxcopell/booking-reviews-scraper";
+        actorInput = {
+          startUrls: [{ url: startUrl }],
+          proxyConfiguration: { useApifyProxy: true },
+          maxReviews: 100,
+          debugLog: true
+        };
+      } else if (platform === "airbnb") {
+        console.log("Using Airbnb Scraper");
+        actorId = "apify/airbnb-scraper";
+        actorInput = {
+          startUrls: [{ url: startUrl }],
+          proxyConfiguration: { useApifyProxy: true },
+          maxListings: 1,
+          includeReviews: true,
+          maxReviews: 100
+        };
+      } else if (platform === "vrbo") {
+        console.log("Using VRBO Scraper");
+        actorId = "apify/vrbo-scraper";
+        actorInput = {
+          startUrls: [{ url: startUrl }],
+          proxyConfiguration: { useApifyProxy: true },
+          maxListings: 1,
+          includeReviews: true
+        };
+      } else {
+        // Fallback to website content crawler for other platforms
+        console.log("Using generic Website Content Crawler for platform:", platform);
+        actorInput = {
+          startUrls: [{ url: startUrl }],
+          maxCrawlPages: 1,
+          crawlerType: "playwright:chrome",
+          saveHtml: false,
+          saveMarkdown: true,
+          saveScreenshots: false,
+          waitForDynamicContent: true,
+          maxScrollHeight: 5000,
+          htmlTransformer: "readableText",
+          removeElements: [
+            ".cookie-banner",
+            ".cookie-consent",
+            "nav",
+            "header",
+            "footer",
+            ".advertisement",
+            ".ad-container"
+          ]
+        };
+      }
       
-      const runResponse = await fetch(websiteContentCrawlerUrl, {
+      // Log which actor we're using and with what input
+      console.log(`Using Apify actor: ${actorId}`);
+      console.log("Actor input:", JSON.stringify(actorInput));
+      
+      // Make the API request to Apify
+      const apiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
+      console.log("Making request to Apify at URL:", apiUrl);
+      
+      const runResponse = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,6 +179,7 @@ serve(async (req: Request) => {
               error_at: new Date().toISOString(),
               reason: "api_error",
               url: startUrl,
+              actor_id: actorId,
               actor_input: actorInput
             }
           })
@@ -167,8 +209,10 @@ serve(async (req: Request) => {
           status: "scraping",
           scraped_data: {
             apify_run_id: runId,
+            actor_id: actorId,
             started_at: new Date().toISOString(),
             url: startUrl,
+            platform: platform,
             actor_input: actorInput
           }
         })
@@ -178,7 +222,8 @@ serve(async (req: Request) => {
         JSON.stringify({
           success: true,
           message: "Property data collection started",
-          runId
+          runId,
+          actorId
         }),
         { 
           status: 200, 
