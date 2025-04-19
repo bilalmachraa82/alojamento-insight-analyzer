@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
@@ -180,33 +179,32 @@ serve(async (req: Request) => {
   }
 });
 
-// Process data from Booking Reviews Scraper
 function processBookingReviewsData(data: any[]): any {
-  console.log("Processing Booking Reviews data");
+  console.log("Processing Booking data");
   
   if (!data || data.length === 0) {
-    console.log("No Booking Reviews data found");
+    console.log("No Booking data found");
     return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
   }
   
   try {
-    // The Booking Reviews Scraper returns information about the property and its reviews
+    // The Booking Scraper returns information about the property and its reviews
     const property = data[0] || {};
     
     return {
-      property_name: property.propertyName || property.hotelName || 'Unknown Property',
-      location: property.location || property.address || 'Unknown location',
+      property_name: property.name || property.propertyName || property.hotelName || 'Unknown Property',
+      location: property.address || property.location || 'Unknown location',
       url: property.url || '',
       property_type: property.propertyType || 'Accommodation',
       rating: property.rating || property.overallRating || null,
       review_count: property.reviewCount || property.totalReviewCount || 0,
-      reviews: (data[0]?.reviews || []).slice(0, 10), // Take first 10 reviews for analysis
+      reviews: (property.reviews || []).slice(0, 10), // Take first 10 reviews for analysis
       amenities: property.amenities || [],
       images: property.images || [],
       room_types: property.roomTypes || []
     };
   } catch (e) {
-    console.error("Error processing Booking review data:", e);
+    console.error("Error processing Booking data:", e);
     return { 
       property_name: 'Error Processing Data',
       location: 'Unknown',
@@ -216,7 +214,6 @@ function processBookingReviewsData(data: any[]): any {
   }
 }
 
-// Process data from Airbnb Scraper
 function processAirbnbData(data: any[]): any {
   console.log("Processing Airbnb data");
   
@@ -251,7 +248,6 @@ function processAirbnbData(data: any[]): any {
   }
 }
 
-// Process data from VRBO Scraper
 function processVrboData(data: any[]): any {
   console.log("Processing VRBO data");
   
@@ -286,7 +282,6 @@ function processVrboData(data: any[]): any {
   }
 }
 
-// Process data from Website Content Crawler (original implementation)
 function processWebsiteContentData(pageData: any[]): any {
   console.log("Processing Website Content Crawler data");
   
@@ -318,7 +313,6 @@ function processWebsiteContentData(pageData: any[]): any {
   }
 }
 
-// Helper function to extract property name from data (from original implementation)
 function extractPropertyName(pageData: any): string {
   // Try to get the title from metadata first
   if (pageData.metadata && pageData.metadata.title) {
@@ -347,7 +341,6 @@ function extractPropertyName(pageData: any): string {
   return 'Unknown Property';
 }
 
-// Helper function to extract location from text (from original implementation)
 function extractLocation(text: string): string {
   // Simple extraction - look for common location patterns
   const locationPatterns = [
@@ -373,7 +366,6 @@ function extractLocation(text: string): string {
   return 'Unknown location';
 }
 
-// Helper function to detect property type (from original implementation)
 function detectPropertyType(text: string): string {
   const lowerText = text.toLowerCase();
   
