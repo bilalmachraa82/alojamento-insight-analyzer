@@ -53,7 +53,8 @@ serve(async (req: Request) => {
       .update({ status: "processing" })
       .eq("id", id);
 
-    let startUrl = submission.link;
+    // Trim any whitespace from the URL
+    let startUrl = submission.link.trim();
     console.log(`Processing URL: ${startUrl}`);
     
     // Check if the URL is a Booking.com Share URL
@@ -94,8 +95,9 @@ serve(async (req: Request) => {
       let actorId = "apify/website-content-crawler";
       let actorInput = {};
       
-      // Get platform from submission
-      const platform = submission.plataforma?.toLowerCase();
+      // Get platform from submission and normalize it
+      const platform = (submission.plataforma || "").toLowerCase();
+      console.log(`Detected platform: ${platform}`);
       
       if (platform === "booking") {
         console.log("Using Booking Reviews Scraper");

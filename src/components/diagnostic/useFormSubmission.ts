@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FormValues, supportedPlatforms } from "./schema";
@@ -45,7 +46,10 @@ export const useFormSubmission = (language: Language) => {
   const handleSubmit = async (data: FormValues) => {
     console.log("Form data being submitted:", data);
     
-    if (data.link.includes("booking.com/share-") || data.link.includes("booking.com/Share-")) {
+    // Trim the URL to remove any leading/trailing whitespace
+    const trimmedUrl = data.link.trim();
+    
+    if (trimmedUrl.includes("booking.com/share-") || trimmedUrl.includes("booking.com/Share-")) {
       toast({
         title: language === "en" ? "⚠️ Shortened Link Detected" : "⚠️ Link Encurtado Detectado",
         description: language === "en" 
@@ -72,7 +76,7 @@ export const useFormSubmission = (language: Language) => {
         .insert({
           nome: data.nome,
           email: data.email,
-          link: data.link,
+          link: trimmedUrl, // Use the trimmed URL
           plataforma: platformInfo.value,
           rgpd: data.rgpd,
           data_submissao: currentDate,
