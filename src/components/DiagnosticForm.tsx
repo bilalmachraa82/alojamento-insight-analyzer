@@ -49,17 +49,37 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
   }, [selectedPlatform]);
   
   useEffect(() => {
-    if (propertyLink && (propertyLink.includes("booking.com/share-") || propertyLink.includes("booking.com/Share-"))) {
-      toast({
-        title: language === "en" ? "⚠️ Shortened Link Detected" : "⚠️ Link Encurtado Detectado",
-        description: language === "en" 
-          ? "Please use the complete URL from the property page, not a shortened link. Shortened links may cause errors." 
-          : "Por favor, use o URL completo da página da propriedade, não um link encurtado. Links encurtados podem causar erros.",
-        variant: "destructive",
-        duration: 10000,
-      });
+    // Check for Booking.com share links or other problematic URL patterns
+    if (propertyLink) {
+      // Trim the URL to check it without whitespace
+      const trimmedLink = propertyLink.trim();
+      
+      if (trimmedLink.includes("booking.com/share-") || trimmedLink.includes("booking.com/Share-")) {
+        toast({
+          title: language === "en" ? "⚠️ Shortened Link Detected" : "⚠️ Link Encurtado Detectado",
+          description: language === "en" 
+            ? "Please use the complete URL from the property page, not a shortened link. Shortened links may cause errors." 
+            : "Por favor, use o URL completo da página da propriedade, não um link encurtado. Links encurtados podem causar erros.",
+          variant: "destructive",
+          duration: 10000,
+        });
+      }
+      
+      // Additional check for invalid URL formats that might not be caught by the schema
+      if (selectedPlatform?.toLowerCase() === "booking" && 
+          !trimmedLink.includes("booking.com/hotel/") && 
+          trimmedLink.startsWith("http")) {
+        toast({
+          title: language === "en" ? "⚠️ Invalid Booking URL Format" : "⚠️ Formato de URL do Booking Inválido",
+          description: language === "en" 
+            ? "The URL should be from a property page (usually contains '/hotel/' in the path)" 
+            : "O URL deve ser de uma página de propriedade (geralmente contém '/hotel/' no caminho)",
+          variant: "warning",
+          duration: 10000,
+        });
+      }
     }
-  }, [propertyLink, language, toast]);
+  }, [propertyLink, selectedPlatform, language, toast]);
 
   if (isSuccess && submissionId) {
     return (

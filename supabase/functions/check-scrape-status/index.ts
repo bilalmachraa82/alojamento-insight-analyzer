@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
@@ -97,9 +98,9 @@ serve(async (req: Request) => {
         // Process the data based on which actor was used
         let propertyInfo;
         
-        if (actorId.includes("booking-reviews-scraper")) {
-          // Handle Booking Reviews Scraper format
-          propertyInfo = processBookingReviewsData(scrapedData);
+        if (actorId.includes("voyager/booking-reviews-scraper")) {
+          // Handle Voyager Booking Reviews Scraper format
+          propertyInfo = processVoyagerBookingData(scrapedData);
         } else if (actorId.includes("airbnb-scraper")) {
           // Handle Airbnb Scraper format
           propertyInfo = processAirbnbData(scrapedData);
@@ -178,6 +179,47 @@ serve(async (req: Request) => {
     );
   }
 });
+
+// New function to process data from the voyager/booking-reviews-scraper
+function processVoyagerBookingData(data: any[]): any {
+  console.log("Processing Voyager Booking Reviews data");
+  
+  if (!data || data.length === 0) {
+    console.log("No Voyager Booking Reviews data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    // Log the first item to see its structure
+    console.log("Voyager Booking data structure sample:", JSON.stringify(data[0], null, 2).substring(0, 500) + "...");
+    
+    // The Voyager Booking Reviews Scraper returns property data and reviews
+    // Extract the property details and reviews
+    const property = data[0] || {};
+    
+    return {
+      property_name: property.propertyName || property.name || property.hotelName || 'Unknown Property',
+      location: property.address || property.location || 'Unknown location',
+      url: property.url || '',
+      property_type: property.propertyType || property.accommodationType || 'Accommodation',
+      rating: property.rating || property.overallRating || property.score || null,
+      review_count: property.reviewCount || property.totalReviews || property.numberOfReviews || 0,
+      reviews: (property.reviews || []).slice(0, 10), // Take first 10 reviews for analysis
+      amenities: property.amenities || property.facilities || [],
+      images: property.images || [],
+      description: property.description || '',
+      roomTypes: property.roomTypes || []
+    };
+  } catch (e) {
+    console.error("Error processing Voyager Booking data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
 
 function processBookingReviewsData(data: any[]): any {
   console.log("Processing Booking data");

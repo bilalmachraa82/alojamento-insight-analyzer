@@ -100,14 +100,13 @@ serve(async (req: Request) => {
       console.log(`Detected platform: ${platform}`);
       
       if (platform === "booking") {
-        // IMPORTANT: Fixed actor ID - the correct actor ID is "apify/booking-scraper", not "maxcopell/booking-reviews-scraper"
-        console.log("Using Booking Scraper");
-        actorId = "apify/booking-scraper";
+        // Using the voyager/booking-reviews-scraper actor
+        console.log("Using Voyager Booking Reviews Scraper");
+        actorId = "voyager/booking-reviews-scraper";
         actorInput = {
           startUrls: [{ url: startUrl }],
           proxyConfiguration: { useApifyProxy: true },
-          maxReviews: 100,
-          debugLog: true
+          maxReviews: 100
         };
       } else if (platform === "airbnb") {
         console.log("Using Airbnb Scraper");
