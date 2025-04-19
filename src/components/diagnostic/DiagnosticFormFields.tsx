@@ -34,14 +34,7 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
         <Input placeholder={t.emailPlaceholder} type="email" />
       </DiagnosticFormField>
 
-      <DiagnosticFormField
-        form={form}
-        name="link"
-        label={t.linkLabel}
-      >
-        <Input placeholder={t.linkPlaceholder} type="url" />
-      </DiagnosticFormField>
-
+      {/* Platform selection moved before URL input */}
       <FormField
         control={form.control}
         name="plataforma"
@@ -69,6 +62,14 @@ const DiagnosticFormFields = ({ form, language }: DiagnosticFormFieldsProps) => 
           </FormItem>
         )}
       />
+
+      <DiagnosticFormField
+        form={form}
+        name="link"
+        label={t.linkLabel}
+      >
+        <Input placeholder={t.linkPlaceholder} type="url" />
+      </DiagnosticFormField>
 
       <FormField
         control={form.control}
