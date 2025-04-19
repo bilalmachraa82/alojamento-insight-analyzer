@@ -60,7 +60,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
           description: language === "en" 
             ? "Please use the complete URL from the property page, not a shortened link. Shortened links may cause errors." 
             : "Por favor, use o URL completo da página da propriedade, não um link encurtado. Links encurtados podem causar erros.",
-          variant: "destructive",
+          variant: "destructive", // Changed from "warning" to "destructive"
           duration: 10000,
         });
       }
@@ -74,7 +74,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
           description: language === "en" 
             ? "The URL should be from a property page (usually contains '/hotel/' in the path)" 
             : "O URL deve ser de uma página de propriedade (geralmente contém '/hotel/' no caminho)",
-          variant: "warning",
+          variant: "destructive", // Changed from "warning" to "destructive"
           duration: 10000,
         });
       }
@@ -124,3 +124,4 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
 };
 
 export default DiagnosticForm;
+
