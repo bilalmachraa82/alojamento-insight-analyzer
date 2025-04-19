@@ -11,7 +11,7 @@ import { Form } from "@/components/ui/form";
 import { createFormSchema, FormValues } from "./diagnostic/schema";
 import { BookingWarning } from "./diagnostic/BookingWarning";
 import { useFormSubmission } from "./diagnostic/useFormSubmission";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";  // Ensure this import is present
 
 interface DiagnosticFormProps {
   language: Language;
@@ -67,9 +67,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         userName={form.getValues("nome")}
         language={language}
         onReset={() => {
-          // Use the values from the custom hook
-          // These lines were trying to use non-existent setters
-          // Now correctly using the hook's returned values
+          // Simply reset the form
           form.reset();
         }}
       />
