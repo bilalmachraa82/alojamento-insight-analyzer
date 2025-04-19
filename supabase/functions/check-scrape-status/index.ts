@@ -193,43 +193,46 @@ function processVoyagerBookingData(data: any[]): any {
     // Log the first item to see its structure
     console.log("Voyager Booking data structure sample:", JSON.stringify(data[0], null, 2).substring(0, 500) + "...");
     
-    // The Voyager Booking Reviews Scraper format is different from other scrapers
-    // Each item in the array should be a review with hotel information
-    const firstItem = data[0] || {};
+    // The Voyager Booking Reviews Scraper format has hotel information at the top level
+    // Each item in the data array is a property with reviews
+    const propertyData = data[0] || {};
     
-    // Hotel information is typically included with each review
-    const hotelInfo = {
-      name: firstItem.hotelName || firstItem.propertyName || 'Unknown Property',
-      address: firstItem.hotelAddress || firstItem.address || 'Unknown location',
-      city: firstItem.city || '',
-      country: firstItem.country || '',
-      rating: firstItem.hotelRating || firstItem.rating || 0,
-      url: firstItem.hotelUrl || firstItem.url || '',
+    // Extract property information
+    const property = {
+      name: propertyData.hotelName || propertyData.name || 'Unknown Property',
+      address: propertyData.hotelAddress || propertyData.address || 'Unknown location',
+      rating: propertyData.hotelRating || propertyData.rating || 0,
+      url: propertyData.hotelUrl || propertyData.url || '',
+      location: propertyData.location || '',
+      reviewsCount: propertyData.reviewsCount || 0,
+      otherInfo: propertyData.otherInfo || {},
+      facilities: propertyData.facilities || []
     };
     
     // Extract reviews
-    const reviews = data.map(item => ({
-      author: item.reviewerName || 'Anonymous',
-      rating: item.reviewerRating || 0,
-      date: item.reviewDate || '',
-      title: item.reviewTitle || '',
-      text: item.reviewText || '',
-      positiveText: item.positivePart || '',
-      negativeText: item.negativePart || '',
-      stayDate: item.stayDate || '',
-      roomType: item.roomType || '',
+    const reviews = propertyData.reviewsList || [];
+    const formattedReviews = (reviews || []).map((review: any) => ({
+      author: review.authorName || 'Anonymous',
+      rating: review.rating || 0,
+      date: review.date || '',
+      title: review.title || '',
+      text: review.text || '',
+      positivePart: review.positivePart || '',
+      negativePart: review.negativePart || '',
+      stayDate: review.stayDate || '',
+      roomType: review.roomType || '',
     }));
     
     return {
-      property_name: hotelInfo.name,
-      location: hotelInfo.address || `${hotelInfo.city}, ${hotelInfo.country}`.trim(),
-      url: hotelInfo.url,
+      property_name: property.name,
+      location: property.address || property.location || 'Unknown location',
+      url: property.url,
       property_type: 'Accommodation',
-      rating: hotelInfo.rating,
-      review_count: reviews.length,
-      reviews: reviews.slice(0, 10), // Take first 10 reviews for analysis
-      amenities: firstItem.facilities || firstItem.amenities || [],
-      images: firstItem.images || [],
+      rating: property.rating,
+      review_count: property.reviewsCount || formattedReviews.length,
+      reviews: formattedReviews.slice(0, 10), // Take first 10 reviews for analysis
+      amenities: property.facilities || [],
+      images: propertyData.images || [],
       is_voyager_format: true  // Flag to identify this specific format
     };
   } catch (e) {

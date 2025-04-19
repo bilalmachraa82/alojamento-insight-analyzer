@@ -104,24 +104,15 @@ serve(async (req: Request) => {
         console.log("Using Voyager Booking Reviews Scraper");
         actorId = "voyager/booking-reviews-scraper";
         
-        // Extract the hotel ID from the URL if possible
-        let hotelId = null;
-        const hotelIdMatch = startUrl.match(/\/hotel\/[^/]+\/([^/?.]+)/);
-        if (hotelIdMatch && hotelIdMatch[1]) {
-          hotelId = hotelIdMatch[1];
-          console.log(`Extracted hotel ID from URL: ${hotelId}`);
-        }
-        
         // Format the input according to the voyager/booking-reviews-scraper input schema
         actorInput = {
-          "mode": "hotelPage",
-          "input": [
+          "startUrls": [
             {
               "url": startUrl
             }
           ],
           "maxReviews": 100,
-          "proxy": {
+          "proxyConfiguration": {
             "useApifyProxy": true,
             "apifyProxyGroups": ["RESIDENTIAL"]
           },
