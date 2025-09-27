@@ -1,12 +1,17 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Download, FileText, Star } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import AnalysisSection from "./AnalysisSection";
 import PerformanceMetrics from "./PerformanceMetrics";
 import RecommendationsList from "./RecommendationsList";
 import PricingStrategy from "./PricingStrategy";
 import CompetitorAnalysis from "./CompetitorAnalysis";
 import { useAnalysisData } from "@/hooks/useAnalysisData";
+import PremiumReportViewer from "./PremiumReportViewer";
 
 interface AnalysisResultsViewerProps {
   analysisData: any;
@@ -14,12 +19,104 @@ interface AnalysisResultsViewerProps {
 
 const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisData }) => {
   const { performanceMetrics, recommendations, pricingStrategy, competitorAnalysis } = useAnalysisData(analysisData);
+  const { toast } = useToast();
 
   // Check if we have reviews in the data
   const hasReviews = analysisData?.scraped_data?.property_data?.reviews?.length > 0;
   
+  // Check if this is a premium analysis (has new Claude structure)
+  const isPremiumAnalysis = analysisData?.analysis_result?.health_score !== undefined;
+
+  const handleGeneratePremiumReport = async () => {
+    if (!analysisData?.analysis_result) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Dados de análise não disponíveis para gerar relatório premium."
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Gerando Relatório Premium",
+        description: "Por favor aguarde enquanto preparamos seu relatório profissional..."
+      });
+
+      const { data, error } = await supabase.functions.invoke("generate-premium-pdf", {
+        body: { 
+          submissionId: analysisData.id,
+          analysisData: analysisData.analysis_result 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.reportUrl) {
+        // Open the report in a new tab
+        window.open(data.reportUrl, '_blank');
+        
+        toast({
+          title: "Relatório Gerado!",
+          description: "Seu relatório premium foi gerado com sucesso."
+        });
+      }
+    } catch (error) {
+      console.error("Error generating premium report:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível gerar o relatório premium. Tente novamente."
+      });
+    }
+  };
+  
+  // Show premium view if it's Claude analysis
+  if (isPremiumAnalysis) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-gradient-to-r from-brand-pink/10 to-brand-blue/10 rounded-lg border">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-brand-pink rounded-full">
+              <Star className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">Análise Premium Completa</h3>
+              <p className="text-gray-600 text-sm">Relatório profissional gerado com IA avançada</p>
+            </div>
+          </div>
+          <Button 
+            onClick={handleGeneratePremiumReport}
+            className="bg-gradient-to-r from-brand-pink to-brand-blue hover:opacity-90 transition-opacity"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Gerar Relatório PDF
+          </Button>
+        </div>
+        
+        <PremiumReportViewer analysisData={analysisData.analysis_result} />
+      </div>
+    );
+  }
+
+  // Original basic analysis view
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-gray-600" />
+          <span className="text-gray-600">Análise Básica</span>
+        </div>
+        <Button 
+          onClick={handleGeneratePremiumReport}
+          variant="outline"
+          size="sm"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Gerar Relatório
+        </Button>
+      </div>
+      
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="w-full grid grid-cols-1 md:grid-cols-5">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>

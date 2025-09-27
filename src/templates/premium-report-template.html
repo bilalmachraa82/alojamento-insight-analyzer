@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Consultoria - {{property_name}}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --rosa-claro: #EECAC9;
+            --azul-suave: #A8DADF;
+            --preto-suave: #1E1E1E;
+            --branco-puro: #FFFFFF;
+            --cinza-claro: #F8F9FA;
+            --verde-sucesso: #28A745;
+            --amarelo-atencao: #FFC107;
+            --vermelho-critico: #DC3545;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: var(--preto-suave);
+            background: var(--branco-puro);
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 1rem;
+        }
+        
+        h1 { font-size: 2.5rem; color: var(--preto-suave); }
+        h2 { font-size: 2rem; color: var(--preto-suave); border-bottom: 3px solid var(--rosa-claro); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.4rem; color: var(--azul-suave); }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .section { margin-bottom: 3rem; padding: 2rem; background: var(--cinza-claro); border-radius: 10px; }
+        .health-score { font-size: 3rem; font-weight: bold; text-align: center; padding: 2rem; border-radius: 50%; width: 150px; height: 150px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+        .score-excelente { background: var(--verde-sucesso); color: white; }
+        .score-bom { background: var(--amarelo-atencao); color: white; }
+        .score-medio { background: #FF8C00; color: white; }
+        .score-critico { background: var(--vermelho-critico); color: white; }
+        
+        ul, ol { margin-left: 2rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        .destaque { background: var(--rosa-claro); padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        .alerta { background: var(--vermelho-critico); color: white; padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        .sucesso { background: var(--verde-sucesso); color: white; padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: var(--azul-suave); color: white; }
+        
+        .btn-maria-faz {
+            background: linear-gradient(135deg, var(--rosa-claro), var(--azul-suave));
+            color: var(--preto-suave);
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 2rem auto;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn-maria-faz:hover { transform: scale(1.05); }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--cinza-claro);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--azul-suave);
+            transition: width 0.3s ease;
+        }
+        
+        hr { border: none; height: 3px; background: linear-gradient(90deg, var(--rosa-claro), var(--azul-suave)); margin: 2rem 0; }
+        
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            .health-score { width: 120px; height: 120px; font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="container">
+            <h1>Relatório de Consultoria</h1>
+            <h2>{{property_name}}</h2>
+            <p><strong>Data do Relatório:</strong> {{current_date}}</p>
+            <p><strong>Consultor:</strong> Equipa A Maria Faz - Especialistas em Alojamento Local</p>
+            
+            <div class="destaque">
+                <h3>Resumo Executivo</h3>
+                <p>{{resumo_executivo}}</p>
+            </div>
+        </header>
+
+        <section class="section">
+            <h2>1. Diagnóstico Inicial</h2>
+            
+            <div class="health-score {{health_score_class}}">
+                {{health_score_total}}/100
+            </div>
+            <p style="text-align: center; margin-top: 1rem;"><strong>Health Score Global</strong></p>
+            
+            <h3>Indicadores de Performance Atual</h3>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <h4>Classificação Média</h4>
+                    <p style="font-size: 2rem; color: var(--azul-suave);">{{rating_display}}</p>
+                    <p>Baseado em {{review_count}} avaliações</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>Receita Anual</h4>
+                    <p style="font-size: 2rem; color: var(--verde-sucesso);">{{receita_anual}}</p>
+                    <p>Performance financeira</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>Preço Médio/Noite</h4>
+                    <p style="font-size: 2rem; color: var(--rosa-claro);">{{preco_medio_noite}}</p>
+                    <p>Posicionamento no mercado</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>Taxa de Ocupação</h4>
+                    <p style="font-size: 2rem; color: var(--amarelo-atencao);">{{taxa_ocupacao}}%</p>
+                    <p>Ocupação estimada</p>
+                </div>
+            </div>
+            
+            <h3>Análise Competitiva</h3>
+            <p>{{analise_competitiva_resumo}}</p>
+        </section>
+
+        <section class="section">
+            <h2>2. Reputação & Reviews</h2>
+            
+            <h3>Análise das Avaliações</h3>
+            <div class="destaque">
+                <h4>Pontos Mais Elogiados:</h4>
+                <ul>
+                    {{#each comentarios_positivos}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            
+            <div class="alerta">
+                <h4>Principais Críticas:</h4>
+                <ul>
+                    {{#each comentarios_negativos}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            
+            <h3>Estratégia de Melhoria da Reputação</h3>
+            <ol>
+                {{#each estrategia_melhoria}}
+                <li>{{this}}</li>
+                {{/each}}
+            </ol>
+            
+            <div class="sucesso">
+                <h4>Meta de 6 Meses:</h4>
+                <p>Atingir classificação de <strong>{{meta_classificacao}}</strong> com pelo menos <strong>{{meta_reviews}}</strong> avaliações adicionais</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>3. Infraestrutura e Conforto</h2>
+            
+            <h3>Intervenções Prioritárias</h3>
+            <table>
+                <tr><th>Prioridade</th><th>Problema Identificado</th><th>Solução Proposta</th><th>Investimento Est.</th><th>Impacto</th></tr>
+                {{#each intervencoes_prioritarias}}
+                <tr>
+                    <td>{{this.prioridade}}</td>
+                    <td>{{this.problema}}</td>
+                    <td>{{this.solucao}}</td>
+                    <td>{{this.investimento}}</td>
+                    <td>{{this.impacto}}</td>
+                </tr>
+                {{/each}}
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>4. Estratégia de Preços</h2>
+            
+            <h3>Análise de Pricing Atual</h3>
+            <p>{{analise_precos_atual}}</p>
+            
+            <h3>Estratégia de Preços Dinâmicos</h3>
+            <table>
+                <tr><th>Período</th><th>Preço Atual</th><th>Preço Sugerido</th><th>Justificação</th></tr>
+                <tr><td>Alta Época</td><td>{{alta_epoca_atual}}</td><td>{{alta_epoca_sugerido}}</td><td>{{alta_epoca_justificacao}}</td></tr>
+                <tr><td>Época Média</td><td>{{epoca_media_atual}}</td><td>{{epoca_media_sugerido}}</td><td>{{epoca_media_justificacao}}</td></tr>
+                <tr><td>Baixa Época</td><td>{{baixa_epoca_atual}}</td><td>{{baixa_epoca_sugerido}}</td><td>{{baixa_epoca_justificacao}}</td></tr>
+                <tr><td>Fins de Semana</td><td>{{fins_semana_atual}}</td><td>{{fins_semana_sugerido}}</td><td>{{fins_semana_justificacao}}</td></tr>
+                <tr><td>Dias de Semana</td><td>{{dias_semana_atual}}</td><td>{{dias_semana_sugerido}}</td><td>{{dias_semana_justificacao}}</td></tr>
+            </table>
+            
+            <div class="destaque">
+                <h4>Estratégias Complementares:</h4>
+                <ul>
+                    {{#each estrategias_complementares}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>5. Divulgação e Presença Online</h2>
+            
+            <h3>Auditoria da Presença Atual</h3>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <h4>Qualidade das Fotos</h4>
+                    <div class="progress-bar"><div class="progress-fill" style="width: {{qualidade_fotos}}%;"></div></div>
+                    <p>{{qualidade_fotos}}%</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>Qualidade da Descrição</h4>
+                    <div class="progress-bar"><div class="progress-fill" style="width: {{qualidade_descricao}}%;"></div></div>
+                    <p>{{qualidade_descricao}}%</p>
+                </div>
+            </div>
+            
+            <h3>Plano de Otimização Digital</h3>
+            <ol>
+                <li><strong>Fotografia Profissional:</strong>
+                    <ul>
+                        {{#each plano_fotografia}}
+                        <li>{{this}}</li>
+                        {{/each}}
+                    </ul>
+                </li>
+                <li><strong>Descrição Otimizada:</strong>
+                    <ul>
+                        {{#each plano_descricao}}
+                        <li>{{this}}</li>
+                        {{/each}}
+                    </ul>
+                </li>
+                <li><strong>Expansão de Canais:</strong>
+                    <ul>
+                        {{#each expansao_canais}}
+                        <li>{{this}}</li>
+                        {{/each}}
+                    </ul>
+                </li>
+            </ol>
+        </section>
+
+        <section class="section">
+            <h2>6. Experiência do Hóspede</h2>
+            
+            <h3>Welcome Kit Personalizado</h3>
+            <div class="destaque">
+                <h4>Itens Obrigatórios:</h4>
+                <ul>
+                    {{#each welcome_kit}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            
+            <h3>Parcerias Estratégicas</h3>
+            <table>
+                <tr><th>Tipo de Parceria</th><th>Benefício para Hóspede</th><th>Benefício para Propriedade</th></tr>
+                {{#each parcerias_estrategicas}}
+                <tr>
+                    <td>{{this.tipo}}</td>
+                    <td>{{this.beneficio_hospede}}</td>
+                    <td>{{this.beneficio_propriedade}}</td>
+                </tr>
+                {{/each}}
+            </table>
+            
+            <h3>Automação da Comunicação</h3>
+            <ol>
+                {{#each automacao_comunicacao}}
+                <li>{{this}}</li>
+                {{/each}}
+            </ol>
+        </section>
+
+        <section class="section">
+            <h2>7. Acompanhamento e KPIs</h2>
+            
+            <h3>Dashboard de Monitorização</h3>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <h4>Taxa de Ocupação</h4>
+                    <p style="font-size: 2rem; color: var(--azul-suave);">{{taxa_ocupacao_atual}}%</p>
+                    <p>Meta: {{taxa_ocupacao_meta}}%</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>ADR (Preço Médio)</h4>
+                    <p style="font-size: 2rem; color: var(--verde-sucesso);">€{{adr_atual}}</p>
+                    <p>Meta: €{{adr_meta}}</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>RevPAR</h4>
+                    <p style="font-size: 2rem; color: var(--rosa-claro);">€{{revpar_atual}}</p>
+                    <p>Meta: €{{revpar_meta}}</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>Guest Score</h4>
+                    <p style="font-size: 2rem; color: var(--amarelo-atencao);">{{guest_score_atual}}</p>
+                    <p>Meta: {{guest_score_meta}}</p>
+                </div>
+            </div>
+            
+            <div class="sucesso">
+                <h4>Objetivos para 12 Meses:</h4>
+                <ul>
+                    <li>{{objetivo_classificacao}}</li>
+                    <li>{{objetivo_ocupacao}}</li>
+                    <li>{{objetivo_crescimento}}</li>
+                    <li>{{objetivo_reviews}}</li>
+                </ul>
+            </div>
+        </section>
+
+        <footer class="container">
+            <hr>
+            <h2>Próximos Passos</h2>
+            <p>Este relatório identifica oportunidades concretas para transformar {{property_name}} numa propriedade de alto desempenho. A implementação deste plano, com acompanhamento profissional, pode resultar num aumento significativo da rentabilidade e satisfação dos hóspedes.</p>
+            
+            <a href="#" class="btn-maria-faz">Solicitar Ajuda da Equipa A Maria Faz</a>
+            
+            <div style="text-align: center; margin-top: 2rem; font-style: italic; font-size: 1.1rem; color: var(--azul-suave);">
+                <p>"Respira fundo e trabalha este plano passo a passo para alcançar o sucesso da tua propriedade. — A Maria Faz"</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem; font-size: 0.9rem; color: #666;">
+                <p>Relatório gerado pela A Maria Faz - Especialistas em Alojamento Local</p>
+                <p>© 2024 A Maria Faz. Todos os direitos reservados.</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
