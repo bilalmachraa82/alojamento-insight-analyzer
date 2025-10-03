@@ -1,8 +1,9 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Star } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Download, FileText, Star, Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AnalysisSection from "./AnalysisSection";
@@ -20,12 +21,54 @@ interface AnalysisResultsViewerProps {
 const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisData }) => {
   const { performanceMetrics, recommendations, pricingStrategy, competitorAnalysis } = useAnalysisData(analysisData);
   const { toast } = useToast();
+  const [isGeneratingClaudeAnalysis, setIsGeneratingClaudeAnalysis] = useState(false);
 
   // Check if we have reviews in the data
   const hasReviews = analysisData?.scraped_data?.property_data?.reviews?.length > 0;
   
   // Check if this is a premium analysis (has new Claude structure)
   const isPremiumAnalysis = analysisData?.analysis_result?.health_score !== undefined;
+
+  const handleGenerateClaudeAnalysis = async () => {
+    setIsGeneratingClaudeAnalysis(true);
+    
+    try {
+      toast({
+        title: "🚀 Iniciando Análise Premium",
+        description: "Gerando análise avançada com Claude 3.7 Sonnet. Isso pode levar alguns minutos..."
+      });
+
+      const { data, error } = await supabase.functions.invoke("analyze-property-claude", {
+        body: { id: analysisData.id }
+      });
+
+      if (error) {
+        console.error("Error generating Claude analysis:", error);
+        throw error;
+      }
+
+      console.log("Claude analysis response:", data);
+      
+      toast({
+        title: "✨ Análise Premium Concluída!",
+        description: "Atualizando a página para mostrar os resultados...",
+      });
+      
+      // Reload after 2 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+      
+    } catch (error) {
+      console.error("Error generating Claude analysis:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível gerar a análise premium. Tente novamente."
+      });
+      setIsGeneratingClaudeAnalysis(false);
+    }
+  };
 
   const handleGeneratePremiumReport = async () => {
     if (!analysisData?.analysis_result) {
@@ -102,10 +145,62 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
   // Original basic analysis view
   return (
     <div className="space-y-4">
+      {/* Premium Upgrade CTA */}
+      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200">
+        <CardContent className="p-6">
+          <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Upgrade para Análise Premium com Claude 3.7 Sonnet
+                </h3>
+              </div>
+              <p className="text-gray-700 mb-3">
+                Obtenha uma análise profunda e profissional usando IA de última geração, 
+                incluindo Health Score preciso, insights avançados e relatório PDF downloadável.
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                <li className="flex items-center gap-1">
+                  <span className="text-green-600">✓</span> Health Score 0-100
+                </li>
+                <li className="flex items-center gap-1">
+                  <span className="text-green-600">✓</span> Análise AI Claude 3.7
+                </li>
+                <li className="flex items-center gap-1">
+                  <span className="text-green-600">✓</span> Relatório PDF profissional
+                </li>
+                <li className="flex items-center gap-1">
+                  <span className="text-green-600">✓</span> Insights mais profundos
+                </li>
+              </ul>
+            </div>
+            <Button 
+              onClick={handleGenerateClaudeAnalysis}
+              disabled={isGeneratingClaudeAnalysis}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white whitespace-nowrap"
+              size="lg"
+            >
+              {isGeneratingClaudeAnalysis ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Gerando Análise...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Gerar Análise Premium
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
       <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-gray-600" />
-          <span className="text-gray-600">Análise Básica</span>
+          <span className="text-gray-600">Análise Básica (Gemini)</span>
         </div>
         <Button 
           onClick={handleGeneratePremiumReport}
