@@ -355,6 +355,27 @@ IMPORTANTE:
         })
         .eq("id", id);
 
+      // CRITICAL: Generate Premium PDF after successful analysis
+      console.log("Triggering premium PDF generation for submission:", id);
+      try {
+        const { data: pdfData, error: pdfError } = await supabase.functions.invoke("generate-premium-pdf", {
+          body: {
+            submissionId: id,
+            analysisData: parsedAnalysis
+          }
+        });
+
+        if (pdfError) {
+          console.error("Error generating premium PDF:", pdfError);
+          // Don't fail the whole request if PDF generation fails
+        } else {
+          console.log("Premium PDF generated successfully:", pdfData);
+        }
+      } catch (pdfException) {
+        console.error("Exception during PDF generation:", pdfException);
+        // Continue without failing the analysis
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
