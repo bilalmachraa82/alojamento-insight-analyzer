@@ -357,14 +357,38 @@ function processWebsiteContentData(pageData: any[]): any {
   try {
     // Get the first page data
     const mainPageData = pageData[0];
-    
+    const contentText = (mainPageData.text || mainPageData.markdown || '').toString();
+    const meta = mainPageData.metadata || {};
+
     // Extract key property information from Website Content Crawler output
+    const property_name = extractPropertyName(mainPageData);
+
+    // Location: try content first, then derive from title (e.g., "Casa do Arco, Sintra, Portugal")
+    let location = extractLocation(contentText, property_name);
+
+    // Review count: try to parse from metadata description or page text (pt keywords)
+    const reviewSource = (meta.description || contentText || '').toString();
+    let review_count = 0;
+    const rcMatch = reviewSource.match(/(\d{1,4})\s+(comentários|comentarios|avaliações|avaliacoes)/i);
+    if (rcMatch) {
+      review_count = parseInt(rcMatch[1], 10);
+    }
+
+    // Photo count (optional)
+    let photo_count: number | undefined = undefined;
+    const pcMatch = reviewSource.match(/(\d{1,4})\s+(fotografias|fotos|imagens)/i);
+    if (pcMatch) {
+      photo_count = parseInt(pcMatch[1], 10);
+    }
+
     return {
-      property_name: extractPropertyName(mainPageData),
-      content: mainPageData.text || mainPageData.markdown || '',
-      location: extractLocation(mainPageData.text || mainPageData.markdown || ''),
+      property_name,
+      content: contentText,
+      location,
       url: mainPageData.url,
-      property_type: detectPropertyType(mainPageData.text || mainPageData.markdown || '')
+      property_type: detectPropertyType(contentText),
+      review_count,
+      photo_count
     };
   } catch (e) {
     console.error("Error processing Website Content Crawler data:", e);
@@ -405,26 +429,31 @@ function extractPropertyName(pageData: any): string {
   return 'Unknown Property';
 }
 
-function extractLocation(text: string): string {
-  // Simple extraction - look for common location patterns
-  const locationPatterns = [
+function extractLocation(text: string, fallbackTitle?: string): string {
+  // Support Portuguese and English patterns
+  const patterns: RegExp[] = [
+    /(localizado|localizada|situado|situada) em ([^,\.;\n]+)/i,
+    /\bem\s+([A-ZÁÉÍÓÚÂÊÎÔÛÀÃÕÇ][\wÀ-ÿ'\-\s]+)/i,
+    /(cidade de|região de)\s+([A-ZÁÉÍÓÚÂÊÎÔÛÀÃÕÇ][\wÀ-ÿ'\-\s]+)/i,
     /located in ([^,.]+)/i,
-    /in ([^,.]+) area/i,
     /situated in ([^,.]+)/i,
-    /property in ([^,.]+)/i
+    /property in ([^,.]+)/i,
   ];
-  
-  for (const pattern of locationPatterns) {
+
+  for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match && match[1]) {
-      return match[1].trim();
+    if (match) {
+      const loc = match[2] || match[1];
+      if (loc) return loc.trim();
     }
   }
 
-  // Look for location in common formats
-  const match = text.match(/(?:located in|in|near) ([A-Z][a-z]+(?: [A-Z][a-z]+)*)/);
-  if (match && match[1]) {
-    return match[1];
+  // Fallback: derive from title like "Nome, Cidade, País"
+  if (fallbackTitle && fallbackTitle.includes(',')) {
+    const parts = fallbackTitle.split(',').map((p) => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      return parts.slice(1).join(', ');
+    }
   }
   
   return 'Unknown location';
