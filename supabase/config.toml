@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.send-diagnostic-email]
 verify_jwt = false
+
+[functions.fix-stuck-submission]
+verify_jwt = false
