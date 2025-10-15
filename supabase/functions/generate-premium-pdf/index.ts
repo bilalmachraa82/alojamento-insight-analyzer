@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
+import Handlebars from "https://esm.sh/handlebars@4.7.8";
 
 const supabaseUrl = "https://rhrluvhbajdsnmvnpjzk.supabase.co";
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -112,36 +113,87 @@ serve(async (req: Request) => {
 });
 
 async function generatePremiumHTML(analysisData: any): Promise<string> {
-  // Get the premium template
-  const template = await getPremiumTemplate();
+  const templateString = await getPremiumTemplate();
   
-  // Calculate health score class
-  const healthScoreClass = `score-${analysisData.health_score.categoria}`;
+  // Compile template with Handlebars
+  const template = Handlebars.compile(templateString);
   
-  // Format current date
-  const currentDate = new Date().toLocaleDateString('pt-PT', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  // Prepare structured data for Handlebars
+  const templateData = {
+    // Property basics
+    property_name: analysisData.property_data?.property_name || "Propriedade",
+    current_date: new Date().toLocaleDateString('pt-PT'),
+    
+    // Health Score
+    health_score_total: analysisData.health_score?.total || 0,
+    health_score_class: `score-${analysisData.health_score?.categoria || 'medio'}`,
+    
+    // Diagnostico Inicial
+    resumo_executivo: analysisData.diagnostico_inicial?.resumo_executivo || "",
+    rating_display: analysisData.property_data?.rating || 0,
+    review_count: analysisData.property_data?.review_count || 0,
+    receita_anual: analysisData.diagnostico_inicial?.receita_anual_estimada || "€0",
+    preco_medio_noite: analysisData.diagnostico_inicial?.preco_medio_noite || "€0",
+    taxa_ocupacao: analysisData.diagnostico_inicial?.taxa_ocupacao_estimada || 0,
+    analise_competitiva_resumo: analysisData.diagnostico_inicial?.analise_competitiva?.posicao_mercado || "",
+    
+    // Reputação & Reviews - Arrays
+    comentarios_positivos: analysisData.reputacao_reviews?.comentarios_positivos || [],
+    comentarios_negativos: analysisData.reputacao_reviews?.comentarios_negativos || [],
+    estrategia_melhoria: analysisData.reputacao_reviews?.estrategia_melhoria || [],
+    meta_classificacao: analysisData.reputacao_reviews?.meta_6_meses?.classificacao_objetivo || 0,
+    meta_reviews: analysisData.reputacao_reviews?.meta_6_meses?.reviews_objetivo || 0,
+    
+    // Infraestrutura - Array
+    intervencoes_prioritarias: analysisData.infraestrutura_conforto?.intervencoes_prioritarias || [],
+    
+    // Estratégia de Preços
+    analise_precos_atual: analysisData.estrategia_precos?.analise_atual || "",
+    alta_epoca_atual: analysisData.estrategia_precos?.precos_dinamicos?.alta_epoca?.atual || "€0",
+    alta_epoca_sugerido: analysisData.estrategia_precos?.precos_dinamicos?.alta_epoca?.sugerido || "€0",
+    alta_epoca_justificacao: analysisData.estrategia_precos?.precos_dinamicos?.alta_epoca?.justificacao || "",
+    epoca_media_atual: analysisData.estrategia_precos?.precos_dinamicos?.epoca_media?.atual || "€0",
+    epoca_media_sugerido: analysisData.estrategia_precos?.precos_dinamicos?.epoca_media?.sugerido || "€0",
+    epoca_media_justificacao: analysisData.estrategia_precos?.precos_dinamicos?.epoca_media?.justificacao || "",
+    baixa_epoca_atual: analysisData.estrategia_precos?.precos_dinamicos?.baixa_epoca?.atual || "€0",
+    baixa_epoca_sugerido: analysisData.estrategia_precos?.precos_dinamicos?.baixa_epoca?.sugerido || "€0",
+    baixa_epoca_justificacao: analysisData.estrategia_precos?.precos_dinamicos?.baixa_epoca?.justificacao || "",
+    fins_semana_atual: analysisData.estrategia_precos?.precos_dinamicos?.fins_semana?.atual || "€0",
+    fins_semana_sugerido: analysisData.estrategia_precos?.precos_dinamicos?.fins_semana?.sugerido || "€0",
+    fins_semana_justificacao: analysisData.estrategia_precos?.precos_dinamicos?.fins_semana?.justificacao || "",
+    dias_semana_atual: analysisData.estrategia_precos?.precos_dinamicos?.dias_semana?.atual || "€0",
+    dias_semana_sugerido: analysisData.estrategia_precos?.precos_dinamicos?.dias_semana?.sugerido || "€0",
+    dias_semana_justificacao: analysisData.estrategia_precos?.precos_dinamicos?.dias_semana?.justificacao || "",
+    estrategias_complementares: analysisData.estrategia_precos?.estrategias_complementares || [],
+    
+    // Presença Online
+    qualidade_fotos: analysisData.presenca_online?.auditoria_atual?.qualidade_fotos || 0,
+    qualidade_descricao: analysisData.presenca_online?.auditoria_atual?.qualidade_descricao || 0,
+    plano_fotografia: analysisData.presenca_online?.plano_otimizacao?.fotografia || [],
+    plano_descricao: analysisData.presenca_online?.plano_otimizacao?.descricao || [],
+    expansao_canais: analysisData.presenca_online?.plano_otimizacao?.expansao_canais || [],
+    
+    // Experiência do Hóspede
+    welcome_kit: analysisData.experiencia_hospede?.welcome_kit || [],
+    parcerias_estrategicas: analysisData.experiencia_hospede?.parcerias_estrategicas || [],
+    automacao_comunicacao: analysisData.experiencia_hospede?.automacao_comunicacao || [],
+    
+    // KPIs
+    taxa_ocupacao_atual: analysisData.kpis_acompanhamento?.metricas_principais?.taxa_ocupacao?.atual || "0",
+    taxa_ocupacao_meta: analysisData.kpis_acompanhamento?.metricas_principais?.taxa_ocupacao?.meta || "0",
+    adr_atual: analysisData.kpis_acompanhamento?.metricas_principais?.adr?.atual || "0",
+    adr_meta: analysisData.kpis_acompanhamento?.metricas_principais?.adr?.meta || "0",
+    revpar_atual: analysisData.kpis_acompanhamento?.metricas_principais?.revpar?.atual || "0",
+    revpar_meta: analysisData.kpis_acompanhamento?.metricas_principais?.revpar?.meta || "0",
+    guest_score_atual: analysisData.kpis_acompanhamento?.metricas_principais?.guest_score?.atual || "0",
+    guest_score_meta: analysisData.kpis_acompanhamento?.metricas_principais?.guest_score?.meta || "0",
+    objetivo_classificacao: analysisData.kpis_acompanhamento?.objetivos_12_meses?.classificacao || "",
+    objetivo_ocupacao: analysisData.kpis_acompanhamento?.objetivos_12_meses?.ocupacao || "",
+    objetivo_crescimento: analysisData.kpis_acompanhamento?.objetivos_12_meses?.crescimento_receita || "",
+    objetivo_reviews: analysisData.kpis_acompanhamento?.objetivos_12_meses?.novas_reviews || ""
+  };
   
-  // Replace template variables
-  let html = template
-    .replace(/{{property_name}}/g, analysisData.property_data?.property_name || 'Propriedade')
-    .replace(/{{current_date}}/g, currentDate)
-    .replace(/{{health_score_class}}/g, healthScoreClass)
-    .replace(/{{health_score_total}}/g, analysisData.health_score?.total?.toString() || '0')
-    .replace(/{{resumo_executivo}}/g, analysisData.diagnostico_inicial?.resumo_executivo || 'Resumo não disponível')
-    .replace(/{{rating_display}}/g, `${analysisData.property_data?.rating || 0}/5`)
-    .replace(/{{receita_anual}}/g, analysisData.diagnostico_inicial?.receita_anual_estimada || 'N/A')
-    .replace(/{{preco_medio_noite}}/g, analysisData.diagnostico_inicial?.preco_medio_noite || 'N/A')
-    .replace(/{{taxa_ocupacao}}/g, analysisData.diagnostico_inicial?.taxa_ocupacao_estimada?.toString() || '0')
-    .replace(/{{analise_competitiva_resumo}}/g, analysisData.diagnostico_inicial?.analise_competitiva?.posicao_mercado || 'Análise não disponível');
-  
-  // Handle arrays and complex objects
-  html = replaceArraysInHTML(html, analysisData);
-  
-  return html;
+  return template(templateData);
 }
 
 async function getPremiumTemplate(): string {
@@ -267,26 +319,4 @@ async function getPremiumTemplate(): string {
 </html>`;
 }
 
-function replaceArraysInHTML(html: string, data: any): string {
-  // Simple array replacement - in production would use proper templating
-  try {
-    // Handle comments arrays if they exist
-    if (data.reputacao_reviews?.comentarios_positivos) {
-      const positivos = data.reputacao_reviews.comentarios_positivos
-        .map((comment: string) => `<li>${comment}</li>`)
-        .join('');
-      html = html.replace('{{comentarios_positivos_list}}', positivos);
-    }
-    
-    if (data.reputacao_reviews?.comentarios_negativos) {
-      const negativos = data.reputacao_reviews.comentarios_negativos
-        .map((comment: string) => `<li>${comment}</li>`)
-        .join('');
-      html = html.replace('{{comentarios_negativos_list}}', negativos);
-    }
-  } catch (error) {
-    console.warn("Error replacing arrays in HTML:", error);
-  }
-  
-  return html;
-}
+// This function is no longer needed as Handlebars handles all array iterations

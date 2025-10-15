@@ -90,8 +90,8 @@ serve(async (req: Request) => {
       similarListings: propertyData.similarListings || []
     };
 
-    // Enhanced prompt for Claude with premium analysis structure
-    const prompt = `Você é um consultor especialista de elite em alojamento local, com 20+ anos de experiência internacional em gestão de propriedades no Booking.com, Airbnb, Vrbo e outras plataformas. 
+    // FASE 2: Enhanced prompt for Claude with premium analysis structure + Advanced KPIs (FASE 4)
+    const prompt = `Você é um consultor especialista de elite em alojamento local, com 20+ anos de experiência internacional em gestão de propriedades no Booking.com, Airbnb, Vrbo e outras plataformas. Você domina análise de mercado, revenue management, e estratégias de optimização operacional.
 
 Analise detalhadamente esta propriedade e forneça um relatório estratégico completo seguindo EXATAMENTE a estrutura A Maria Faz para relatórios premium.
 
@@ -212,13 +212,36 @@ Forneça uma análise no seguinte formato JSON EXATO para relatório premium:
       "taxa_ocupacao": { "atual": string, "meta": string },
       "adr": { "atual": string, "meta": string },
       "revpar": { "atual": string, "meta": string },
-      "guest_score": { "atual": string, "meta": string }
+      "guest_score": { "atual": string, "meta": string },
+      "trevpar": { "atual": string, "meta": string, "descricao": "Total RevPAR incluindo receitas complementares" },
+      "goppar": { "atual": string, "meta": string, "descricao": "Gross Operating Profit per Available Room" }
+    },
+    "metricas_avancadas": {
+      "pickup_analysis": {
+        "reservas_last_30_days": number,
+        "reservas_same_period_last_year": number,
+        "variacao_percentual": string
+      },
+      "channel_performance": [
+        {
+          "canal": string,
+          "receita_percentual": number,
+          "ocupacao_percentual": number,
+          "custo_aquisicao": string
+        }
+      ],
+      "compression_analysis": {
+        "dias_alta_demanda": number,
+        "oportunidade_preco_premium": string
+      }
     },
     "objetivos_12_meses": {
       "classificacao": string,
       "ocupacao": string,
       "crescimento_receita": string,
-      "novas_reviews": string
+      "novas_reviews": string,
+      "reducao_custo_aquisicao": string,
+      "aumento_ancillary_revenue": string
     }
   },
   "property_data": {
@@ -230,12 +253,47 @@ Forneça uma análise no seguinte formato JSON EXATO para relatório premium:
   }
 }
 
+CÁLCULOS AVANÇADOS OBRIGATÓRIOS:
+
+1. **TRevPAR** (Total Revenue Per Available Room): 
+   - TRevPAR = (Receita Alojamento + Receitas Ancilares) / Total Quartos Disponíveis
+   - Inclua estimativas realistas de receitas complementares (serviços adicionais, upgrades, parcerias)
+
+2. **GOPPAR** (Gross Operating Profit per Available Room):
+   - GOPPAR = (Receita Total - Custos Operacionais) / Total Quartos Disponíveis
+   - Estime custos: limpeza (15-20% receita), comissões plataformas (15-18%), utilities (8-12%), manutenção (5-8%)
+
+3. **Pickup Analysis**:
+   - Compare reservas dos últimos 30 dias vs mesmo período ano anterior
+   - Identifique tendências de antecedência de reserva
+
+4. **Channel Performance**:
+   - Analise distribuição de receita por canal (Booking, Airbnb, direto)
+   - Calcule CAC (Customer Acquisition Cost) por canal
+   - Identifique canal mais rentável
+
+5. **Compression Analysis**:
+   - Identifique períodos de alta demanda onde preço premium é possível
+   - Analise elasticidade de preço vs ocupação
+
+REGRAS DE INFERÊNCIA quando dados estão em falta:
+- Se não houver dados históricos, use benchmarks da indústria para a localização
+- Para propriedades em Lisboa: Ocupação média 65-75%, ADR €80-150 dependendo do bairro
+- Para propriedades em Porto: Ocupação média 60-70%, ADR €70-120
+- Para propriedades em Algarve: Ocupação média 70-80% (sazonal), ADR €90-180
+- Use o rating e número de reviews para ajustar estimativas (rating >4.5 = +15% ADR)
+- Estime receitas ancilares em 8-12% da receita de alojamento para propriedades bem geridas
+
 IMPORTANTE: 
-- Seja específico e prático em todas as recomendações
-- Use dados reais da propriedade para cálculos
-- Mantenha tom profissional tipo "A Maria Faz"
-- Inclua valores em euros e percentagens reais
-- Responda APENAS com o JSON válido, sem texto adicional`;
+- Seja específico e prático em todas as recomendações com AÇÕES CONCRETAS
+- Use dados reais da propriedade para todos os cálculos
+- Quando dados não disponíveis, use benchmarks e EXPLIQUE as suposições
+- Mantenha tom profissional e consultivo tipo "A Maria Faz"
+- Todos os valores devem estar em euros com 2 casas decimais
+- Todas as percentagens devem incluir o símbolo %
+- Forneça pelo menos 5 intervenções prioritárias na infraestrutura
+- Inclua pelo menos 3 estratégias complementares de preços
+- Responda APENAS com o JSON válido, sem texto adicional antes ou depois`;
 
     console.log("Sending request to Claude API");
     
@@ -249,7 +307,7 @@ IMPORTANTE:
         },
         body: JSON.stringify({
           model: "claude-3-5-sonnet-20241022",
-          max_tokens: 8000,
+          max_tokens: 12000,
           temperature: 0.3,
           messages: [
             {

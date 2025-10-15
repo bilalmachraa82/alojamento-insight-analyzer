@@ -1,18 +1,22 @@
 
+// FASE 3: Enhanced data extraction configuration
 export const ENHANCED_PLATFORM_CONFIG = {
   booking: {
     actorId: "voyager/booking-reviews-scraper",
     dataPoints: [
-      "property_name", "location", "rating", "review_count", "amenities", 
-      "room_types", "pricing", "policies", "photos", "description"
+      "property_name", "location", "rating", "review_count", "price", "price_breakdown",
+      "seasonal_pricing", "amenities", "description", "photos", "photo_count",
+      "host_info", "host_response_rate", "host_response_time", "reviews",
+      "review_categories", "nearby_attractions", "competitor_properties",
+      "availability_calendar", "cancellation_policy", "check_in_out_times",
+      "house_rules", "property_type", "number_of_rooms", "max_guests", "facilities_detailed"
     ],
     defaultInput: {
-      maxReviews: 200,
-      includePhotos: true,
-      includeAmenities: true,
-      includePolicies: true,
-      language: "en-US",
+      maxReviews: 150,
+      language: "pt",
+      includeReviewDetails: true,
       extractPricing: true,
+      extractAmenities: true,
       proxyConfiguration: {
         useApifyProxy: true,
         apifyProxyGroups: ["RESIDENTIAL"]
@@ -22,30 +26,35 @@ export const ENHANCED_PLATFORM_CONFIG = {
   airbnb: {
     actorId: "apify/airbnb-scraper",
     dataPoints: [
-      "name", "location", "price", "rating", "reviews", "amenities",
-      "host_info", "calendar", "photos", "description", "house_rules"
+      "property_name", "location", "rating", "review_count", "price",
+      "pricing_details", "amenities", "description", "host_info",
+      "host_response_rate", "host_languages", "superhost_status",
+      "reviews", "review_categories", "similar_listings",
+      "calendar_availability", "instant_book", "cancellation_policy",
+      "property_type", "bedrooms", "beds", "bathrooms"
     ],
     defaultInput: {
       maxListings: 1,
       includeReviews: true,
-      maxReviews: 200,
-      includePricing: true,
+      maxReviews: 150,
+      currency: "EUR",
+      language: "pt",
       includeCalendar: true,
-      includeHostInfo: true,
       proxyConfiguration: { useApifyProxy: true }
     }
   },
   vrbo: {
     actorId: "apify/vrbo-scraper", 
     dataPoints: [
-      "property_name", "location", "nightly_rate", "reviews", "amenities",
-      "property_details", "photos", "availability", "policies"
+      "property_name", "location", "rating", "review_count", "price",
+      "amenities", "description", "photos", "host_info", "reviews",
+      "property_type", "bedrooms", "bathrooms", "sleeps", "policies"
     ],
     defaultInput: {
       maxListings: 1,
       includeReviews: true,
-      includeAvailability: true,
-      includePolicies: true,
+      maxReviews: 100,
+      currency: "EUR",
       proxyConfiguration: { useApifyProxy: true }
     }
   }
