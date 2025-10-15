@@ -10,6 +10,7 @@ const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 serve(async (req: Request) => {
@@ -54,7 +55,7 @@ serve(async (req: Request) => {
 
     const propertyData = submission.property_data || {};
     const runId = submission.actor_run_id;
-    const actorId = submission.actor_id || "apify/website-content-crawler";
+    const actorId = submission.actor_id || "apify~website-content-crawler";
 
     if (!runId) {
       return new Response(

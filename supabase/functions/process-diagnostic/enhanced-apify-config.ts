@@ -2,7 +2,7 @@
 // FASE 3: Enhanced data extraction configuration
 export const ENHANCED_PLATFORM_CONFIG = {
   booking: {
-    actorId: "apify/website-content-crawler",
+    actorId: "apify~website-content-crawler",
     dataPoints: [
       "property_name", "location", "rating", "review_count", "price", "price_breakdown",
       "seasonal_pricing", "amenities", "description", "photos", "photo_count",
@@ -64,7 +64,7 @@ export const getEnhancedActorConfig = (platform: string) => {
   const config = ENHANCED_PLATFORM_CONFIG[platform.toLowerCase()];
   if (!config) {
     return {
-      actorId: "apify/website-content-crawler",
+      actorId: "apify~website-content-crawler",
       dataPoints: ["content", "metadata", "structured_data"],
       defaultInput: {
         maxCrawlPages: 1,

@@ -8,6 +8,7 @@ const resendApiKey = Deno.env.get("RESEND_API_KEY");
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 interface EmailRequest {
@@ -100,7 +101,15 @@ serve(async (req) => {
 
       if (error) {
         console.error("Resend API error:", error);
-        throw error;
+        // Return 200 with warning instead of failing - email is non-critical
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            warning: "email_send_failed",
+            message: error.message || String(error)
+          }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
       }
 
       console.log("DEBUG: Email sent successfully:", data);
@@ -111,12 +120,23 @@ serve(async (req) => {
       });
     } catch (resendError) {
       console.error("Resend send error:", resendError);
-      throw resendError;
+      // Return 200 with warning instead of 500 - email is non-critical
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          warning: "email_exception",
+          message: resendError.message || String(resendError)
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
   } catch (error) {
     console.error("Error in send-diagnostic-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || String(error) 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

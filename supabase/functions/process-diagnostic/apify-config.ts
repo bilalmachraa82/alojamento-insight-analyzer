@@ -1,7 +1,7 @@
 
 export const SUPPORTED_PLATFORMS = {
   booking: {
-    actorId: "apify/website-content-crawler",
+    actorId: "apify~website-content-crawler",
     defaultInput: {
       maxCrawlPages: 1,
       crawlerType: "playwright:chrome",
@@ -45,7 +45,7 @@ export const getActorConfig = (platform: string) => {
   const config = SUPPORTED_PLATFORMS[platform.toLowerCase()];
   if (!config) {
     return {
-      actorId: "apify/website-content-crawler",
+      actorId: "apify~website-content-crawler",
       defaultInput: {
         maxCrawlPages: 1,
         crawlerType: "playwright:chrome",

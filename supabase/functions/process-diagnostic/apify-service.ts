@@ -11,43 +11,33 @@ export async function startApifyRun(platform: string, startUrl: string) {
     startUrls: [{ url: startUrl }]
   };
 
-  // Try primary API endpoint format
-  const primaryApiUrl = `https://api.apify.com/v2/actor-tasks/${actorId}/run-sync?token=${APIFY_API_TOKEN}`;
+  // Use the correct Apify Actor Runs API endpoint with Authorization header
+  const apiUrl = `https://api.apify.com/v2/acts/${actorId}/runs`;
+  
   try {
-    const runResponse = await fetch(primaryApiUrl, {
+    console.log(`Starting Apify run for actor: ${actorId}`);
+    const runResponse = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${APIFY_API_TOKEN}`
+      },
       body: JSON.stringify(actorInput),
     });
 
-    if (runResponse.ok) {
-      const runData = await runResponse.json();
-      return { success: true, data: runData };
-    }
-
-    // If primary endpoint fails, try alternative format
-    const errorText = await runResponse.text();
-    console.error(`Primary API request failed: ${errorText}`);
-    
-    const altApiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
-    const altRunResponse = await fetch(altApiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(actorInput),
-    });
-
-    if (!altRunResponse.ok) {
-      const altErrorText = await altRunResponse.text();
-      console.error(`Alternative API request failed: ${altErrorText}`);
+    if (!runResponse.ok) {
+      const errorText = await runResponse.text();
+      console.error(`Apify API request failed: ${errorText}`);
       return { 
         success: false, 
-        error: `Primary endpoint error: ${errorText}\nAlternative endpoint error: ${altErrorText}`,
-        endpoints: [primaryApiUrl, altApiUrl]
+        error: `Apify API error: ${errorText}`,
+        endpoint: apiUrl
       };
     }
 
-    const altRunData = await altRunResponse.json();
-    return { success: true, data: altRunData, endpoint: "alternative" };
+    const runData = await runResponse.json();
+    console.log(`Apify run started successfully. Run ID: ${runData.data.id}`);
+    return { success: true, data: runData };
   } catch (error) {
     console.error("Error calling Apify:", error);
     return { success: false, error: String(error) };
