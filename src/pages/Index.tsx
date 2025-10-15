@@ -11,37 +11,7 @@ import DiagnosticForm from "@/components/DiagnosticForm";
 import { Separator } from "@/components/ui/separator";
 
 const Index: React.FC = () => {
-  useEffect(() => {
-    const testSupabaseConnection = async () => {
-      try {
-        // Just making a basic request to test the connection
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Supabase Connection Test Failed",
-            description: error.message
-          });
-        } else {
-          toast({
-            title: "Supabase Connected ✓",
-            description: "Successfully connected to Supabase"
-          });
-        }
-      } catch (err) {
-        toast({
-          variant: "destructive", 
-          title: "Supabase Connection Error",
-          description: String(err)
-        });
-      }
-    };
-
-    testSupabaseConnection();
-  }, []);
-
-  const [language, setLanguage] = useState<"en" | "pt">("pt"); // Changed default to Portuguese
+  const [language, setLanguage] = useState<"en" | "pt">("pt");
 
   const scrollToForm = () => {
     const form = document.getElementById("diagnosticoForm");

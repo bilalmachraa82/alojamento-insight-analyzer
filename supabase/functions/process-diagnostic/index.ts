@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "./cors.ts";
 import { startApifyRun } from "./apify-service.ts";
 import { getSubmission, updateSubmissionStatus } from "./db-service.ts";
+import { getActorConfig } from "./apify-config.ts";
 
 serve(async (req: Request) => {
   // Handle CORS preflight requests
@@ -61,6 +62,7 @@ serve(async (req: Request) => {
     // Start Apify run
     console.log("Starting Apify scraping process");
     const platform = submission.platform.toLowerCase();
+    const { actorId } = getActorConfig(platform);
     const apifyResult = await startApifyRun(platform, startUrl);
     
     if (!apifyResult.success) {
@@ -70,7 +72,7 @@ serve(async (req: Request) => {
         reason: "api_error",
         url: startUrl,
         message: "Não foi possível acessar os dados da propriedade automaticamente.",
-        actor_id: platform,
+        actor_id: actorId,
         api_urls_tried: apifyResult.endpoints
       });
       
@@ -91,7 +93,7 @@ serve(async (req: Request) => {
     const runId = apifyResult.data.data.id;
     await updateSubmissionStatus(id, "scraping", {
       apify_run_id: runId,
-      actor_id: platform,
+      actor_id: actorId,
       started_at: new Date().toISOString(),
       url: startUrl,
       platform: platform,
@@ -103,7 +105,7 @@ serve(async (req: Request) => {
         success: true,
         message: "Property data collection started",
         runId,
-        actorId: platform
+        actorId
       }),
       { 
         status: 200, 

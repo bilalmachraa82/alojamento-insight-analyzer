@@ -164,11 +164,11 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
       case "airbnb":
         return "apify/airbnb-scraper";
       case "booking":
-        return "apify/booking-hotels-scraper";
+        return "apify~website-content-crawler";
       case "vrbo":
         return "apify/vrbo-scraper";
       default:
-        return "apify/web-scraper";
+        return "apify~website-content-crawler";
     }
   };
 
@@ -228,7 +228,7 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
               <ul className="space-y-1">
                 <li><span className="text-gray-500">Platform:</span> {scrapingDetails.platform}</li>
                 <li><span className="text-gray-500">Apify Actor:</span> {scrapingDetails.actor_id}</li>
-                <li><span className="text-gray-500">Task ID:</span> {scrapingDetails.task_id || "Not started"}</li>
+                <li><span className="text-gray-500">Task ID:</span> {scrapingDetails.task_id || "N/A"}</li>
                 <li><span className="text-gray-500">Run ID:</span> {scrapingDetails.run_id || "Not started"}</li>
                 <li><span className="text-gray-500">Started at:</span> {formatDate(scrapingDetails.started_at)}</li>
                 <li><span className="text-gray-500">Status:</span> {scrapingDetails.status}</li>

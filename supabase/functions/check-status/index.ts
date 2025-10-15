@@ -123,9 +123,9 @@ serve(async (req: Request) => {
             .update({ property_data: updatedPropertyData })
             .eq("id", id);
           
-          // Invoke the analyze-property function to retry the analysis
+          // Invoke the analyze-property-claude function to retry the analysis
           try {
-            const retryResponse = await supabase.functions.invoke("analyze-property", {
+            const retryResponse = await supabase.functions.invoke("analyze-property-claude", {
               body: { id }
             });
             

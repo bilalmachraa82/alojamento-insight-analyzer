@@ -133,7 +133,8 @@ serve(async (req: Request) => {
           .eq("id", id);
 
         try {
-          await supabase.functions.invoke("analyze-property", {
+          console.log("Triggering Claude analysis for submission:", id);
+          await supabase.functions.invoke("analyze-property-claude", {
             body: { id }
           });
         } catch (analyzeError) {
