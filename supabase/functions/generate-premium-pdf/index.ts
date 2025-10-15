@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const supabaseUrl = "https://rhrluvhbajdsnmvnpjzk.supabase.co";
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -30,15 +31,40 @@ serve(async (req: Request) => {
     // Generate premium HTML report
     const html = await generatePremiumHTML(analysisData);
     
-    // For now, return the HTML directly
-    // In production, this would use Puppeteer to generate PDF
-    const fileName = `relatorio_premium_${analysisData.property_data.property_name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+    console.log("Launching Puppeteer browser...");
     
-    // Store the HTML report in Supabase Storage
+    // Generate PDF using Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+    
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    // Generate PDF with optimized settings
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        right: '15mm',
+        bottom: '20mm',
+        left: '15mm'
+      }
+    });
+    
+    await browser.close();
+    
+    console.log(`PDF generated successfully, size: ${pdfBuffer.length} bytes`);
+    
+    const fileName = `relatorio_premium_${analysisData.property_data.property_name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
+    
+    // Store the PDF report in Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('reports')
-      .upload(fileName, new Blob([html], { type: 'text/html' }), {
-        contentType: 'text/html',
+      .upload(fileName, pdfBuffer, {
+        contentType: 'application/pdf',
         upsert: false
       });
 
