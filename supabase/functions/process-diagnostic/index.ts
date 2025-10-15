@@ -30,7 +30,7 @@ serve(async (req: Request) => {
     await updateSubmissionStatus(id, "processing");
 
     // Trim any whitespace from the URL
-    const startUrl = submission.link.trim();
+    const startUrl = submission.property_url.trim();
     console.log(`Processing URL: ${startUrl}`);
     
     // Check if the URL is a Booking.com Share URL
@@ -60,7 +60,7 @@ serve(async (req: Request) => {
     
     // Start Apify run
     console.log("Starting Apify scraping process");
-    const platform = submission.plataforma.toLowerCase();
+    const platform = submission.platform.toLowerCase();
     const apifyResult = await startApifyRun(platform, startUrl);
     
     if (!apifyResult.success) {

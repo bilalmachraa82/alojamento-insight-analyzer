@@ -45,7 +45,7 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
       // First, check from database directly (faster response)
       const { data: dbData, error: dbError } = await supabase
         .from("diagnostic_submissions")
-        .select("status, analysis_result, plataforma, scraped_data")
+        .select("status, analysis_result, platform, property_data, actor_run_id, actor_id")
         .eq("id", id)
         .single();
 
@@ -55,18 +55,12 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
         setProcessingStatus(dbData.status);
         
         // Extract scraping details from the data
-        if (dbData.scraped_data && typeof dbData.scraped_data === 'object') {
-          const scrapedData = dbData.scraped_data as Record<string, any>;
-          
-          setScrapingDetails({
-            platform: dbData.plataforma,
-            actor_id: getActorId(dbData.plataforma),
-            task_id: scrapedData.apify_task_id,
-            run_id: scrapedData.apify_run_id,
-            started_at: scrapedData.started_at,
-            status: dbData.status
-          });
-        }
+        setScrapingDetails({
+          platform: dbData.platform,
+          actor_id: dbData.actor_id || getActorId(dbData.platform),
+          run_id: dbData.actor_run_id,
+          status: dbData.status
+        });
 
         // Handle immediate completed state from database
         if (dbData.status === "completed" && !completionToastShown && !isNavigating) {

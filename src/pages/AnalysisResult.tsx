@@ -11,10 +11,10 @@ import ProcessingStatus from "@/components/diagnostic/ProcessingStatus";
 
 interface AnalysisData {
   id: string;
-  nome: string;
+  name: string;
   email: string;
-  link: string;
-  plataforma: string;
+  property_url: string;
+  platform: string;
   status: string;
   analysis_result: {
     property_data?: {
@@ -25,26 +25,11 @@ interface AnalysisData {
     };
     [key: string]: any;
   } | null;
-  data_submissao: string;
-  rgpd: boolean;
-  scraped_data: ScrapedData | null;
+  submission_date: string;
+  property_data: any | null;
+  error_message: string | null;
 }
 
-// Define the structure of the scraped_data field
-interface ScrapedData {
-  property_data?: {
-    name?: string;
-    location?: string;
-    type?: string;
-    rating?: number;
-  };
-  error?: string;
-  reason?: string;
-  message?: string;
-  url?: string;
-  manual_review_requested_at?: string;
-  [key: string]: any;
-}
 
 const AnalysisResult = () => {
   const { id } = useParams<{ id: string }>();
@@ -77,20 +62,17 @@ const AnalysisResult = () => {
         return;
       }
 
-      // Type casting the scraped_data as our defined ScrapedData interface
-      const scrapedData = data.scraped_data as ScrapedData | null;
-      
       const processedData: AnalysisData = {
         id: data.id,
-        nome: data.nome,
+        name: data.name,
         email: data.email,
-        link: data.link,
-        plataforma: data.plataforma,
+        property_url: data.property_url,
+        platform: data.platform,
         status: data.status,
         analysis_result: data.analysis_result as AnalysisData['analysis_result'],
-        data_submissao: data.data_submissao,
-        rgpd: data.rgpd,
-        scraped_data: scrapedData
+        submission_date: data.submission_date,
+        property_data: data.property_data,
+        error_message: data.error_message
       };
       
       setAnalysisData(processedData);
@@ -196,23 +178,11 @@ const AnalysisResult = () => {
         description: "Seu pedido para análise manual foi registrado. Nossa equipe entrará em contato em breve.",
       });
       
-      // Fix for the spread operator issue - properly handle scraped_data
-      let updatedScrapedData: ScrapedData = {};
-      
-      // If scraped_data exists and is an object, copy its properties
-      if (analysisData.scraped_data && typeof analysisData.scraped_data === 'object') {
-        updatedScrapedData = { ...analysisData.scraped_data };
-      }
-      
-      // Add the timestamp
-      updatedScrapedData.manual_review_requested_at = new Date().toISOString();
-      
-      // Update the database with proper object handling
       await supabase
         .from("diagnostic_submissions")
         .update({ 
           status: "manual_review_requested",
-          scraped_data: updatedScrapedData
+          error_message: "Manual review requested by user at " + new Date().toISOString()
         })
         .eq("id", analysisData.id);
         
@@ -232,78 +202,35 @@ const AnalysisResult = () => {
     if (!analysisData) return "Propriedade";
     
     return analysisData.analysis_result?.property_data?.property_name || 
-           (analysisData.scraped_data?.property_data?.name) ||
-           analysisData.link?.split('/').pop() || 
+           analysisData.property_data?.property_name ||
+           analysisData.property_url?.split('/').pop() || 
            "Sua Propriedade";
   };
   
   const getPropertyLocation = () => {
-    if (!analysisData || (!analysisData.analysis_result?.property_data && !analysisData.scraped_data?.property_data)) {
-      return "Localização Indisponível";
-    }
+    if (!analysisData) return "Localização Indisponível";
     return analysisData.analysis_result?.property_data?.location || 
-           (analysisData.scraped_data?.property_data?.location) ||
+           analysisData.property_data?.location ||
            "Localização Indisponível";
   };
   
   const getPropertyType = () => {
-    if (!analysisData || (!analysisData.analysis_result?.property_data && !analysisData.scraped_data?.property_data)) {
-      return "Alojamento";
-    }
+    if (!analysisData) return "Alojamento";
     return analysisData.analysis_result?.property_data?.property_type || 
-           (analysisData.scraped_data?.property_data?.type) ||
+           analysisData.property_data?.property_type ||
            "Alojamento";
   };
   
   const getPropertyRating = () => {
-    if (!analysisData || (!analysisData.analysis_result?.property_data && !analysisData.scraped_data?.property_data)) {
-      return null;
-    }
+    if (!analysisData) return null;
     return analysisData.analysis_result?.property_data?.rating || 
-           (analysisData.scraped_data?.property_data?.rating) ||
+           analysisData.property_data?.rating ||
            null;
   };
 
-  // Função para mostrar detalhes do erro de coleta de dados
-  const getScrapingErrorDetails = () => {
-    if (!analysisData || !analysisData.scraped_data) return null;
-    
-    const scraped_data = analysisData.scraped_data;
-    
-    if (scraped_data.error) {
-      try {
-        // Tentar extrair uma mensagem de erro mais legível
-        const errorJson = typeof scraped_data.error === 'string' 
-          ? JSON.parse(scraped_data.error)
-          : scraped_data.error;
-          
-        return errorJson.error?.message || scraped_data.error.toString() || "Erro ao coletar dados da propriedade";
-      } catch (e) {
-        return typeof scraped_data.error === 'string' ? scraped_data.error : "Erro ao processar os dados da propriedade";
-      }
-    }
-    
-    if (scraped_data.reason) {
-      return `Motivo: ${scraped_data.reason}${scraped_data.message ? ` - ${scraped_data.message}` : ''}`;
-    }
-    
-    return null;
-  };
-
-  const getScrapingErrorReason = () => {
-    if (!analysisData || !analysisData.scraped_data) return null;
-    
-    const scraped_data = analysisData.scraped_data;
-    
-    if (scraped_data.reason === "incompatible_url") {
-      return "URL incompatível";
-    } else if (scraped_data.reason === "api_error") {
-      return "Erro na API";
-    } else if (scraped_data.error) {
-      return "Erro técnico";
-    }
-    
-    return "Erro desconhecido";
+  const getErrorMessage = () => {
+    if (!analysisData?.error_message) return null;
+    return analysisData.error_message;
   };
 
   if (loading) {
@@ -394,13 +321,10 @@ const AnalysisResult = () => {
                       <li>A plataforma bloqueou nossa tentativa de coleta de dados</li>
                     </ul>
                     
-                    {getScrapingErrorDetails() && (
+                    {getErrorMessage() && (
                       <div className="bg-gray-100 p-3 rounded-md text-sm mb-4 overflow-auto">
-                        <p className="font-medium text-gray-700">Detalhes técnicos: {getScrapingErrorReason()}</p>
-                        <p className="text-gray-600 font-mono">{getScrapingErrorDetails()}</p>
-                        {analysisData.scraped_data?.url && (
-                          <p className="text-gray-600 mt-2">URL processada: <span className="font-mono">{analysisData.scraped_data.url}</span></p>
-                        )}
+                        <p className="font-medium text-gray-700">Detalhes técnicos:</p>
+                        <p className="text-gray-600 font-mono">{getErrorMessage()}</p>
                       </div>
                     )}
                     

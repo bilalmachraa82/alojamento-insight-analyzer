@@ -99,12 +99,11 @@ export const useFormSubmission = (language: Language) => {
       const { data: submissionData, error } = await supabase
         .from("diagnostic_submissions")
         .insert({
-          nome: data.nome,
+          name: data.nome,
           email: data.email,
-          link: trimmedUrl, // Use the trimmed URL
-          plataforma: platformInfo.value,
-          rgpd: data.rgpd,
-          data_submissao: currentDate,
+          property_url: trimmedUrl,
+          platform: platformInfo.value,
+          submission_date: currentDate,
           status: "pending"
         })
         .select();
