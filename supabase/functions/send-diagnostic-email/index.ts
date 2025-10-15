@@ -2,9 +2,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-// Initialize Resend with the API key
+// Lazy init inside handler to avoid boot errors when key missing
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
-const resend = new Resend(resendApiKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,6 +82,15 @@ serve(async (req) => {
     console.log(`DEBUG: Preparing to send email to ${emailData.email}`);
 
     try {
+      if (!resendApiKey) {
+        console.warn("RESEND_API_KEY missing - skipping email send");
+        return new Response(
+          JSON.stringify({ success: false, warning: "email_disabled_missing_api_key" }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const resend = new Resend(resendApiKey);
       const { data, error } = await resend.emails.send({
         from: "onboarding@resend.dev", // Using Resend's verified sender
         to: [emailData.email],

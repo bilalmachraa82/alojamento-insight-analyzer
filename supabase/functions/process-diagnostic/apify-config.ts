@@ -1,14 +1,25 @@
 
 export const SUPPORTED_PLATFORMS = {
   booking: {
-    actorId: "voyager/booking-reviews-scraper",
+    actorId: "apify/website-content-crawler",
     defaultInput: {
-      maxReviews: 100,
-      language: "en-US",
-      proxyConfiguration: {
-        useApifyProxy: true,
-        apifyProxyGroups: ["RESIDENTIAL"]
-      }
+      maxCrawlPages: 1,
+      crawlerType: "playwright:chrome",
+      saveHtml: false,
+      saveMarkdown: true,
+      saveScreenshots: false,
+      waitForDynamicContent: true,
+      maxScrollHeight: 5000,
+      htmlTransformer: "readableText",
+      removeElements: [
+        ".cookie-banner",
+        ".cookie-consent",
+        "nav",
+        "header",
+        "footer",
+        ".advertisement",
+        ".ad-container"
+      ]
     }
   },
   airbnb: {

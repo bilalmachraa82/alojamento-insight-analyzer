@@ -2,7 +2,7 @@
 // FASE 3: Enhanced data extraction configuration
 export const ENHANCED_PLATFORM_CONFIG = {
   booking: {
-    actorId: "voyager/booking-reviews-scraper",
+    actorId: "apify/website-content-crawler",
     dataPoints: [
       "property_name", "location", "rating", "review_count", "price", "price_breakdown",
       "seasonal_pricing", "amenities", "description", "photos", "photo_count",
