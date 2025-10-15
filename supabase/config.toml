@@ -1,1 +1,22 @@
 project_id = "tdjwmxzhzvejrvxgpcrj"
+
+[functions.process-diagnostic]
+verify_jwt = false
+
+[functions.check-scrape-status]
+verify_jwt = false
+
+[functions.analyze-property]
+verify_jwt = false
+
+[functions.analyze-property-claude]
+verify_jwt = false
+
+[functions.check-status]
+verify_jwt = false
+
+[functions.generate-premium-pdf]
+verify_jwt = false
+
+[functions.send-diagnostic-email]
+verify_jwt = false

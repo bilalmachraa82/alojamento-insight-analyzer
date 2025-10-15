@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
 // Configure Supabase client
-const supabaseUrl = "https://rhrluvhbajdsnmvnpjzk.supabase.co";
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -48,14 +48,14 @@ serve(async (req: Request) => {
 
     const status = submission.status;
     const analysisResult = submission.analysis_result;
-    const scraped_data = submission.scraped_data || {};
+    const propertyData = submission.property_data || {};
     
     console.log(`Current status for submission ${id}: ${status}`);
     
     // If there's an error with a Booking.com Share URL, notify the user
     if (status === "pending_manual_review" && 
-        scraped_data.reason === "incompatible_url" && 
-        (submission.link.includes("booking.com/Share-") || submission.link.includes("booking.com/share-"))) {
+        propertyData.reason === "incompatible_url" && 
+        (submission.property_url.includes("booking.com/Share-") || submission.property_url.includes("booking.com/share-"))) {
       
       return new Response(
         JSON.stringify({
@@ -72,7 +72,7 @@ serve(async (req: Request) => {
     
     // If the status is "analyzing" and it's been more than 5 minutes, check if we need to retry
     if (status === "analyzing") {
-      const startedAt = scraped_data.analysis_started_at;
+      const startedAt = propertyData.analysis_started_at;
       if (startedAt) {
         const startTime = new Date(startedAt).getTime();
         const currentTime = new Date().getTime();
@@ -82,23 +82,23 @@ serve(async (req: Request) => {
         if (elapsedTimeMinutes > 5) {
           console.log(`Analysis for ${id} has been running for ${elapsedTimeMinutes.toFixed(1)} minutes. Retrying...`);
           
-          // Update the scraped data to include this retry attempt
-          const updatedScrapedData = {
-            ...scraped_data,
-            retry_attempts: ((scraped_data.retry_attempts || 0) + 1),
+          // Update the property data to include this retry attempt
+          const updatedPropertyData = {
+            ...propertyData,
+            retry_attempts: ((propertyData.retry_attempts || 0) + 1),
             last_retry_at: new Date().toISOString()
           };
           
           // If we've retried too many times, move to manual review
-          if (updatedScrapedData.retry_attempts > 3) {
-            console.log(`Too many retry attempts (${updatedScrapedData.retry_attempts}) for submission ${id}. Moving to manual review.`);
+          if (updatedPropertyData.retry_attempts > 3) {
+            console.log(`Too many retry attempts (${updatedPropertyData.retry_attempts}) for submission ${id}. Moving to manual review.`);
             
             await supabase
               .from("diagnostic_submissions")
               .update({
                 status: "pending_manual_review",
-                scraped_data: {
-                  ...updatedScrapedData,
+                property_data: {
+                  ...updatedPropertyData,
                   manual_review_reason: "too_many_retries",
                   manual_review_at: new Date().toISOString()
                 }
@@ -119,7 +119,7 @@ serve(async (req: Request) => {
           
           await supabase
             .from("diagnostic_submissions")
-            .update({ scraped_data: updatedScrapedData })
+            .update({ property_data: updatedPropertyData })
             .eq("id", id);
           
           // Invoke the analyze-property function to retry the analysis
@@ -169,7 +169,7 @@ serve(async (req: Request) => {
     }
     
     // If the status is "scraping", check the status of the Apify run
-    if (status === "scraping" && scraped_data.apify_run_id) {
+    if (status === "scraping" && submission.actor_run_id) {
       try {
         // Invoke the check-scrape-status function to get the latest status
         const checkResponse = await supabase.functions.invoke("check-scrape-status", {

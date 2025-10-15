@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
-const supabaseUrl = "https://rhrluvhbajdsnmvnpjzk.supabase.co";
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -52,9 +52,9 @@ serve(async (req: Request) => {
       );
     }
 
-    const scraped_data = submission.scraped_data || {};
-    const runId = scraped_data.apify_run_id;
-    const actorId = scraped_data.actor_id || "apify/website-content-crawler";
+    const propertyData = submission.property_data || {};
+    const runId = submission.actor_run_id;
+    const actorId = submission.actor_id || "apify/website-content-crawler";
 
     if (!runId) {
       return new Response(
@@ -122,8 +122,8 @@ serve(async (req: Request) => {
           .from("diagnostic_submissions")
           .update({
             status: "scraping_completed",
-            scraped_data: {
-              ...scraped_data,
+            property_data: {
+              ...propertyData,
               property_data: propertyInfo,
               raw_data: scrapedData,
               completed_at: new Date().toISOString(),

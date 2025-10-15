@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 import Handlebars from "https://esm.sh/handlebars@4.7.8";
 
-const supabaseUrl = "https://rhrluvhbajdsnmvnpjzk.supabase.co";
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -63,7 +63,7 @@ serve(async (req: Request) => {
     
     // Store the PDF report in Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('reports')
+      .from('premium-reports')
       .upload(fileName, pdfBuffer, {
         contentType: 'application/pdf',
         upsert: false
@@ -76,7 +76,7 @@ serve(async (req: Request) => {
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('reports')
+      .from('premium-reports')
       .getPublicUrl(fileName);
 
     // Update submission with report URL
@@ -84,7 +84,7 @@ serve(async (req: Request) => {
       .from("diagnostic_submissions")
       .update({
         premium_report_url: publicUrl,
-        premium_report_generated_at: new Date().toISOString()
+        report_generated_at: new Date().toISOString()
       })
       .eq("id", submissionId);
 

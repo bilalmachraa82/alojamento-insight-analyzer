@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
-const supabaseUrl = "https://rhrluvhbajdsnmvnpjzk.supabase.co";
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -44,15 +44,16 @@ serve(async (req: Request) => {
       );
     }
 
-    if (!submission.scraped_data?.property_data) {
+    if (!submission.property_data?.property_data) {
       console.error("No property data found for submission:", id);
       
       await supabase
         .from("diagnostic_submissions")
         .update({ 
           status: "pending_manual_review",
-          scraped_data: {
-            ...submission.scraped_data,
+          error_message: "missing_property_data",
+          property_data: {
+            ...submission.property_data,
             error_reason: "missing_property_data",
             error_at: new Date().toISOString()
           }
@@ -73,12 +74,12 @@ serve(async (req: Request) => {
       .update({ status: "analyzing" })
       .eq("id", id);
 
-    const propertyData = submission.scraped_data.property_data;
+    const propertyData = submission.property_data.property_data;
     
     const propertyInfo = {
       name: propertyData.name || "Propriedade",
-      url: submission.link,
-      platform: submission.plataforma,
+      url: submission.property_url,
+      platform: submission.platform,
       location: propertyData.location || "Portugal",
       rating: propertyData.rating || 0,
       reviewCount: propertyData.reviewCount || 0,
@@ -395,8 +396,9 @@ IMPORTANTE:
         .from("diagnostic_submissions")
         .update({ 
           status: "pending_manual_review",
-          scraped_data: {
-            ...submission.scraped_data,
+          error_message: String(claudeError),
+          property_data: {
+            ...submission.property_data,
             analysis_error: String(claudeError),
             analysis_error_at: new Date().toISOString()
           }
