@@ -6,16 +6,33 @@ const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
 
 export async function startEnhancedApifyRun(platform: string, startUrl: string, submissionId: string) {
   const { actorId, defaultInput, dataPoints } = getEnhancedActorConfig(platform);
+  
+  // Enhanced input with comprehensive extraction
   const actorInput = {
     ...defaultInput,
     startUrls: [{ url: startUrl }],
+    // Increase timeout and scroll for better data extraction
+    pageLoadTimeoutSecs: 120,
+    maxScrollHeight: 15000,
+    waitForDynamicContent: true,
     // Add extraction instructions based on platform
     extractionRules: {
       fields: dataPoints,
-      waitForSelectors: platform === 'booking' ? ['.hp_hotel_name', '.bui-review-score__badge'] :
-                       platform === 'airbnb' ? ['[data-testid="listing-title"]', '[data-testid="review-summary"]'] :
-                       platform === 'vrbo' ? ['.headline', '.review-summary'] : []
-    }
+      waitForSelectors: platform === 'booking' ? [
+        '.hp_hotel_name', '.bui-review-score__badge', '.hp-description',
+        '.hotel_description', '.c-section-title', '[data-testid="property-description"]'
+      ] :
+      platform === 'airbnb' ? [
+        '[data-testid="listing-title"]', '[data-testid="review-summary"]',
+        '[data-section-id="DESCRIPTION_DEFAULT"]', '[data-section-id="AMENITIES_DEFAULT"]'
+      ] :
+      platform === 'vrbo' ? ['.headline', '.review-summary', '.property-description'] : 
+      []
+    },
+    // Enhanced screenshots and content capture
+    saveScreenshots: true,
+    saveMarkdown: true,
+    saveHtml: true
   };
 
   console.log(`[EnhancedApify] Starting extraction for ${platform} with ${dataPoints.length} data points`);

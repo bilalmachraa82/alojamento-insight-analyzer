@@ -380,15 +380,41 @@ function processWebsiteContentData(pageData: any[]): any {
     if (pcMatch) {
       photo_count = parseInt(pcMatch[1], 10);
     }
+    
+    // Enhanced: Extract rating
+    let rating = 0;
+    const ratingMatch = reviewSource.match(/(\d+[.,]\d+)\s*\/\s*10|(\d+[.,]\d+)\s*de\s*10|nota\s*(\d+[.,]\d+)/i);
+    if (ratingMatch) {
+      const ratingStr = ratingMatch[1] || ratingMatch[2] || ratingMatch[3];
+      rating = parseFloat(ratingStr.replace(',', '.')) / 2; // Convert 10-point to 5-point scale
+    }
+    
+    // Enhanced: Extract description (first substantial paragraph)
+    const description = extractDescription(contentText);
+    
+    // Enhanced: Extract amenities/facilities
+    const amenities = extractAmenities(contentText);
+    
+    // Enhanced: Extract price information
+    const price = extractPrice(contentText, reviewSource);
+    
+    // Enhanced: Extract images/photos from metadata
+    const images = extractImages(mainPageData);
 
     return {
       property_name,
       content: contentText,
+      description,
       location,
       url: mainPageData.url,
       property_type: detectPropertyType(contentText),
+      rating,
       review_count,
-      photo_count
+      photo_count,
+      amenities,
+      price,
+      images,
+      facilities: amenities // Alias for compatibility
     };
   } catch (e) {
     console.error("Error processing Website Content Crawler data:", e);
@@ -399,6 +425,119 @@ function processWebsiteContentData(pageData: any[]): any {
       error: String(e)
     };
   }
+}
+
+function extractDescription(text: string): string {
+  // Look for common description patterns in Portuguese and English
+  const descPatterns = [
+    /descrição[:\s]+([^\n]{100,500})/i,
+    /description[:\s]+([^\n]{100,500})/i,
+    /sobre[:\s]+([^\n]{100,500})/i,
+    /about[:\s]+([^\n]{100,500})/i
+  ];
+  
+  for (const pattern of descPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  // Fallback: get first substantial paragraph (100+ chars)
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 100);
+  return lines[0] || 'Descrição não disponível';
+}
+
+function extractAmenities(text: string): string[] {
+  const amenities = new Set<string>();
+  const lowerText = text.toLowerCase();
+  
+  // Common amenities in PT/EN
+  const amenityKeywords = {
+    'Wi-Fi': ['wi-fi', 'wifi', 'internet'],
+    'Ar Condicionado': ['ar condicionado', 'air conditioning', 'a/c'],
+    'Estacionamento': ['estacionamento', 'parking', 'garagem'],
+    'Piscina': ['piscina', 'pool', 'swimming'],
+    'Cozinha': ['cozinha', 'kitchen', 'kitchenette'],
+    'TV': ['televisão', 'television', 'tv', 'smart tv'],
+    'Máquina de Lavar': ['máquina de lavar', 'washing machine', 'lavandaria'],
+    'Aquecimento': ['aquecimento', 'heating', 'calefação'],
+    'Varanda': ['varanda', 'balcony', 'terraço'],
+    'Jardim': ['jardim', 'garden', 'outdoor'],
+    'Animais': ['animais permitidos', 'pets allowed', 'pet friendly'],
+    'Ginásio': ['ginásio', 'gym', 'fitness']
+  };
+  
+  for (const [amenity, keywords] of Object.entries(amenityKeywords)) {
+    for (const keyword of keywords) {
+      if (lowerText.includes(keyword)) {
+        amenities.add(amenity);
+        break;
+      }
+    }
+  }
+  
+  return Array.from(amenities);
+}
+
+function extractPrice(text: string, metaText: string): string {
+  const combinedText = text + ' ' + metaText;
+  
+  // Match price patterns
+  const pricePatterns = [
+    /€\s*(\d+)/,
+    /(\d+)\s*€/,
+    /(\d+)\s*euros?/i,
+    /preço.*?(\d+)/i,
+    /price.*?(\d+)/i
+  ];
+  
+  for (const pattern of pricePatterns) {
+    const match = combinedText.match(pattern);
+    if (match && match[1]) {
+      const price = parseInt(match[1]);
+      if (price > 20 && price < 5000) { // Reasonable nightly price range
+        return `€${price}`;
+      }
+    }
+  }
+  
+  return 'Preço não disponível';
+}
+
+function extractImages(pageData: any): string[] {
+  const images: string[] = [];
+  
+  // Try to get images from metadata
+  if (pageData.metadata?.image) {
+    images.push(pageData.metadata.image);
+  }
+  
+  // Try to extract from screenshots if available
+  if (pageData.screenshot) {
+    images.push(pageData.screenshot);
+  }
+  
+  // Try structured data
+  if (pageData.structuredData) {
+    try {
+      const structured = typeof pageData.structuredData === 'string' 
+        ? JSON.parse(pageData.structuredData) 
+        : pageData.structuredData;
+        
+      if (structured.image) {
+        if (Array.isArray(structured.image)) {
+          images.push(...structured.image);
+        } else {
+          images.push(structured.image);
+        }
+      }
+    } catch (e) {
+      console.log("Could not parse structured data for images");
+    }
+  }
+  
+  return images.slice(0, 10); // Limit to 10 images
 }
 
 function extractPropertyName(pageData: any): string {

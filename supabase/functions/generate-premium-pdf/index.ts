@@ -197,121 +197,544 @@ async function generatePremiumHTML(analysisData: any): Promise<string> {
 }
 
 async function getPremiumTemplate(): string {
-  // Premium template with A Maria Faz styling
+  // Full premium template with ALL sections from A Maria Faz
   return `<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Consultoria - {{property_name}}</title>
+    <title>Relatório de Consultoria Premium - {{property_name}}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@300;400;500;600;700;800&display=swap');
         
         :root {
-            --rosa-claro: #EECAC9;
-            --azul-suave: #A8DADF;
-            --preto-suave: #1E1E1E;
-            --branco-puro: #FFFFFF;
+            --rosa-primary: #E8B4B8;
+            --rosa-claro: #F5D5D8;
+            --azul-primary: #89CFF0;
+            --azul-suave: #B8E0F0;
+            --preto-suave: #2C2C2C;
+            --cinza-medio: #666666;
             --cinza-claro: #F8F9FA;
-            --verde-sucesso: #28A745;
-            --amarelo-atencao: #FFC107;
-            --vermelho-critico: #DC3545;
+            --branco: #FFFFFF;
+            --verde: #4CAF50;
+            --amarelo: #FFB74D;
+            --laranja: #FF9800;
+            --vermelho: #E57373;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Montserrat', sans-serif;
-            line-height: 1.6;
+            line-height: 1.7;
             color: var(--preto-suave);
-            background: var(--branco-puro);
+            background: var(--branco);
+            font-size: 11pt;
         }
         
-        h1, h2, h3 { font-family: 'Playfair Display', serif; margin-bottom: 1rem; }
-        h1 { font-size: 2.5rem; color: var(--preto-suave); }
-        h2 { font-size: 2rem; color: var(--preto-suave); border-bottom: 3px solid var(--rosa-claro); padding-bottom: 0.5rem; }
-        h3 { font-size: 1.4rem; color: var(--azul-suave); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px; }
         
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-        .section { margin-bottom: 3rem; padding: 2rem; background: var(--cinza-claro); border-radius: 10px; }
+        /* Typography */
+        h1, h2, h3, h4 { font-family: 'Playfair Display', serif; font-weight: 700; }
+        h1 { font-size: 36pt; color: var(--rosa-primary); margin-bottom: 10px; }
+        h2 { font-size: 24pt; color: var(--azul-primary); margin: 30px 0 15px; border-bottom: 3px solid var(--rosa-primary); padding-bottom: 8px; }
+        h3 { font-size: 18pt; color: var(--preto-suave); margin: 20px 0 10px; }
+        h4 { font-size: 14pt; color: var(--cinza-medio); margin: 15px 0 8px; }
         
+        /* Header */
+        header { 
+            background: linear-gradient(135deg, var(--rosa-claro) 0%, var(--azul-suave) 100%);
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        header h1 { color: var(--preto-suave); }
+        header p { font-size: 12pt; color: var(--cinza-medio); margin: 5px 0; }
+        
+        /* Sections */
+        .section { 
+            background: var(--cinza-claro);
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            page-break-inside: avoid;
+        }
+        
+        /* Health Score */
+        .health-score-container { text-align: center; margin: 30px 0; }
         .health-score { 
-            font-size: 3rem; font-weight: bold; text-align: center; padding: 2rem; 
-            border-radius: 50%; width: 150px; height: 150px; margin: 0 auto; 
-            display: flex; align-items: center; justify-content: center; 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            font-size: 48pt;
+            font-weight: 900;
+            color: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
-        .score-excelente { background: var(--verde-sucesso); color: white; }
-        .score-bom { background: var(--amarelo-atencao); color: white; }
-        .score-medio { background: #FF8C00; color: white; }
-        .score-critico { background: var(--vermelho-critico); color: white; }
+        .score-excelente { background: linear-gradient(135deg, var(--verde) 0%, #66BB6A 100%); }
+        .score-bom { background: linear-gradient(135deg, var(--amarelo) 0%, #FFA726 100%); }
+        .score-medio { background: linear-gradient(135deg, var(--laranja) 0%, #FF7043 100%); }
+        .score-critico { background: linear-gradient(135deg, var(--vermelho) 0%, #EF5350 100%); }
+        .score-label { font-size: 12pt; margin-top: 15px; font-weight: 600; color: var(--cinza-medio); }
         
-        .destaque { background: var(--rosa-claro); padding: 1rem; border-radius: 5px; margin: 1rem 0; }
-        .alerta { background: var(--vermelho-critico); color: white; padding: 1rem; border-radius: 5px; margin: 1rem 0; }
-        .sucesso { background: var(--verde-sucesso); color: white; padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        /* Cards & Grid */
+        .kpi-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
         
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 2rem 0; }
-        .kpi-card { background: white; padding: 1.5rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .kpi-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--rosa-primary);
+        }
         
-        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: var(--azul-suave); color: white; }
+        .kpi-card h4 { margin: 0 0 10px; font-size: 11pt; color: var(--cinza-medio); }
+        .kpi-value { font-size: 28pt; font-weight: 700; color: var(--azul-primary); line-height: 1; }
+        .kpi-meta { font-size: 10pt; color: var(--cinza-medio); margin-top: 8px; }
         
-        ul, ol { margin-left: 2rem; margin-bottom: 1rem; }
-        li { margin-bottom: 0.5rem; }
+        /* Tables */
+        table { 
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        
+        th {
+            background: linear-gradient(135deg, var(--rosa-primary) 0%, var(--azul-primary) 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 11pt;
+        }
+        
+        tr:hover { background: #F5F5F5; }
+        
+        /* Lists */
+        ul, ol { margin: 15px 0 15px 30px; }
+        li { 
+            margin-bottom: 12px;
+            line-height: 1.6;
+            padding-left: 10px;
+        }
+        
+        ul li::marker { color: var(--rosa-primary); font-size: 14pt; }
+        
+        /* Highlight Boxes */
+        .destaque {
+            background: linear-gradient(135deg, var(--rosa-claro) 0%, white 100%);
+            border-left: 5px solid var(--rosa-primary);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .alerta {
+            background: linear-gradient(135deg, #FFEBEE 0%, white 100%);
+            border-left: 5px solid var(--vermelho);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .sucesso {
+            background: linear-gradient(135deg, #E8F5E9 0%, white 100%);
+            border-left: 5px solid var(--verde);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        /* Progress Bars */
+        .progress-container {
+            background: #E0E0E0;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--rosa-primary) 0%, var(--azul-primary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 10pt;
+        }
+        
+        /* Intervention Cards */
+        .intervention-card {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid var(--azul-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        
+        .priority-urgente { border-left-color: var(--vermelho); }
+        .priority-alta { border-left-color: var(--laranja); }
+        .priority-media { border-left-color: var(--amarelo); }
+        .priority-baixa { border-left-color: var(--verde); }
+        
+        .intervention-card h4 { 
+            color: var(--preto-suave);
+            margin-bottom: 10px;
+            font-size: 13pt;
+        }
+        
+        .intervention-meta {
+            display: flex;
+            gap: 20px;
+            margin-top: 12px;
+            font-size: 10pt;
+            color: var(--cinza-medio);
+        }
+        
+        .intervention-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin: 20px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--rosa-primary) 0%, var(--azul-primary) 100%);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+            padding-left: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--rosa-primary);
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px var(--rosa-primary);
+        }
+        
+        .timeline-item h4 {
+            color: var(--azul-primary);
+            margin-bottom: 8px;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 2px solid var(--rosa-primary);
+        }
+        
+        footer p {
+            margin: 10px 0;
+            color: var(--cinza-medio);
+        }
+        
+        .quote {
+            font-style: italic;
+            font-size: 13pt;
+            color: var(--azul-primary);
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        
+        /* Page breaks */
+        .page-break { page-break-before: always; }
+        
+        @media print {
+            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            .section { page-break-inside: avoid; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- HEADER -->
         <header>
-            <h1>Relatório de Consultoria</h1>
-            <h2>{{property_name}}</h2>
-            <p><strong>Data do Relatório:</strong> {{current_date}}</p>
-            <p><strong>Consultor:</strong> Equipa A Maria Faz - Especialistas em Alojamento Local</p>
-            
-            <div class="destaque">
-                <h3>Resumo Executivo</h3>
-                <p>{{resumo_executivo}}</p>
-            </div>
+            <h1>{{property_name}}</h1>
+            <p style="font-size: 16pt; font-weight: 600; margin-top: 10px;">Relatório de Consultoria Premium</p>
+            <p>Data: {{current_date}} | Consultor: A Maria Faz - Especialistas em Alojamento Local</p>
         </header>
 
+        <!-- RESUMO EXECUTIVO -->
+        <div class="destaque">
+            <h3 style="margin-top: 0;">📋 Resumo Executivo</h3>
+            <p style="font-size: 12pt; line-height: 1.8;">{{resumo_executivo}}</p>
+        </div>
+
+        <!-- HEALTH SCORE -->
         <section class="section">
-            <h2>1. Diagnóstico Inicial</h2>
-            
-            <div class="health-score {{health_score_class}}">
-                {{health_score_total}}/100
+            <h2>🏆 Health Score Global</h2>
+            <div class="health-score-container">
+                <div class="health-score {{health_score_class}}">
+                    {{health_score_total}}
+                </div>
+                <p class="score-label">Pontuação de Saúde da Propriedade</p>
             </div>
-            <p style="text-align: center; margin-top: 1rem;"><strong>Health Score Global</strong></p>
+        </section>
+
+        <!-- DIAGNÓSTICO INICIAL -->
+        <section class="section">
+            <h2>📊 Diagnóstico Inicial & Performance</h2>
             
-            <h3>Indicadores de Performance Atual</h3>
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <h4>Classificação Média</h4>
-                    <p style="font-size: 2rem; color: var(--azul-suave);">{{rating_display}}</p>
+                    <h4>Classificação Atual</h4>
+                    <div class="kpi-value">{{rating_display}}</div>
+                    <p class="kpi-meta">⭐ de 5.0</p>
                 </div>
                 <div class="kpi-card">
                     <h4>Receita Anual Estimada</h4>
-                    <p style="font-size: 2rem; color: var(--verde-sucesso);">{{receita_anual}}</p>
+                    <div class="kpi-value" style="color: var(--verde);">{{receita_anual}}</div>
                 </div>
                 <div class="kpi-card">
                     <h4>Preço Médio/Noite</h4>
-                    <p style="font-size: 2rem; color: var(--rosa-claro);">{{preco_medio_noite}}</p>
+                    <div class="kpi-value" style="color: var(--rosa-primary);">{{preco_medio_noite}}</div>
                 </div>
                 <div class="kpi-card">
                     <h4>Taxa de Ocupação</h4>
-                    <p style="font-size: 2rem; color: var(--amarelo-atencao);">{{taxa_ocupacao}}%</p>
+                    <div class="kpi-value" style="color: var(--laranja);">{{taxa_ocupacao}}%</div>
                 </div>
             </div>
             
-            <p><strong>Análise Competitiva:</strong> {{analise_competitiva_resumo}}</p>
+            <h3>🎯 Análise Competitiva</h3>
+            <p>{{analise_competitiva_resumo}}</p>
+            
+            {{#if comentarios_positivos}}
+            <div class="sucesso">
+                <h4>✅ Pontos Fortes</h4>
+                <ul>
+                    {{#each comentarios_positivos}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
+            
+            {{#if comentarios_negativos}}
+            <div class="alerta">
+                <h4>⚠️ Problemas Críticos Identificados</h4>
+                <ul>
+                    {{#each comentarios_negativos}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
         </section>
 
-        <footer style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--rosa-claro);">
-            <p style="font-style: italic; font-size: 1.1rem; color: var(--azul-suave);">
-                "Respira fundo e trabalha este plano passo a passo para alcançar o sucesso da tua propriedade. — A Maria Faz"
+        <div class="page-break"></div>
+
+        <!-- REPUTAÇÃO & REVIEWS -->
+        <section class="section">
+            <h2>⭐ Reputação & Gestão de Reviews</h2>
+            
+            <p style="margin-bottom: 20px;"><strong>Situação Atual:</strong> A propriedade possui {{review_count}} avaliações com uma classificação média de {{rating_display}}/5.0</p>
+            
+            {{#if estrategia_melhoria}}
+            <h3>🎯 Estratégias de Melhoria</h3>
+            <ul>
+                {{#each estrategia_melhoria}}
+                <li>{{this}}</li>
+                {{/each}}
+            </ul>
+            {{/if}}
+            
+            <div class="destaque">
+                <h4>📈 Metas para os Próximos 6 Meses</h4>
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <h4>Classificação Objetivo</h4>
+                        <div class="kpi-value">{{meta_classificacao}}</div>
+                    </div>
+                    <div class="kpi-card">
+                        <h4>Número de Reviews</h4>
+                        <div class="kpi-value">{{meta_reviews}}</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INFRAESTRUTURA & CONFORTO -->
+        <section class="section">
+            <h2>🔧 Infraestrutura & Intervenções</h2>
+            
+            {{#if intervencoes_prioritarias}}
+            <h3>Plano de Intervenções Prioritárias</h3>
+            {{#each intervencoes_prioritarias}}
+            <div class="intervention-card priority-{{prioridade}}">
+                <h4>{{problema}}</h4>
+                <p><strong>Solução:</strong> {{solucao}}</p>
+                <div class="intervention-meta">
+                    <span><strong>💰 Investimento:</strong> {{investimento}}</span>
+                    <span><strong>⚡ Prioridade:</strong> {{prioridade}}</span>
+                    <span><strong>📈 Impacto:</strong> {{impacto}}</span>
+                </div>
+            </div>
+            {{/each}}
+            {{/if}}
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- ESTRATÉGIA DE PREÇOS -->
+        <section class="section">
+            <h2>💰 Estratégia de Preços Dinâmicos</h2>
+            
+            <p style="margin-bottom: 20px;">{{analise_precos_atual}}</p>
+            
+            <h3>Tabela de Preços Recomendados</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Preço Atual</th>
+                        <th>Preço Sugerido</th>
+                        <th>Justificação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Alta Época</strong></td>
+                        <td>{{alta_epoca_atual}}</td>
+                        <td style="color: var(--verde); font-weight: 600;">{{alta_epoca_sugerido}}</td>
+                        <td>{{alta_epoca_justificacao}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Época Média</strong></td>
+                        <td>{{epoca_media_atual}}</td>
+                        <td style="color: var(--verde); font-weight: 600;">{{epoca_media_sugerido}}</td>
+                        <td>{{epoca_media_justificacao}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Baixa Época</strong></td>
+                        <td>{{baixa_epoca_atual}}</td>
+                        <td style="color: var(--verde); font-weight: 600;">{{baixa_epoca_sugerido}}</td>
+                        <td>{{baixa_epoca_justificacao}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fins de Semana</strong></td>
+                        <td>{{fins_semana_atual}}</td>
+                        <td style="color: var(--verde); font-weight: 600;">{{fins_semana_sugerido}}</td>
+                        <td>{{fins_semana_justificacao}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dias de Semana</strong></td>
+                        <td>{{dias_semana_atual}}</td>
+                        <td style="color: var(--verde); font-weight: 600;">{{dias_semana_sugerido}}</td>
+                        <td>{{dias_semana_justificacao}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            {{#if estrategias_complementares}}
+            <div class="destaque">
+                <h4>💡 Estratégias Complementares</h4>
+                <ul>
+                    {{#each estrategias_complementares}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
+        </section>
+
+        <!-- KPIs & ACOMPANHAMENTO -->
+        <section class="section">
+            <h2>📈 KPIs & Acompanhamento</h2>
+            
+            <h3>Métricas Principais</h3>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <h4>Taxa de Ocupação</h4>
+                    <div class="kpi-value">{{taxa_ocupacao_atual}}</div>
+                    <p class="kpi-meta">Meta: {{taxa_ocupacao_meta}}</p>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: {{taxa_ocupacao_atual}};">{{taxa_ocupacao_atual}}</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <h4>ADR (Average Daily Rate)</h4>
+                    <div class="kpi-value">{{adr_atual}}</div>
+                    <p class="kpi-meta">Meta: {{adr_meta}}</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>RevPAR</h4>
+                    <div class="kpi-value">{{revpar_atual}}</div>
+                    <p class="kpi-meta">Meta: {{revpar_meta}}</p>
+                </div>
+                <div class="kpi-card">
+                    <h4>Guest Score</h4>
+                    <div class="kpi-value">{{guest_score_atual}}</div>
+                    <p class="kpi-meta">Meta: {{guest_score_meta}}</p>
+                </div>
+            </div>
+            
+            <div class="destaque">
+                <h4>🎯 Objetivos a 12 Meses</h4>
+                <ul>
+                    <li><strong>Classificação:</strong> {{objetivo_classificacao}}</li>
+                    <li><strong>Ocupação:</strong> {{objetivo_ocupacao}}</li>
+                    <li><strong>Crescimento Receita:</strong> {{objetivo_crescimento}}</li>
+                    <li><strong>Novas Reviews:</strong> {{objetivo_reviews}}</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <p class="quote">
+                "Respira fundo e trabalha este plano passo a passo. O sucesso da tua propriedade está ao alcance com dedicação e estratégia."
             </p>
-            <p style="margin-top: 2rem; font-size: 0.9rem; color: #666;">
-                Relatório gerado pela A Maria Faz - Especialistas em Alojamento Local<br>
-                © 2024 A Maria Faz. Todos os direitos reservados.
+            <p style="font-weight: 600; font-size: 12pt; margin-top: 30px;">
+                A Maria Faz - Especialistas em Alojamento Local
+            </p>
+            <p style="font-size: 10pt; color: var(--cinza-medio);">
+                © 2024 A Maria Faz. Todos os direitos reservados.<br>
+                Este relatório é confidencial e destinado exclusivamente ao proprietário mencionado.
             </p>
         </footer>
     </div>
