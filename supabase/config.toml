@@ -1,5 +1,8 @@
 project_id = "tdjwmxzhzvejrvxgpcrj"
 
+[functions.daily-ingest]
+verify_jwt = false
+
 [functions.process-diagnostic]
 verify_jwt = false
 
