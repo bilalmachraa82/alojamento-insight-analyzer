@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.test-claude-analysis]
 verify_jwt = false
+
+[functions.reprocess-submission]
+verify_jwt = false
