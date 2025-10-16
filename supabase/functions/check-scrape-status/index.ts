@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { requireEnv, SCRAPER_ENV } from "../_shared/env-validator.ts";
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
+const env = requireEnv(SCRAPER_ENV);
+const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
+const APIFY_API_TOKEN = env.APIFY_API_TOKEN;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

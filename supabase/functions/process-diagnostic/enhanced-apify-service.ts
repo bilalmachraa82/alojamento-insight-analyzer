@@ -1,8 +1,11 @@
-
 import { corsHeaders } from "./cors.ts";
 import { getEnhancedActorConfig } from "./enhanced-apify-config.ts";
 
 const APIFY_API_TOKEN = Deno.env.get("APIFY_API_TOKEN");
+
+if (!APIFY_API_TOKEN) {
+  throw new Error("APIFY_API_TOKEN is required but not set");
+}
 
 export async function startEnhancedApifyRun(platform: string, startUrl: string, submissionId: string) {
   const { actorId, defaultInput, dataPoints } = getEnhancedActorConfig(platform);

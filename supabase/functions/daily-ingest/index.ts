@@ -284,11 +284,7 @@ async function ensureProperty(submission: any, location: string): Promise<string
     const propertyData = submission.property_data?.property_data || {};
     const propertyName = propertyData.property_name || propertyData.name || "Unknown Property";
 
-    // For now, create a dummy user_id (in production, this would come from auth)
-    // We'll use a system user ID - you may need to create this user in auth.users
-    const systemUserId = "00000000-0000-0000-0000-000000000000";
-
-    // Try to find existing property by URL
+    // Try to find existing property by name
     const { data: existing, error: findError } = await supabase
       .from("dim_property")
       .select("id")
@@ -299,11 +295,11 @@ async function ensureProperty(submission: any, location: string): Promise<string
       return existing.id;
     }
 
-    // Create new property
+    // Create new system property (user_id = null, is_system = true)
     const { data: newProperty, error: insertError } = await supabase
       .from("dim_property")
       .insert({
-        user_id: systemUserId,
+        user_id: null,
         name: propertyName,
         location,
         property_type: propertyData.property_type || "Accommodation",
@@ -311,6 +307,7 @@ async function ensureProperty(submission: any, location: string): Promise<string
         max_guests: 2,
         amenities: propertyData.amenities || [],
         is_active: true,
+        is_system: true,
       })
       .select("id")
       .single();

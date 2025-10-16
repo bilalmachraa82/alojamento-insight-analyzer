@@ -1,9 +1,8 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-// Lazy init inside handler to avoid boot errors when key missing
-const resendApiKey = Deno.env.get("RESEND_API_KEY");
+// RESEND_API_KEY is optional - function degrades gracefully if missing
+const resendApiKey = Deno.env.get("RESEND_API_KEY") || "";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

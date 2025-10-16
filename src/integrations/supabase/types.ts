@@ -233,39 +233,42 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean | null
+          is_system: boolean | null
           location: string | null
           max_guests: number | null
           name: string
           property_type: string | null
           room_count: number | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           amenities?: Json | null
           created_at?: string
           id?: string
           is_active?: boolean | null
+          is_system?: boolean | null
           location?: string | null
           max_guests?: number | null
           name: string
           property_type?: string | null
           room_count?: number | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           amenities?: Json | null
           created_at?: string
           id?: string
           is_active?: boolean | null
+          is_system?: boolean | null
           location?: string | null
           max_guests?: number | null
           name?: string
           property_type?: string | null
           room_count?: number | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
