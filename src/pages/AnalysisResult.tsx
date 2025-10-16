@@ -124,7 +124,7 @@ const AnalysisResult = () => {
 
   const checkAnalysisStatus = async (submissionId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("check-status", {
+      const { data, error } = await supabase.functions.invoke("check-scrape-status", {
         body: { id: submissionId }
       });
 
