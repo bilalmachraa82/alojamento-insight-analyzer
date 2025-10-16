@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Consultoria - Apartamento Douro Vintage</title>
+    <style>
+        /* CSS OBRIGATÓRIO */
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --rosa-claro: #EECAC9;
+            --azul-suave: #A8DADF;
+            --preto-suave: #1E1E1E;
+            --branco-puro: #FFFFFF;
+            --cinza-claro: #F8F9FA;
+            --verde-sucesso: #28A745;
+            --amarelo-atencao: #FFC107;
+            --vermelho-critico: #DC3545;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: var(--preto-suave);
+            background: var(--branco-puro);
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 1rem;
+        }
+        
+        h1 { font-size: 2.5rem; color: var(--preto-suave); }
+        h2 { font-size: 2rem; color: var(--preto-suave); border-bottom: 3px solid var(--rosa-claro); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.4rem; color: var(--azul-suave); }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .section { margin-bottom: 3rem; padding: 2rem; background: var(--cinza-claro); border-radius: 10px; }
+        .health-score { font-size: 3rem; font-weight: bold; text-align: center; padding: 2rem; border-radius: 50%; width: 150px; height: 150px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+        .score-excelente { background: var(--verde-sucesso); color: white; }
+        .score-bom { background: var(--amarelo-atencao); color: white; }
+        .score-critico { background: var(--vermelho-critico); color: white; }
+        
+        ul, ol { margin-left: 2rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        
+        .destaque { background: var(--rosa-claro); padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        .alerta { background: var(--vermelho-critico); color: white; padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        .sucesso { background: var(--verde-sucesso); color: white; padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: var(--azul-suave); color: white; }
+        
+        .btn-maria-faz {
+            background: linear-gradient(135deg, var(--rosa-claro), var(--azul-suave));
+            color: var(--preto-suave);
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 2rem auto;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn-maria-faz:hover { transform: scale(1.05); }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--cinza-claro);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--azul-suave);
+            transition: width 0.3s ease;
+        }
+        
+        hr { border: none; height: 3px; background: linear-gradient(90deg, var(--rosa-claro), var(--azul-suave)); margin: 2rem 0; }
+        
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            .health-score { width: 120px; height: 120px; font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="container">
+    <h1>Relatório de Consultoria</h1>
+    <h2>Apartamento Douro Vintage</h2>
+    <p><strong>Data do Relatório:</strong> 27 de Setembro de 2024</p>
+    <p><strong>Consultor:</strong> Equipa A Maria Faz - Especialistas em Alojamento Local</p>
+    
+    <div class="destaque">
+        <h3>Resumo Executivo</h3>
+        <p>Esta propriedade T1 no coração do Porto apresenta um potencial significativo para aumentar a rentabilidade em 35-40%. Identificámos oportunidades imediatas na otimização de preços, melhoria da presença digital e correção de pontos críticos mencionados pelos hóspedes. Com uma classificação atual de 4,2/5, existe margem clara para atingir 4,6+ e aumentar substancialmente as reservas.</p>
+    </div>
+</header>
+
+<section class="section">
+    <h2>1. Diagnóstico Inicial</h2>
+    
+    <div class="health-score score-bom">
+        73/100
+    </div>
+    <p style="text-align: center; margin-top: 1rem;"><strong>Health Score Global</strong></p>
+    
+    <h3>Indicadores de Performance Atual</h3>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <h4>Classificação Média</h4>
+            <p style="font-size: 2rem; color: var(--azul-suave);">4,2/5</p>
+            <p>Baseado em 127 avaliações</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Receita Anual</h4>
+            <p style="font-size: 2rem; color: var(--verde-sucesso);">€18.400</p>
+            <p>Performance financeira</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Preço Médio/Noite</h4>
+            <p style="font-size: 2rem; color: var(--rosa-claro);">€65</p>
+            <p>Posicionamento no mercado</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Presença Digital</h4>
+            <p style="font-size: 2rem; color: var(--amarelo-atencao);">6/10</p>
+            <p>Qualidade da listagem</p>
+        </div>
+    </div>
+    
+    <h3>Análise Competitiva</h3>
+    <table>
+        <tr><th>Métrica</th><th>Apartamento Douro Vintage</th><th>Média do Mercado</th><th>Gap</th></tr>
+        <tr><td>Preço/Noite</td><td>€65</td><td>€78</td><td>-€13 (-17%)</td></tr>
+        <tr><td>Classificação</td><td>4,2/5</td><td>4,4/5</td><td>-0,2 pontos</td></tr>
+        <tr><td>Nº Avaliações</td><td>127</td><td>85</td><td>+42 (+49%)</td></tr>
+    </table>
+</section>
+
+<section class="section">
+    <h2>2. Reputação & Reviews</h2>
+    
+    <h3>Análise das Avaliações</h3>
+    <div class="destaque">
+        <h4>Pontos Mais Elogiados:</h4>
+        <ul>
+            <li><strong>Localização excepcional:</strong> "Perfeita para explorar o Porto a pé"</li>
+            <li><strong>Vista para o Douro:</strong> "Vista deslumbrante, especialmente ao pôr do sol"</li>
+            <li><strong>Comunicação do anfitrião:</strong> "Sempre disponível e prestável"</li>
+            <li><strong>Limpeza:</strong> "Apartamento impecável à chegada"</li>
+            <li><strong>Valor-preço:</strong> "Excelente relação qualidade-preço"</li>
+        </ul>
+    </div>
+    
+    <div class="alerta">
+        <h4>Principais Críticas:</h4>
+        <ul>
+            <li><strong>Ruído da rua (47% das críticas):</strong> "Muito barulho durante a noite"</li>
+            <li><strong>Wi-Fi instável (31%):</strong> "Internet muito lenta para trabalho"</li>
+            <li><strong>Cozinha mal equipada (28%):</strong> "Faltam utensílios básicos"</li>
+            <li><strong>Check-in complicado (23%):</strong> "Dificuldade em encontrar as chaves"</li>
+            <li><strong>Colchão desconfortável (19%):</strong> "Cama demasiado mole"</li>
+        </ul>
+    </div>
+    
+    <h3>Estratégia de Melhoria da Reputação</h3>
+    <ol>
+        <li><strong>Resposta Imediata:</strong> Implementar protocolo de resposta a todas as avaliações em máximo 24h</li>
+        <li><strong>Correção de Problemas:</strong> Priorizar resolução dos problemas mais mencionados</li>
+        <li><strong>Solicitação Proativa:</strong> Sistema de follow-up para pedir avaliações a hóspedes satisfeitos</li>
+        <li><strong>Gestão de Expectativas:</strong> Melhorar descrição da propriedade para alinhar expectativas</li>
+    </ol>
+    
+    <div class="sucesso">
+        <h4>Meta de 6 Meses:</h4>
+        <p>Atingir classificação de <strong>4,6/5</strong> com pelo menos <strong>50</strong> avaliações adicionais</p>
+    </div>
+</section>
+
+<section class="section">
+    <h2>3. Infraestrutura e Conforto</h2>
+    
+    <h3>Intervenções Prioritárias</h3>
+    <table>
+        <tr><th>Prioridade</th><th>Problema Identificado</th><th>Solução Proposta</th><th>Investimento Est.</th><th>Impacto</th></tr>
+        <tr><td>🔴 CRÍTICA</td><td>Wi-Fi instável</td><td>Upgrade para fibra ótica + router mesh</td><td>€80-120</td><td>Alto</td></tr>
+        <tr><td>🔴 CRÍTICA</td><td>Ruído da rua</td><td>Vidros duplos + cortinas blackout</td><td>€400-600</td><td>Muito Alto</td></tr>
+        <tr><td>🟡 ALTA</td><td>Colchão desconfortável</td><td>Colchão memory foam novo</td><td>€300-450</td><td>Alto</td></tr>
+        <tr><td>🟡 ALTA</td><td>Cozinha mal equipada</td><td>Kit utensílios completo</td><td>€50-80</td><td>Médio</td></tr>
+        <tr><td>🟢 MÉDIA</td><td>Check-in complicado</td><td>Caixa-forte inteligente</td><td>€120-180</td><td>Alto</td></tr>
+    </table>
+    
+    <h3>Cronograma de Implementação</h3>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <h4>Semana 1-2</h4>
+            <p>Wi-Fi + Utensílios Cozinha</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
+            <p><strong>€130-200</strong></p>
+        </div>
+        <div class="kpi-card">
+            <h4>Semana 3-4</h4>
+            <p>Caixa-forte + Colchão</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
+            <p><strong>€420-630</strong></p>
+        </div>
+        <div class="kpi-card">
+            <h4>Mês 2</h4>
+            <p>Vidros Duplos + Cortinas</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 50%;"></div></div>
+            <p><strong>€400-600</strong></p>
+        </div>
+        <div class="kpi-card">
+            <h4>Mês 3</h4>
+            <p>Toques Finais</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 25%;"></div></div>
+            <p><strong>€100-200</strong></p>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <h2>4. Estratégia de Preços</h2>
+    
+    <h3>Análise de Pricing Atual</h3>
+    <p>Preço médio atual: <strong>€65/noite</strong> - <span style="color: var(--vermelho-critico);">17% abaixo da média de mercado</span></p>
+    
+    <h3>Estratégia de Preços Dinâmicos</h3>
+    <table>
+        <tr><th>Período</th><th>Preço Atual</th><th>Preço Sugerido</th><th>Variação</th><th>Justificação</th></tr>
+        <tr><td>Alta Época (Jun-Sep)</td><td>€75</td><td>€95-110</td><td>+27-47%</td><td>Época de maior procura + vista Douro</td></tr>
+        <tr><td>Época Média (Mar-Mai, Out)</td><td>€65</td><td>€80-90</td><td>+23-38%</td><td>Alinhamento com mercado local</td></tr>
+        <tr><td>Baixa Época (Nov-Fev)</td><td>€55</td><td>€65-75</td><td>+18-36%</td><td>Manter competitividade</td></tr>
+        <tr><td>Fins de Semana</td><td>€70</td><td>€85-95</td><td>+21-36%</td><td>Procura urbana elevada</td></tr>
+        <tr><td>Dias de Semana</td><td>€60</td><td>€70-80</td><td>+17-33%</td><td>Viajantes de negócios</td></tr>
+    </table>
+    
+    <div class="destaque">
+        <h4>Estratégias Complementares:</h4>
+        <ul>
+            <li><strong>Early Bird:</strong> Desconto de 15% para reservas com 30+ dias de antecedência</li>
+            <li><strong>Estadia Longa:</strong> Desconto de 20% para reservas de 7+ noites</li>
+            <li><strong>Last Minute:</strong> Desconto de 25% para reservas com menos de 3 dias</li>
+            <li><strong>Pacotes Temáticos:</strong> "Romance no Douro" (+€15), "Porto Business" (+€10)</li>
+        </ul>
+    </div>
+    
+    <div class="sucesso">
+        <h4>Impacto Financeiro Estimado:</h4>
+        <p>Aumento de receita projetado: <strong>€6.500-8.200/ano (+35-45%)</strong></p>
+    </div>
+</section>
+
+<section class="section">
+    <h2>5. Divulgação e Presença Online</h2>
+    
+    <h3>Auditoria da Presença Atual</h3>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <h4>Airbnb</h4>
+            <p>Plataforma Principal</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 70%;"></div></div>
+            <p>7/10 - Boa mas melhorável</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Booking.com</h4>
+            <p>Secundária</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 50%;"></div></div>
+            <p>5/10 - Precisa otimização</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Website Próprio</h4>
+            <p>Inexistente</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 0%;"></div></div>
+            <p>0/10 - Oportunidade perdida</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Redes Sociais</h4>
+            <p>Instagram/Facebook</p>
+            <div class="progress-bar"><div class="progress-fill" style="width: 20%;"></div></div>
+            <p>2/10 - Quase inexistente</p>
+        </div>
+    </div>
+    
+    <h3>Plano de Otimização Digital</h3>
+    <ol>
+        <li><strong>Fotografia Profissional:</strong>
+            <ul>
+                <li>Sessão fotográfica com fotógrafo especializado em imobiliário</li>
+                <li>Mínimo de 25 fotos de alta qualidade, incluindo vista Douro</li>
+                <li>Fotos de detalhes e lifestyle (café manhã, pôr do sol)</li>
+                <li>Investimento estimado: €350-500</li>
+            </ul>
+        </li>
+        <li><strong>Descrição Otimizada:</strong>
+            <ul>
+                <li>Reescrita focada na vista Douro e localização premium</li>
+                <li>Keywords: "vista Douro", "centro Porto", "Ribeira a pé"</li>
+                <li>Destacar a limpeza e comunicação (pontos fortes)</li>
+            </ul>
+        </li>
+        <li><strong>Expansão de Canais:</strong>
+            <ul>
+                <li>Otimização Booking.com e Vrbo</li>
+                <li>Website próprio com reservas diretas (0% comissão)</li>
+                <li>Instagram dedicado com conteúdo do Porto</li>
+            </ul>
+        </li>
+    </ol>
+    
+    <div class="destaque">
+        <h4>Título Otimizado Sugerido:</h4>
+        <p>"✨ Douro Vintage - Vista Rio Única no Coração do Porto | WiFi Rápido | Centro Histórico"</p>
+    </div>
+</section>
+
+<section class="section">
+    <h2>6. Experiência do Hóspede</h2>
+    
+    <h3>Welcome Kit Personalizado</h3>
+    <div class="destaque">
+        <h4>Itens Obrigatórios:</h4>
+        <ul>
+            <li>Guia digital do Porto (QR Code) com recomendações exclusivas</li>
+            <li>Mapa personalizado com os melhores spots fotográficos do Douro</li>
+            <li>Garrafa de vinho do Porto de boas-vindas</li>
+            <li>Instruções Wi-Fi, TV smart, aquecimento</li>
+            <li>Contactos de emergência e serviços locais</li>
+            <li>Tampões para ouvidos (solução temporária para ruído)</li>
+        </ul>
+    </div>
+    
+    <h3>Parcerias Estratégicas</h3>
+    <table>
+        <tr><th>Tipo de Parceria</th><th>Benefício para Hóspede</th><th>Benefício para Propriedade</th></tr>
+        <tr><td>Restaurantes da Ribeira</td><td>Desconto de 15%</td><td>€5 comissão por refeição</td></tr>
+        <tr><td>Cruzeiros no Douro</td><td>10% desconto</td><td>€8-12 comissão por booking</td></tr>
+        <tr><td>Taxi/Uber Premium</td><td>Transfer aeroporto €25</td><td>Serviço diferenciado</td></tr>
+        <tr><td>Enoteca Local</td><td>Prova vinhos 20% off</td><td>Experiência autêntica</td></tr>
+    </table>
+    
+    <h3>Automação da Comunicação</h3>
+    <ol>
+        <li><strong>Pré-Chegada:</strong> Email 48h antes com código caixa-forte e guia digital</li>
+        <li><strong>Check-in:</strong> WhatsApp boas-vindas + verificação se está tudo bem</li>
+        <li><strong>Durante a Estadia:</strong> Follow-up discreta no 2º dia via app</li>
+        <li><strong>Check-out:</strong> Agradecimento + solicitação review + desconto próxima estadia</li>
+        <li><strong>Pós-Estadia:</strong> Follow-up 1 semana + newsletter mensal Porto</li>
+    </ol>
+</section>
+
+<section class="section">
+    <h2>7. Acompanhamento e KPIs</h2>
+    
+    <h3>Dashboard de Monitorização</h3>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <h4>Taxa de Ocupação</h4>
+            <p style="font-size: 2rem; color: var(--azul-suave);">68%</p>
+            <p>Meta: <strong>82%</strong></p>
+        </div>
+        <div class="kpi-card">
+            <h4>ADR (Preço Médio)</h4>
+            <p style="font-size: 2rem; color: var(--verde-sucesso);">€65</p>
+            <p>Meta: <strong>€85</strong></p>
+        </div>
+        <div class="kpi-card">
+            <h4>RevPAR</h4>
+            <p style="font-size: 2rem; color: var(--rosa-claro);">€44,2</p>
+            <p>Meta: <strong>€69,7</strong></p>
+        </div>
+        <div class="kpi-card">
+            <h4>Guest Score</h4>
+            <p style="font-size: 2rem; color: var(--amarelo-atencao);">4,2</p>
+            <p>Meta: <strong>4,6</strong></p>
+        </div>
+    </div>
+    
+    <h3>Cronograma de Avaliações</h3>
+    <table>
+        <tr><th>Período</th><th>Métricas a Avaliar</th><th>Ações Esperadas</th></tr>
+        <tr><td>Mensal</td><td>Ocupação, ADR, Reviews</td><td>Ajustes de preço e melhorias</td></tr>
+        <tr><td>Trimestral</td><td>ROI, Satisfação, Concorrência</td><td>Revisão estratégica</td></tr>
+        <tr><td>Anual</td><td>Performance global, Crescimento</td><td>Planeamento do ano seguinte</td></tr>
+    </table>
+    
+    <div class="sucesso">
+        <h4>Objetivos para 12 Meses:</h4>
+        <ul>
+            <li>Aumentar classificação para <strong>4,6/5</strong></li>
+            <li>Atingir <strong>82%</strong> de ocupação média</li>
+            <li>Incrementar receita em <strong>35-45%</strong> (€24.000-26.500)</li>
+            <li>Obter <strong>80+</strong> novas avaliações positivas</li>
+        </ul>
+    </div>
+</section>
+
+<footer class="container">
+    <hr>
+    <h2>Próximos Passos</h2>
+    <p>Este relatório identifica oportunidades concretas para transformar <strong>Apartamento Douro Vintage</strong> numa propriedade de alto desempenho. A implementação deste plano, com acompanhamento profissional, pode resultar num aumento de <strong>€6.500-8.200</strong> na receita anual e numa melhoria significativa da satisfação dos hóspedes.</p>
+    
+    <div class="destaque">
+        <h3>Investimento Total Recomendado: €1.050-1.430</h3>
+        <h3>ROI Projetado: 450-570% no primeiro ano</h3>
+    </div>
+    
+    <a href="#" class="btn-maria-faz">Solicitar Ajuda da Equipa A Maria Faz</a>
+    
+    <div style="text-align: center; margin-top: 2rem; font-style: italic; font-size: 1.1rem; color: var(--azul-suave);">
+        <p>"Respira fundo e trabalha este plano passo a passo para alcançar o sucesso da tua propriedade. — A Maria Faz"</p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 2rem; font-size: 0.9rem; color: #666;">
+        <p>Relatório gerado pela A Maria Faz - Especialistas em Alojamento Local</p>
+        <p>© 2024 A Maria Faz. Todos os direitos reservados.</p>
+    </div>
+</footer>
+
+</body>
+</html>

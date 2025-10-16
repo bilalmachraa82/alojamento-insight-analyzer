@@ -13,6 +13,7 @@ import PricingStrategy from "./PricingStrategy";
 import CompetitorAnalysis from "./CompetitorAnalysis";
 import { useAnalysisData } from "@/hooks/useAnalysisData";
 import PremiumReportViewer from "./PremiumReportViewer";
+import EnhancedPremiumReport from "./EnhancedPremiumReport";
 
 interface AnalysisResultsViewerProps {
   analysisData: any;
@@ -125,7 +126,7 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
             </div>
             <div>
               <h3 className="font-semibold text-lg">Análise Premium Completa</h3>
-              <p className="text-gray-600 text-sm">Relatório profissional gerado com IA avançada</p>
+              <p className="text-gray-600 text-sm">Relatório profissional com KPIs reais e benchmarking</p>
             </div>
           </div>
           <Button 
@@ -137,7 +138,10 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
           </Button>
         </div>
         
-        <PremiumReportViewer analysisData={analysisData.analysis_result} />
+        <EnhancedPremiumReport 
+          propertyId={analysisData.id}
+          analysisData={analysisData.analysis_result} 
+        />
       </div>
     );
   }

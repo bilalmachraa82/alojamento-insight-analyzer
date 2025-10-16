@@ -1,0 +1,206 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/maria_faz_analytics/app/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  firstName     String?
+  lastName      String?
+  company       String?
+  phone         String?
+  password      String?
+  role          String    @default("user")
+  
+  // Créditos e subscrição
+  credits       Int       @default(1) // 1 relatório grátis
+  stripeCustomerId String?
+  subscriptionId   String?
+  subscriptionStatus String? // active, canceled, past_due
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  properties    Property[]
+  reports       Report[]
+  notifications Notification[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  userId      String
+  
+  // Dados básicos da propriedade
+  name        String
+  address     String?
+  city        String?
+  country     String?
+  propertyType String? // apartment, house, room
+  bedrooms    Int?
+  bathrooms   Int?
+  maxGuests   Int?
+  
+  // Links das plataformas
+  airbnbUrl    String?
+  bookingUrl   String?
+  vrboUrl      String?
+  
+  // Dados extraídos
+  currentRating     Float?
+  totalReviews      Int?
+  averagePrice      Float?
+  monthlyRevenue    Float?
+  occupancyRate     Float?
+  responseRate      Float?
+  superHostStatus   Boolean @default(false)
+  
+  // Análise competitiva
+  marketAveragePrice Float?
+  marketAverageRating Float?
+  
+  // Metadados
+  lastScrapedAt DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports     Report[]
+}
+
+model Report {
+  id           String   @id @default(cuid())
+  userId       String
+  propertyId   String
+  
+  // Identificação do relatório
+  title        String
+  description  String?
+  
+  // Health Score e métricas
+  healthScore    Int
+  scoreCategory  String // excellent, good, critical
+  
+  // Métricas principais
+  currentRating       Float?
+  targetRating        Float?
+  currentRevenue      Float?
+  projectedRevenue    Float?
+  currentOccupancy    Float?
+  targetOccupancy     Float?
+  averagePrice        Float?
+  suggestedPrice      Float?
+  
+  // Análises específicas
+  reputationAnalysis    String? @db.Text
+  infrastructureIssues  String? @db.Text
+  pricingRecommendations String? @db.Text
+  marketingInsights     String? @db.Text
+  guestExperience       String? @db.Text
+  
+  // Pontos fortes e críticas (JSON)
+  strongPoints     String? @db.Text // JSON array
+  criticalIssues   String? @db.Text // JSON array
+  recommendations  String? @db.Text // JSON array
+  
+  // Status e dados do relatório
+  htmlContent   String?  @db.Text
+  pdfUrl        String?
+  status        String   @default("generated") // generated, exported, archived
+  
+  // Metadados
+  generatedAt   DateTime @default(now())
+  exportedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String?
+  adminNotification Boolean @default(false)
+  
+  // Conteúdo da notificação
+  type        String   // welcome, report_ready, payment_success, new_signup
+  subject     String
+  message     String   @db.Text
+  
+  // Email específico
+  emailTo     String?
+  emailFrom   String   @default("noreply@amariafaz.com")
+  
+  // Status
+  sent        Boolean  @default(false)
+  sentAt      DateTime?
+  failed      Boolean  @default(false)
+  errorMessage String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HealthScoreMetrics {
+  id          String   @id @default(cuid())
+  
+  // Categorias e pesos para cálculo do Health Score
+  category        String   // rating, revenue, occupancy, market_position, digital_presence
+  weight          Float    // Peso desta categoria no score final
+  description     String
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([category])
+}
