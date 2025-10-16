@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
+// Puppeteer removed - generating HTML report instead
 import Handlebars from "https://esm.sh/handlebars@4.7.8";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -32,40 +32,18 @@ serve(async (req: Request) => {
     // Generate premium HTML report
     const html = await generatePremiumHTML(analysisData);
     
-    console.log("Launching Puppeteer browser...");
+    console.log("Preparing HTML report bytes...");
+    const encoder = new TextEncoder();
+    const htmlBytes = encoder.encode(html);
+    console.log(`HTML generated successfully, size: ${htmlBytes.length} bytes`);
     
-    // Generate PDF using Puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    });
+    const fileName = `relatorio_premium_${analysisData.property_data.property_name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
     
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    // Generate PDF with optimized settings
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        right: '15mm',
-        bottom: '20mm',
-        left: '15mm'
-      }
-    });
-    
-    await browser.close();
-    
-    console.log(`PDF generated successfully, size: ${pdfBuffer.length} bytes`);
-    
-    const fileName = `relatorio_premium_${analysisData.property_data.property_name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
-    
-    // Store the PDF report in Supabase Storage
+    // Store the HTML report in Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('premium-reports')
-      .upload(fileName, pdfBuffer, {
-        contentType: 'application/pdf',
+      .upload(fileName, htmlBytes, {
+        contentType: 'text/html; charset=utf-8',
         upsert: false
       });
 

@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "./cors.ts";
-import { startApifyRun } from "./apify-service.ts";
+import { startEnhancedApifyRun } from "./enhanced-apify-service.ts";
 import { getSubmission, updateSubmissionStatus } from "./db-service.ts";
 import { getActorConfig } from "./apify-config.ts";
 
@@ -63,7 +63,7 @@ serve(async (req: Request) => {
     console.log("Starting Apify scraping process");
     const platform = submission.platform.toLowerCase();
     const { actorId } = getActorConfig(platform);
-    const apifyResult = await startApifyRun(platform, startUrl);
+    const apifyResult = await startEnhancedApifyRun(platform, startUrl, id);
     
     if (!apifyResult.success) {
       await updateSubmissionStatus(id, "pending_manual_review", {
@@ -97,7 +97,9 @@ serve(async (req: Request) => {
       started_at: new Date().toISOString(),
       url: startUrl,
       platform: platform,
-      endpoint_used: apifyResult.endpoint || "primary"
+      endpoint_used: apifyResult.fallbackMode ? "basic_fallback" : "enhanced",
+      extracted_data_points: apifyResult.extractedDataPoints,
+      processing_time_secs: apifyResult.processingTime || 0
     });
     
     return new Response(

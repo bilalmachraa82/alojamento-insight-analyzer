@@ -42,12 +42,21 @@ serve(async (req: Request) => {
       );
     }
 
-    if (submission.status === "pending_manual_review") {
+    // If submission already moved past scraping, return its DB status immediately
+    const passthroughStatuses = [
+      "completed",
+      "analyzing",
+      "failed",
+      "pending_manual_review",
+      "manual_review_requested",
+      "scraping_completed"
+    ];
+    if (submission.status && passthroughStatuses.includes(submission.status)) {
       return new Response(
         JSON.stringify({
-          success: false,
-          status: "pending_manual_review",
-          message: "This submission requires manual review"
+          success: true,
+          status: submission.status,
+          message: `Current status: ${submission.status}`
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
