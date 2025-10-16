@@ -74,12 +74,657 @@ export type Database = {
         }
         Relationships: []
       }
+      dim_channel: {
+        Row: {
+          channel_code: string
+          commission_rate: number
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          channel_code: string
+          commission_rate: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          channel_code?: string
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dim_competitor: {
+        Row: {
+          created_at: string
+          distance_km: number | null
+          id: string
+          is_active: boolean | null
+          last_scraped_at: string | null
+          location: string | null
+          market_id: string | null
+          name: string
+          property_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          distance_km?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_scraped_at?: string | null
+          location?: string | null
+          market_id?: string | null
+          name: string
+          property_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          distance_km?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_scraped_at?: string | null
+          location?: string | null
+          market_id?: string | null
+          name?: string
+          property_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dim_date: {
+        Row: {
+          date: string
+          day_name: string
+          day_of_week: number
+          is_holiday: boolean | null
+          is_weekend: boolean
+          month: number
+          month_name: string
+          quarter: number
+          season: string
+          week: number
+          year: number
+        }
+        Insert: {
+          date: string
+          day_name: string
+          day_of_week: number
+          is_holiday?: boolean | null
+          is_weekend: boolean
+          month: number
+          month_name: string
+          quarter: number
+          season: string
+          week: number
+          year: number
+        }
+        Update: {
+          date?: string
+          day_name?: string
+          day_of_week?: number
+          is_holiday?: boolean | null
+          is_weekend?: boolean
+          month?: number
+          month_name?: string
+          quarter?: number
+          season?: string
+          week?: number
+          year?: number
+        }
+        Relationships: []
+      }
+      dim_event: {
+        Row: {
+          created_at: string
+          end_date: string
+          event_type: string
+          id: string
+          impact_score: number
+          location: string | null
+          market_id: string | null
+          name: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          event_type: string
+          id?: string
+          impact_score: number
+          location?: string | null
+          market_id?: string | null
+          name: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          event_type?: string
+          id?: string
+          impact_score?: number
+          location?: string | null
+          market_id?: string | null
+          name?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dim_property: {
+        Row: {
+          amenities: Json | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          location: string | null
+          max_guests: number | null
+          name: string
+          property_type: string | null
+          room_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amenities?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          max_guests?: number | null
+          name: string
+          property_type?: string | null
+          room_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amenities?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          max_guests?: number | null
+          name?: string
+          property_type?: string | null
+          room_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fact_channel_daily: {
+        Row: {
+          acquisition_cost: number
+          bookings: number
+          cancellations: number
+          channel_id: string
+          created_at: string
+          date: string
+          property_id: string
+          room_revenue: number
+          updated_at: string
+        }
+        Insert: {
+          acquisition_cost?: number
+          bookings?: number
+          cancellations?: number
+          channel_id: string
+          created_at?: string
+          date: string
+          property_id: string
+          room_revenue?: number
+          updated_at?: string
+        }
+        Update: {
+          acquisition_cost?: number
+          bookings?: number
+          cancellations?: number
+          channel_id?: string
+          created_at?: string
+          date?: string
+          property_id?: string
+          room_revenue?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_channel_daily_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "dim_channel"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fact_channel_daily_date_fkey"
+            columns: ["date"]
+            isOneToOne: false
+            referencedRelation: "dim_date"
+            referencedColumns: ["date"]
+          },
+          {
+            foreignKeyName: "fact_channel_daily_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_competitor_rates: {
+        Row: {
+          adr_comp: number | null
+          competitor_id: string
+          created_at: string
+          date: string
+          occupancy_comp: number | null
+          property_id: string
+          rating_comp: number | null
+          revpar_comp: number | null
+          scraped_at: string
+          updated_at: string
+        }
+        Insert: {
+          adr_comp?: number | null
+          competitor_id: string
+          created_at?: string
+          date: string
+          occupancy_comp?: number | null
+          property_id: string
+          rating_comp?: number | null
+          revpar_comp?: number | null
+          scraped_at?: string
+          updated_at?: string
+        }
+        Update: {
+          adr_comp?: number | null
+          competitor_id?: string
+          created_at?: string
+          date?: string
+          occupancy_comp?: number | null
+          property_id?: string
+          rating_comp?: number | null
+          revpar_comp?: number | null
+          scraped_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_competitor_rates_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "dim_competitor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fact_competitor_rates_date_fkey"
+            columns: ["date"]
+            isOneToOne: false
+            referencedRelation: "dim_date"
+            referencedColumns: ["date"]
+          },
+          {
+            foreignKeyName: "fact_competitor_rates_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_daily: {
+        Row: {
+          bookings: number
+          cancellations: number
+          created_at: string
+          data_quality_score: number | null
+          date: string
+          direct_revenue: number
+          inquiries: number
+          property_id: string
+          room_cost: number
+          room_revenue: number
+          rooms_available: number
+          rooms_sold: number
+          searches: number
+          total_revenue: number
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          bookings?: number
+          cancellations?: number
+          created_at?: string
+          data_quality_score?: number | null
+          date: string
+          direct_revenue?: number
+          inquiries?: number
+          property_id: string
+          room_cost?: number
+          room_revenue?: number
+          rooms_available?: number
+          rooms_sold?: number
+          searches?: number
+          total_revenue?: number
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          bookings?: number
+          cancellations?: number
+          created_at?: string
+          data_quality_score?: number | null
+          date?: string
+          direct_revenue?: number
+          inquiries?: number
+          property_id?: string
+          room_cost?: number
+          room_revenue?: number
+          rooms_available?: number
+          rooms_sold?: number
+          searches?: number
+          total_revenue?: number
+          updated_at?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_daily_date_fkey"
+            columns: ["date"]
+            isOneToOne: false
+            referencedRelation: "dim_date"
+            referencedColumns: ["date"]
+          },
+          {
+            foreignKeyName: "fact_daily_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_goals: {
+        Row: {
+          created_at: string
+          created_by: string
+          current_value: number | null
+          deadline: string
+          id: string
+          metric_name: string
+          property_id: string
+          start_date: string
+          status: string
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          current_value?: number | null
+          deadline: string
+          id?: string
+          metric_name: string
+          property_id: string
+          start_date: string
+          status: string
+          target_value: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          current_value?: number | null
+          deadline?: string
+          id?: string
+          metric_name?: string
+          property_id?: string
+          start_date?: string
+          status?: string
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_goals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_reviews: {
+        Row: {
+          created_at: string
+          csat_score: number | null
+          date: string
+          id: string
+          is_repeat_guest: boolean | null
+          nps_score: number | null
+          platform: string
+          property_id: string
+          rating: number | null
+          responded: boolean | null
+          response_time_hours: number | null
+          review_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          csat_score?: number | null
+          date: string
+          id?: string
+          is_repeat_guest?: boolean | null
+          nps_score?: number | null
+          platform: string
+          property_id: string
+          rating?: number | null
+          responded?: boolean | null
+          response_time_hours?: number | null
+          review_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          csat_score?: number | null
+          date?: string
+          id?: string
+          is_repeat_guest?: boolean | null
+          nps_score?: number | null
+          platform?: string
+          property_id?: string
+          rating?: number | null
+          responded?: boolean | null
+          response_time_hours?: number | null
+          review_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_reviews_date_fkey"
+            columns: ["date"]
+            isOneToOne: false
+            referencedRelation: "dim_date"
+            referencedColumns: ["date"]
+          },
+          {
+            foreignKeyName: "fact_reviews_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_sentiment_topics: {
+        Row: {
+          created_at: string
+          date: string
+          mention_count: number
+          platform: string
+          property_id: string
+          sentiment_score: number
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          mention_count?: number
+          platform: string
+          property_id: string
+          sentiment_score: number
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          mention_count?: number
+          platform?: string
+          property_id?: string
+          sentiment_score?: number
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_sentiment_topics_date_fkey"
+            columns: ["date"]
+            isOneToOne: false
+            referencedRelation: "dim_date"
+            referencedColumns: ["date"]
+          },
+          {
+            foreignKeyName: "fact_sentiment_topics_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      kpi_channel_daily: {
+        Row: {
+          acquisition_cost: number | null
+          bookings: number | null
+          cancellations: number | null
+          channel_id: string | null
+          channel_name: string | null
+          channel_type: string | null
+          date: string | null
+          nrevpar: number | null
+          property_id: string | null
+          room_revenue: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_channel_daily_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "dim_channel"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fact_channel_daily_date_fkey"
+            columns: ["date"]
+            isOneToOne: false
+            referencedRelation: "dim_date"
+            referencedColumns: ["date"]
+          },
+          {
+            foreignKeyName: "fact_channel_daily_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpi_comp_set_daily: {
+        Row: {
+          ari: number | null
+          date: string | null
+          mpi: number | null
+          property_id: string | null
+          rgi: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_daily_date_fkey"
+            columns: ["date"]
+            isOneToOne: false
+            referencedRelation: "dim_date"
+            referencedColumns: ["date"]
+          },
+          {
+            foreignKeyName: "fact_daily_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpi_daily: {
+        Row: {
+          adr: number | null
+          alos: number | null
+          bookings: number | null
+          cancellation_rate: number | null
+          cancellations: number | null
+          date: string | null
+          drr: number | null
+          lbr: number | null
+          occupancy_rate: number | null
+          property_id: string | null
+          revpar: number | null
+          rooms_available: number | null
+          rooms_sold: number | null
+          trevpar: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_daily_date_fkey"
+            columns: ["date"]
+            isOneToOne: false
+            referencedRelation: "dim_date"
+            referencedColumns: ["date"]
+          },
+          {
+            foreignKeyName: "fact_daily_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      refresh_all_kpi_views: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
