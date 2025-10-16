@@ -636,66 +636,7 @@ export type Database = {
           property_id: string | null
           room_revenue: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fact_channel_daily_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "dim_channel"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fact_channel_daily_date_fkey"
-            columns: ["date"]
-            isOneToOne: false
-            referencedRelation: "dim_date"
-            referencedColumns: ["date"]
-          },
-          {
-            foreignKeyName: "fact_channel_daily_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "dim_property"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      kpi_channel_daily_secure: {
-        Row: {
-          acquisition_cost: number | null
-          bookings: number | null
-          cancellations: number | null
-          channel_id: string | null
-          channel_name: string | null
-          channel_type: string | null
-          date: string | null
-          nrevpar: number | null
-          property_id: string | null
-          room_revenue: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fact_channel_daily_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "dim_channel"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fact_channel_daily_date_fkey"
-            columns: ["date"]
-            isOneToOne: false
-            referencedRelation: "dim_date"
-            referencedColumns: ["date"]
-          },
-          {
-            foreignKeyName: "fact_channel_daily_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "dim_property"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       kpi_comp_set_daily: {
         Row: {
@@ -705,47 +646,7 @@ export type Database = {
           property_id: string | null
           rgi: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fact_daily_date_fkey"
-            columns: ["date"]
-            isOneToOne: false
-            referencedRelation: "dim_date"
-            referencedColumns: ["date"]
-          },
-          {
-            foreignKeyName: "fact_daily_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "dim_property"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      kpi_comp_set_daily_secure: {
-        Row: {
-          ari: number | null
-          date: string | null
-          mpi: number | null
-          property_id: string | null
-          rgi: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fact_daily_date_fkey"
-            columns: ["date"]
-            isOneToOne: false
-            referencedRelation: "dim_date"
-            referencedColumns: ["date"]
-          },
-          {
-            foreignKeyName: "fact_daily_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "dim_property"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       kpi_daily: {
         Row: {
@@ -764,56 +665,7 @@ export type Database = {
           rooms_sold: number | null
           trevpar: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fact_daily_date_fkey"
-            columns: ["date"]
-            isOneToOne: false
-            referencedRelation: "dim_date"
-            referencedColumns: ["date"]
-          },
-          {
-            foreignKeyName: "fact_daily_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "dim_property"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      kpi_daily_secure: {
-        Row: {
-          adr: number | null
-          alos: number | null
-          bookings: number | null
-          cancellation_rate: number | null
-          cancellations: number | null
-          date: string | null
-          drr: number | null
-          lbr: number | null
-          occupancy_rate: number | null
-          property_id: string | null
-          revpar: number | null
-          rooms_available: number | null
-          rooms_sold: number | null
-          trevpar: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fact_daily_date_fkey"
-            columns: ["date"]
-            isOneToOne: false
-            referencedRelation: "dim_date"
-            referencedColumns: ["date"]
-          },
-          {
-            foreignKeyName: "fact_daily_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "dim_property"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
