@@ -27,6 +27,7 @@ export type Database = {
           platform: string
           premium_report_url: string | null
           property_data: Json | null
+          property_id: string | null
           property_url: string
           report_generated_at: string | null
           retry_count: number | null
@@ -46,6 +47,7 @@ export type Database = {
           platform: string
           premium_report_url?: string | null
           property_data?: Json | null
+          property_id?: string | null
           property_url: string
           report_generated_at?: string | null
           retry_count?: number | null
@@ -65,6 +67,7 @@ export type Database = {
           platform?: string
           premium_report_url?: string | null
           property_data?: Json | null
+          property_id?: string | null
           property_url?: string
           report_generated_at?: string | null
           retry_count?: number | null
@@ -72,7 +75,15 @@ export type Database = {
           submission_date?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_submissions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dim_channel: {
         Row: {

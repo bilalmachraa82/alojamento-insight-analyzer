@@ -190,6 +190,17 @@ async function processSubmission(
       };
     }
 
+    // Link submission to property for frontend access
+    const { error: linkError } = await supabase
+      .from("diagnostic_submissions")
+      .update({ property_id })
+      .eq("id", submission.id);
+
+    if (linkError) {
+      console.error(`Error linking submission ${submission.id} to property ${property_id}:`, linkError);
+      // Continue anyway - this is not critical for analytics
+    }
+
     // Calculate occupancy based on rating
     const occupancy_rate = calculateOccupancy(rating);
     const rooms_available = 1; // Assume 1 room per property

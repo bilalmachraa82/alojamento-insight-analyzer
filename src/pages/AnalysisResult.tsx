@@ -16,6 +16,7 @@ interface AnalysisData {
   property_url: string;
   platform: string;
   status: string;
+  property_id: string | null; // Link to dim_property for analytics
   analysis_result: {
     property_data?: {
       property_name?: string;
@@ -69,6 +70,7 @@ const AnalysisResult = () => {
         property_url: data.property_url,
         platform: data.platform,
         status: data.status,
+        property_id: data.property_id,
         analysis_result: data.analysis_result as AnalysisData['analysis_result'],
         submission_date: data.submission_date,
         property_data: data.property_data,

@@ -117,6 +117,9 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
   
   // Show premium view if it's Claude analysis
   if (isPremiumAnalysis) {
+    // Use property_id if available, otherwise fall back to submission id
+    const propertyId = analysisData.property_id || analysisData.id;
+    
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-gradient-to-r from-brand-pink/10 to-brand-blue/10 rounded-lg border">
@@ -139,7 +142,7 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
         </div>
         
         <EnhancedPremiumReport 
-          propertyId={analysisData.id}
+          propertyId={propertyId}
           analysisData={analysisData.analysis_result} 
         />
       </div>
