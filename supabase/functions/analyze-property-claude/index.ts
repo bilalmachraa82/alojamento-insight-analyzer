@@ -378,6 +378,24 @@ IMPORTANTE:
         // Continue without failing the analysis
       }
 
+      // CRITICAL: Ingest data to analytics system
+      console.log("Triggering daily-ingest for submission:", id);
+      try {
+        const { data: ingestData, error: ingestError } = await supabase.functions.invoke("daily-ingest", {
+          body: {}
+        });
+
+        if (ingestError) {
+          console.error("Error calling daily-ingest:", ingestError);
+          // Don't fail the whole request if ingest fails
+        } else {
+          console.log("Daily ingest completed successfully:", ingestData);
+        }
+      } catch (ingestException) {
+        console.error("Exception during daily-ingest:", ingestException);
+        // Continue without failing the analysis
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
