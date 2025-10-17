@@ -272,6 +272,9 @@ async function processSubmission(
       }
     }
 
+    // Generate competitive set data for benchmarking
+    await generateCompetitorData(property_id, location, rating, occupancy_rate, price_per_night, today);
+
     console.log(`Successfully processed submission ${submission.id} for property ${property_id}`);
 
     return {
@@ -425,4 +428,87 @@ function calculateOccupancy(rating: number): number {
   if (rating >= 4.5) return 0.7; // 70% occupancy for excellent properties
   if (rating >= 4.0) return 0.6; // 60% occupancy for good properties
   return 0.5; // 50% occupancy for average properties
+}
+
+async function generateCompetitorData(
+  property_id: string,
+  location: string,
+  property_rating: number,
+  property_occupancy: number,
+  property_adr: number,
+  date: string
+) {
+  try {
+    // Create 3 synthetic competitors for the market
+    const competitors = [
+      { name: `Competitor A - ${location}`, rating_offset: -0.2, price_offset: 0.9 },
+      { name: `Competitor B - ${location}`, rating_offset: 0.1, price_offset: 1.1 },
+      { name: `Competitor C - ${location}`, rating_offset: -0.1, price_offset: 0.95 },
+    ];
+
+    for (const comp of competitors) {
+      // Check if competitor exists
+      const { data: existing } = await supabase
+        .from("dim_competitor")
+        .select("id")
+        .eq("name", comp.name)
+        .maybeSingle();
+
+      let competitor_id: string;
+
+      if (existing) {
+        competitor_id = existing.id;
+      } else {
+        // Create competitor
+        const { data: newComp, error: compError } = await supabase
+          .from("dim_competitor")
+          .insert({
+            name: comp.name,
+            location,
+            market_id: location.split(",")[0]?.trim() || "MARKET001",
+            is_active: true,
+          })
+          .select("id")
+          .single();
+
+        if (compError || !newComp) {
+          console.error(`Error creating competitor ${comp.name}:`, compError);
+          continue;
+        }
+
+        competitor_id = newComp.id;
+      }
+
+      // Generate competitor metrics
+      const comp_rating = Math.max(3.0, Math.min(5.0, property_rating + comp.rating_offset));
+      const comp_adr = Math.round(property_adr * comp.price_offset);
+      const comp_occupancy = calculateOccupancy(comp_rating);
+      const comp_revpar = comp_adr * comp_occupancy;
+
+      // Insert competitor rates
+      const { error: ratesError } = await supabase
+        .from("fact_competitor_rates")
+        .upsert(
+          {
+            property_id,
+            date,
+            competitor_id,
+            adr_comp: comp_adr,
+            occupancy_comp: comp_occupancy,
+            revpar_comp: comp_revpar,
+            rating_comp: comp_rating,
+          },
+          { onConflict: "property_id,date,competitor_id" }
+        );
+
+      if (ratesError) {
+        console.error(`Error inserting competitor rates for ${comp.name}:`, ratesError);
+      }
+    }
+
+    console.log(`Generated competitor data for property ${property_id}`);
+  } catch (error) {
+    console.error("Error generating competitor data:", error);
+    // Don't fail the entire process if competitor generation fails
+  }
 }
