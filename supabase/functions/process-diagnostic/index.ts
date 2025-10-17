@@ -5,6 +5,10 @@ import { startEnhancedApifyRun } from "./enhanced-apify-service.ts";
 import { getSubmission, updateSubmissionStatus } from "./db-service.ts";
 import { getActorConfig } from "./apify-config.ts";
 
+// FASE 3: Retry configuration
+const MAX_RETRY_ATTEMPTS = 2;
+const RETRY_DELAY_MS = 5000;
+
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -59,21 +63,58 @@ serve(async (req: Request) => {
       );
     }
     
-    // Start Apify run
-    console.log("Starting Apify scraping process");
+    // Start Apify run with retry logic (FASE 3)
+    console.log("Starting Apify scraping process with retry logic");
     const platform = submission.platform.toLowerCase();
     const { actorId } = getActorConfig(platform);
-    const apifyResult = await startEnhancedApifyRun(platform, startUrl, id);
     
-    if (!apifyResult.success) {
+    let apifyResult;
+    let lastError;
+    
+    for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+      console.log(`Scraping attempt ${attempt}/${MAX_RETRY_ATTEMPTS}`);
+      
+      try {
+        apifyResult = await startEnhancedApifyRun(platform, startUrl, id);
+        
+        if (apifyResult.success) {
+          console.log(`Scraping succeeded on attempt ${attempt}`);
+          break;
+        }
+        
+        lastError = apifyResult.error;
+        console.warn(`Attempt ${attempt} failed:`, lastError);
+        
+        // Update status to retry if not last attempt
+        if (attempt < MAX_RETRY_ATTEMPTS) {
+          await updateSubmissionStatus(id, "scraping_retry", {
+            retry_attempt: attempt,
+            last_error: lastError,
+            next_retry_at: new Date(Date.now() + RETRY_DELAY_MS).toISOString()
+          });
+          
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        }
+      } catch (error) {
+        lastError = String(error);
+        console.error(`Attempt ${attempt} error:`, error);
+        
+        if (attempt < MAX_RETRY_ATTEMPTS) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        }
+      }
+    }
+    
+    if (!apifyResult || !apifyResult.success) {
       await updateSubmissionStatus(id, "pending_manual_review", {
-        error: apifyResult.error,
+        error: lastError,
         error_at: new Date().toISOString(),
-        reason: "api_error",
+        reason: "scraping_failed_after_retries",
         url: startUrl,
-        message: "Não foi possível acessar os dados da propriedade automaticamente.",
+        message: "Não foi possível acessar os dados da propriedade após múltiplas tentativas.",
         actor_id: actorId,
-        api_urls_tried: apifyResult.endpoints
+        retry_attempts: MAX_RETRY_ATTEMPTS,
+        api_urls_tried: apifyResult?.endpoints
       });
       
       return new Response(

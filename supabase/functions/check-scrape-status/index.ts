@@ -107,7 +107,10 @@ serve(async (req: Request) => {
         // Process the data based on which actor was used
         let propertyInfo;
         
-        if (actorId.includes("voyager/booking-reviews-scraper")) {
+        if (actorId.includes("dtrungtin/booking-scraper")) {
+          // Handle dtrungtin Booking Scraper format (PRIORITY)
+          propertyInfo = processBookingScraperData(scrapedData);
+        } else if (actorId.includes("voyager/booking-reviews-scraper")) {
           // Handle Voyager Booking Reviews Scraper format
           propertyInfo = processVoyagerBookingData(scrapedData);
         } else if (actorId.includes("airbnb-scraper")) {
@@ -127,6 +130,36 @@ serve(async (req: Request) => {
         propertyInfo.run_id = runId;
         
         console.log("Processed property info:", JSON.stringify(propertyInfo, null, 2));
+
+        // Validate scraped data quality
+        if (!validateScrapedData(propertyInfo)) {
+          console.warn("Scraped data validation failed - insufficient data quality");
+          
+          await supabase
+            .from("diagnostic_submissions")
+            .update({
+              status: "pending_manual_review",
+              property_data: {
+                ...propertyData,
+                property_data: propertyInfo,
+                raw_data: scrapedData,
+                validation_failed: true,
+                validation_reason: "insufficient_data_quality",
+                completed_at: new Date().toISOString(),
+              }
+            })
+            .eq("id", id);
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              status: "pending_manual_review",
+              message: "Data collection completed but needs manual review due to insufficient data quality",
+              data: propertyInfo
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         await supabase
           .from("diagnostic_submissions")
@@ -189,6 +222,68 @@ serve(async (req: Request) => {
     );
   }
 });
+
+function validateScrapedData(data: any): boolean {
+  // Validate that we have minimum required data for analysis
+  return !!(
+    data.property_name &&
+    data.property_name !== 'Unknown Property' &&
+    data.location &&
+    data.location !== 'Unknown location' &&
+    (data.rating > 0 || data.review_count > 0 || data.amenities?.length > 0)
+  );
+}
+
+function processBookingScraperData(data: any[]): any {
+  console.log("Processing dtrungtin/booking-scraper data");
+  
+  if (!data || data.length === 0) {
+    console.log("No booking scraper data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    const property = data[0] || {};
+    
+    // Extract comprehensive property information
+    const result = {
+      property_name: property.name || property.hotelName || 'Unknown Property',
+      location: property.address || property.location || 'Unknown location',
+      url: property.url || '',
+      property_type: property.type || property.propertyType || 'Hotel',
+      rating: parseFloat(property.rating || property.reviewScore || '0'),
+      review_count: parseInt(property.reviews || property.reviewCount || '0', 10),
+      price: property.price || property.avgPrice || 'Preço não disponível',
+      description: property.description || property.propertyDescription || '',
+      amenities: Array.isArray(property.amenities) ? property.amenities : 
+                 (property.facilities ? (Array.isArray(property.facilities) ? property.facilities : []) : []),
+      images: Array.isArray(property.photos) ? property.photos.slice(0, 10) : [],
+      rooms: property.rooms || property.numberOfRooms || 0,
+      facilities: Array.isArray(property.facilities) ? property.facilities : [],
+      check_in: property.checkIn || property.checkInTime || '',
+      check_out: property.checkOut || property.checkOutTime || '',
+      hotel_id: property.hotelId || property.id || ''
+    };
+    
+    console.log("Extracted booking data:", JSON.stringify({
+      name: result.property_name,
+      rating: result.rating,
+      reviews: result.review_count,
+      amenities_count: result.amenities.length,
+      has_description: result.description.length > 0
+    }));
+    
+    return result;
+  } catch (e) {
+    console.error("Error processing Booking scraper data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
 
 function processVoyagerBookingData(data: any[]): any {
   console.log("Processing Voyager Booking Reviews data");

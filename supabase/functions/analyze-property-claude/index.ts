@@ -77,19 +77,42 @@ serve(async (req: Request) => {
 
     const propertyData = submission.property_data.property_data;
     
+    // FASE 2: Validate input data quality before analysis
+    const hasValidRating = propertyData.rating && propertyData.rating > 0;
+    const hasValidReviews = propertyData.reviewCount && propertyData.reviewCount > 0;
+    const hasValidAmenities = propertyData.amenities && propertyData.amenities.length > 0;
+    const hasValidDescription = propertyData.description && propertyData.description.length > 50;
+    
+    // Log data quality warnings
+    if (!hasValidRating) console.warn("⚠️ Missing or invalid rating data");
+    if (!hasValidReviews) console.warn("⚠️ Missing or insufficient review data");
+    if (!hasValidAmenities) console.warn("⚠️ Missing amenities data");
+    if (!hasValidDescription) console.warn("⚠️ Missing or short description");
+    
+    // Build property info with quality indicators
     const propertyInfo = {
-      name: propertyData.name || "Propriedade",
+      name: propertyData.property_name || propertyData.name || "Propriedade",
       url: submission.property_url,
       platform: submission.platform,
       location: propertyData.location || "Portugal",
       rating: propertyData.rating || 0,
-      reviewCount: propertyData.reviewCount || 0,
+      reviewCount: propertyData.review_count || propertyData.reviewCount || 0,
       amenities: propertyData.amenities || [],
       price: propertyData.price || "Preço não disponível",
       description: propertyData.description || "Sem descrição",
       host: propertyData.host || {},
       reviews: propertyData.reviews || [],
-      similarListings: propertyData.similarListings || []
+      similarListings: propertyData.similarListings || [],
+      images: propertyData.images || [],
+      facilities: propertyData.facilities || [],
+      // Data quality flags
+      dataQuality: {
+        hasValidRating,
+        hasValidReviews,
+        hasValidAmenities,
+        hasValidDescription,
+        completeness: [hasValidRating, hasValidReviews, hasValidAmenities, hasValidDescription].filter(Boolean).length / 4
+      }
     };
 
     // FASE 2: Enhanced prompt for Claude with premium analysis structure + Advanced KPIs (FASE 4)
@@ -97,18 +120,39 @@ serve(async (req: Request) => {
 
 Analise detalhadamente esta propriedade e forneça um relatório estratégico completo seguindo EXATAMENTE a estrutura A Maria Faz para relatórios premium.
 
-DADOS DA PROPRIEDADE:
+DADOS DA PROPRIEDADE (Extraídos do ${propertyInfo.platform} via scraping real):
 Nome: ${propertyInfo.name}
 Plataforma: ${propertyInfo.platform}  
 Localização: ${propertyInfo.location}
-Avaliação: ${propertyInfo.rating}
-Número de Avaliações: ${propertyInfo.reviewCount}
-Preço: ${propertyInfo.price}
-Reviews: ${JSON.stringify(propertyInfo.reviews?.slice(0, 10) || [])}
-Comodidades: ${JSON.stringify(propertyInfo.amenities)}
-Descrição: ${propertyInfo.description}
-Anfitrião: ${JSON.stringify(propertyInfo.host)}
-Propriedades Similares: ${JSON.stringify(propertyInfo.similarListings.slice(0, 5))}
+Avaliação: ${propertyInfo.rating > 0 ? `${propertyInfo.rating}/5.0 ⭐` : '⚠️ Avaliação não disponível'}
+Número de Avaliações: ${propertyInfo.reviewCount > 0 ? `${propertyInfo.reviewCount} reviews` : '⚠️ Sem reviews públicos'}
+Preço por Noite: ${propertyInfo.price}
+
+${propertyInfo.reviewCount > 0 && propertyInfo.reviews?.length > 0 ? `
+REVIEWS RECENTES (Reais da plataforma):
+${JSON.stringify(propertyInfo.reviews.slice(0, 10), null, 2)}
+` : '⚠️ AVISO: Propriedade sem reviews disponíveis - análise será limitada'}
+
+${propertyInfo.amenities?.length > 0 ? `
+COMODIDADES (Reais da plataforma):
+${propertyInfo.amenities.join(', ')}
+` : '⚠️ AVISO: Lista de comodidades não disponível'}
+
+${propertyInfo.description && propertyInfo.description !== 'Sem descrição' ? `
+DESCRIÇÃO DA PROPRIEDADE:
+${propertyInfo.description.substring(0, 500)}${propertyInfo.description.length > 500 ? '...' : ''}
+` : '⚠️ AVISO: Descrição não disponível'}
+
+${propertyInfo.facilities?.length > 0 ? `
+FACILIDADES:
+${propertyInfo.facilities.join(', ')}
+` : ''}
+
+QUALIDADE DOS DADOS (Completude: ${Math.round(propertyInfo.dataQuality.completeness * 100)}%):
+- Rating válido: ${propertyInfo.dataQuality.hasValidRating ? '✅' : '❌'}
+- Reviews válidos: ${propertyInfo.dataQuality.hasValidReviews ? '✅' : '❌'}
+- Comodidades válidas: ${propertyInfo.dataQuality.hasValidAmenities ? '✅' : '❌'}
+- Descrição válida: ${propertyInfo.dataQuality.hasValidDescription ? '✅' : '❌'}
 
 CALCULE O HEALTH SCORE (0-100) usando esta fórmula exata:
 Health Score = (
@@ -286,10 +330,20 @@ REGRAS DE INFERÊNCIA quando dados estão em falta:
 - Use o rating e número de reviews para ajustar estimativas (rating >4.5 = +15% ADR)
 - Estime receitas ancilares em 8-12% da receita de alojamento para propriedades bem geridas
 
+REGRAS CRÍTICAS PARA ANÁLISE:
+1. **USE APENAS DADOS REAIS** fornecidos acima - não invente números
+2. **Se dados estão em falta**, indique claramente no relatório com "⚠️ Dados não disponíveis"
+3. **Para campos sem dados reais**, use "Dados insuficientes para análise precisa"
+4. **Quando usar benchmarks**, SEMPRE explique: "Estimativa baseada em benchmark de mercado porque [razão]"
+5. **Para propriedades sem reviews**: reduza health_score em 15 pontos e mencione como crítico
+6. **Para propriedades sem rating válido**: use apenas dados de comodidades e localização
+7. **Seja transparente** sobre limitações de dados na análise
+
 IMPORTANTE: 
 - Seja específico e prático em todas as recomendações com AÇÕES CONCRETAS
-- Use dados reais da propriedade para todos os cálculos
-- Quando dados não disponíveis, use benchmarks e EXPLIQUE as suposições
+- PRIORIZE dados reais extraídos sobre estimativas
+- Quando dados não disponíveis, use benchmarks MAS identifique claramente como "ESTIMADO"
+- Se completude < 50%, adicione seção "limitacoes_analise" no JSON
 - Mantenha tom profissional e consultivo tipo "A Maria Faz"
 - Todos os valores devem estar em euros com 2 casas decimais
 - Todas as percentagens devem incluir o símbolo %

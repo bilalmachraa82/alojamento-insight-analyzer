@@ -2,24 +2,21 @@
 // FASE 3: Enhanced data extraction configuration
 export const ENHANCED_PLATFORM_CONFIG = {
   booking: {
-    actorId: "apify~website-content-crawler",
+    actorId: "dtrungtin/booking-scraper",
     dataPoints: [
-      "property_name", "location", "rating", "review_count", "price", "price_breakdown",
-      "seasonal_pricing", "amenities", "description", "photos", "photo_count",
-      "host_info", "host_response_rate", "host_response_time", "reviews",
-      "review_categories", "nearby_attractions", "competitor_properties",
-      "availability_calendar", "cancellation_policy", "check_in_out_times",
-      "house_rules", "property_type", "number_of_rooms", "max_guests", "facilities_detailed"
+      "name", "location", "rating", "reviews", "price", "description",
+      "amenities", "photos", "hotel_id", "check_in", "check_out",
+      "type", "rooms", "facilities"
     ],
     defaultInput: {
-      maxReviews: 150,
+      search: "", // Will be replaced with property URL
+      maxItems: 1,
+      checkIn: new Date().toISOString().split('T')[0],
+      checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      currency: "EUR",
       language: "pt",
-      includeReviewDetails: true,
-      extractPricing: true,
-      extractAmenities: true,
       proxyConfiguration: {
-        useApifyProxy: true,
-        apifyProxyGroups: ["RESIDENTIAL"]
+        useApifyProxy: true
       }
     }
   },
