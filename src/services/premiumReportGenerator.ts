@@ -13,6 +13,29 @@ export interface HealthScore {
   categoria: 'excelente' | 'bom' | 'medio' | 'critico';
 }
 
+export interface SentimentAnalysisData {
+  overall_sentiment: {
+    score: number; // -1 to +1
+    category: 'positive' | 'neutral' | 'negative';
+    trend: 'improving' | 'stable' | 'declining';
+  };
+  topic_scores: Array<{
+    topic: string;
+    score: number;
+    mention_count: number;
+    trend: 'improving' | 'stable' | 'declining';
+  }>;
+  key_insights: {
+    top_positive_aspects: string[];
+    areas_for_improvement: string[];
+    notable_quotes: Array<{
+      text: string;
+      sentiment: 'positive' | 'negative';
+    }>;
+  };
+  action_items: string[];
+}
+
 export interface PremiumAnalysisData {
   health_score: HealthScore;
   diagnostico_inicial: {
@@ -28,6 +51,7 @@ export interface PremiumAnalysisData {
       gap_qualidade: string;
     };
   };
+  sentiment_analysis?: SentimentAnalysisData;
   reputacao_reviews: {
     situacao_atual: string;
     comentarios_positivos: string[];
@@ -225,7 +249,10 @@ export class PremiumReportGenerator {
     
     // Handle array replacements (simplified for now)
     html = this.replaceArrays(html, analysisData);
-    
+
+    // Add sentiment analysis section if available
+    html = this.addSentimentSection(html, analysisData);
+
     return html;
   }
   
@@ -263,19 +290,311 @@ export class PremiumReportGenerator {
   private static replaceArrays(html: string, data: PremiumAnalysisData): string {
     // Handle array replacements (simplified implementation)
     // In a full implementation, this would use a proper templating engine like Handlebars
-    
+
     // Replace comments arrays
     const positivos = data.reputacao_reviews.comentarios_positivos
       .map(comment => `<li>${comment}</li>`)
       .join('');
-    
+
     const negativos = data.reputacao_reviews.comentarios_negativos
       .map(comment => `<li>${comment}</li>`)
       .join('');
-    
+
     html = html.replace('{{#each comentarios_positivos}}', '').replace('{{/each}}', positivos);
     html = html.replace('{{#each comentarios_negativos}}', '').replace('{{/each}}', negativos);
-    
+
     return html;
+  }
+
+  private static addSentimentSection(html: string, data: PremiumAnalysisData): string {
+    if (!data.sentiment_analysis) {
+      return html;
+    }
+
+    const sentiment = data.sentiment_analysis;
+
+    // Create sentiment section HTML
+    const sentimentSection = `
+      <section class="sentiment-analysis-section">
+        <h2>Análise de Sentimento dos Hóspedes</h2>
+
+        <div class="sentiment-overview">
+          <div class="sentiment-gauge">
+            <h3>Sentimento Geral</h3>
+            <div class="gauge-container">
+              <div class="gauge-score ${sentiment.overall_sentiment.category}">
+                ${(sentiment.overall_sentiment.score * 100).toFixed(0)}
+              </div>
+              <div class="gauge-label">${this.getSentimentLabel(sentiment.overall_sentiment.category)}</div>
+              <div class="gauge-trend ${sentiment.overall_sentiment.trend}">
+                ${this.getTrendIcon(sentiment.overall_sentiment.trend)} ${this.getTrendLabel(sentiment.overall_sentiment.trend)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="topic-sentiment">
+          <h3>Sentimento por Categoria</h3>
+          <div class="topic-grid">
+            ${sentiment.topic_scores.map(topic => `
+              <div class="topic-card ${this.getSentimentCategory(topic.score)}">
+                <h4>${this.translateTopic(topic.topic)}</h4>
+                <div class="topic-score">${(topic.score * 100).toFixed(0)}</div>
+                <div class="topic-mentions">${topic.mention_count} menções</div>
+                <div class="topic-trend ${topic.trend}">
+                  ${this.getTrendIcon(topic.trend)}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="key-insights">
+          <div class="positive-aspects">
+            <h3>Pontos Fortes Destacados</h3>
+            <ul>
+              ${sentiment.key_insights.top_positive_aspects.map(aspect =>
+                `<li class="positive">${aspect}</li>`
+              ).join('')}
+            </ul>
+          </div>
+
+          <div class="improvement-areas">
+            <h3>Áreas de Melhoria</h3>
+            <ul>
+              ${sentiment.key_insights.areas_for_improvement.map(area =>
+                `<li class="negative">${area}</li>`
+              ).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <div class="notable-quotes">
+          <h3>Comentários Notáveis</h3>
+          ${sentiment.key_insights.notable_quotes.map(quote => `
+            <blockquote class="${quote.sentiment}">
+              "${quote.text}"
+            </blockquote>
+          `).join('')}
+        </div>
+
+        <div class="action-items">
+          <h3>Ações Recomendadas</h3>
+          <ol class="action-list">
+            ${sentiment.action_items.map(action =>
+              `<li>${action}</li>`
+            ).join('')}
+          </ol>
+        </div>
+
+        <style>
+          .sentiment-analysis-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+
+          .sentiment-overview {
+            margin: 30px 0;
+          }
+
+          .sentiment-gauge {
+            text-align: center;
+          }
+
+          .gauge-container {
+            display: inline-block;
+            padding: 20px;
+          }
+
+          .gauge-score {
+            font-size: 72px;
+            font-weight: bold;
+            margin: 20px 0;
+          }
+
+          .gauge-score.positive { color: #28A745; }
+          .gauge-score.neutral { color: #FFC107; }
+          .gauge-score.negative { color: #DC3545; }
+
+          .gauge-label {
+            font-size: 24px;
+            margin: 10px 0;
+          }
+
+          .gauge-trend {
+            font-size: 18px;
+            margin-top: 10px;
+          }
+
+          .gauge-trend.improving { color: #28A745; }
+          .gauge-trend.stable { color: #FFC107; }
+          .gauge-trend.declining { color: #DC3545; }
+
+          .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+          }
+
+          .topic-card {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+          }
+
+          .topic-card.positive {
+            background-color: #e8f5e9;
+            border-color: #28A745;
+          }
+
+          .topic-card.neutral {
+            background-color: #fff8e1;
+            border-color: #FFC107;
+          }
+
+          .topic-card.negative {
+            background-color: #ffebee;
+            border-color: #DC3545;
+          }
+
+          .topic-score {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+          }
+
+          .topic-mentions {
+            font-size: 14px;
+            color: #666;
+          }
+
+          .topic-trend {
+            margin-top: 10px;
+            font-size: 20px;
+          }
+
+          .key-insights {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+          }
+
+          .positive-aspects, .improvement-areas {
+            padding: 20px;
+            border-radius: 8px;
+          }
+
+          .positive-aspects {
+            background-color: #e8f5e9;
+          }
+
+          .improvement-areas {
+            background-color: #ffebee;
+          }
+
+          .positive-aspects ul li.positive::before {
+            content: "✓ ";
+            color: #28A745;
+            font-weight: bold;
+          }
+
+          .improvement-areas ul li.negative::before {
+            content: "⚠ ";
+            color: #DC3545;
+            font-weight: bold;
+          }
+
+          .notable-quotes blockquote {
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid;
+            border-radius: 4px;
+            font-style: italic;
+          }
+
+          .notable-quotes blockquote.positive {
+            background-color: #e8f5e9;
+            border-color: #28A745;
+          }
+
+          .notable-quotes blockquote.negative {
+            background-color: #ffebee;
+            border-color: #DC3545;
+          }
+
+          .action-list {
+            list-style: decimal;
+            padding-left: 20px;
+          }
+
+          .action-list li {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+          }
+        </style>
+      </section>
+    `;
+
+    // Insert sentiment section after reputation section
+    const insertPoint = html.indexOf('</body>');
+    if (insertPoint !== -1) {
+      html = html.slice(0, insertPoint) + sentimentSection + html.slice(insertPoint);
+    }
+
+    return html;
+  }
+
+  private static getSentimentLabel(category: string): string {
+    const labels: Record<string, string> = {
+      positive: 'Positivo',
+      neutral: 'Neutro',
+      negative: 'Negativo',
+    };
+    return labels[category] || 'N/A';
+  }
+
+  private static getTrendIcon(trend: string): string {
+    const icons: Record<string, string> = {
+      improving: '↗',
+      stable: '→',
+      declining: '↘',
+    };
+    return icons[trend] || '→';
+  }
+
+  private static getTrendLabel(trend: string): string {
+    const labels: Record<string, string> = {
+      improving: 'Melhorando',
+      stable: 'Estável',
+      declining: 'Declinando',
+    };
+    return labels[trend] || 'Estável';
+  }
+
+  private static getSentimentCategory(score: number): string {
+    if (score >= 0.3) return 'positive';
+    if (score <= -0.3) return 'negative';
+    return 'neutral';
+  }
+
+  private static translateTopic(topic: string): string {
+    const translations: Record<string, string> = {
+      'Cleanliness': 'Limpeza',
+      'Location': 'Localização',
+      'Value': 'Custo-Benefício',
+      'Amenities': 'Comodidades',
+      'Communication': 'Comunicação',
+      'Check-in': 'Check-in',
+      'Accuracy': 'Precisão',
+    };
+    return translations[topic] || topic;
   }
 }

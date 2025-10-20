@@ -21,3 +21,16 @@ export {
   useMarketPerformance,
   type CompSetBenchmark,
 } from './useCompSetBenchmarking';
+
+// Sentiment Analysis
+export {
+  useSentimentTopics,
+  useSentimentSummary,
+  useSentimentTrend,
+  useSentimentComparison,
+  useTopicTrends,
+  useSentimentInsights,
+  type SentimentTopic,
+  type SentimentSummary,
+  type SentimentTrend,
+} from './useSentimentAnalysis';
