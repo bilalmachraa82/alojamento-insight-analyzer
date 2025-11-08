@@ -135,8 +135,6 @@ const AnalysisResult = () => {
       if (error) throw error;
 
       if (data) {
-        console.log("Status check response:", data);
-        
         if (data.status === "scraping") {
           setProgressValue(50);
         } else if (data.status === "scraping_completed") {

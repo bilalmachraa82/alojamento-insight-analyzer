@@ -1,4 +1,169 @@
+/**
+ * Represents an amenity item from various platforms
+ */
+interface AmenityItem {
+  name?: string;
+  title?: string;
+}
 
+/**
+ * Amenities data can be an array of strings, objects, or a record
+ */
+type AmenitiesData = string[] | AmenityItem[] | Record<string, boolean>;
+
+/**
+ * Photo item from various platforms
+ */
+interface PhotoItem {
+  url?: string;
+  src?: string;
+}
+
+/**
+ * Photos data can be an array of strings or objects
+ */
+type PhotosData = string[] | PhotoItem[];
+
+/**
+ * Availability data structure for occupancy estimation
+ */
+interface AvailabilityData {
+  available_days?: number;
+  total_days?: number;
+}
+
+/**
+ * Booking.com raw data structure
+ */
+export interface BookingComRawData {
+  hotel_name?: string;
+  name?: string;
+  address?: string;
+  location?: string;
+  hotel_type?: string;
+  property_type?: string;
+  description?: string;
+  hotel_description?: string;
+  rating?: string | number;
+  review_score?: string | number;
+  review_count?: string | number;
+  reviews_count?: string | number;
+  price?: string | number;
+  rate?: string | number;
+  base_rate?: string | number;
+  cleaning_fee?: string | number;
+  amenities?: AmenitiesData;
+  facilities?: AmenitiesData;
+  photos?: PhotosData;
+  images?: PhotosData;
+  check_in_time?: string;
+  checkin?: string;
+  check_out_time?: string;
+  checkout?: string;
+  cancellation_policy?: string;
+  house_rules?: string[];
+  additional_fees?: Record<string, number>;
+  discounts?: Record<string, number>;
+  occupancy_rate?: number;
+  availability?: AvailabilityData;
+  number_of_reviews?: string | number;
+  [key: string]: unknown;
+}
+
+/**
+ * Airbnb raw data structure
+ */
+export interface AirbnbRawData {
+  name?: string;
+  title?: string;
+  location?: string;
+  city?: string;
+  country?: string;
+  room_type?: string;
+  property_type?: string;
+  description?: string;
+  summary?: string;
+  rating?: string | number;
+  review_scores_rating?: string | number;
+  number_of_reviews?: string | number;
+  reviews_count?: string | number;
+  price?: string | number;
+  cleaning_fee?: string | number;
+  service_fee?: string | number;
+  occupancy_tax?: string | number;
+  amenities?: AmenitiesData;
+  photos?: PhotosData;
+  picture_urls?: PhotosData;
+  check_in_time?: string;
+  check_out_time?: string;
+  cancellation_policy?: string;
+  house_rules?: string;
+  discounts?: Record<string, number>;
+  occupancy_rate?: number;
+  availability?: AvailabilityData;
+  review_count?: string | number;
+  [key: string]: unknown;
+}
+
+/**
+ * VRBO raw data structure
+ */
+export interface VrboRawData {
+  headline?: string;
+  name?: string;
+  location?: string;
+  address?: string;
+  propertyType?: string;
+  description?: string;
+  averageRating?: string | number;
+  rating?: string | number;
+  reviewCount?: string | number;
+  reviews_count?: string | number;
+  nightlyRate?: string | number;
+  price?: string | number;
+  baseRate?: string | number;
+  cleaningFee?: string | number;
+  amenities?: AmenitiesData;
+  photos?: PhotosData;
+  checkInTime?: string;
+  checkOutTime?: string;
+  cancellationPolicy?: string;
+  houseRules?: string[];
+  fees?: Record<string, number>;
+  discounts?: Record<string, number>;
+  occupancy_rate?: number;
+  availability?: AvailabilityData;
+  number_of_reviews?: string | number;
+  review_count?: string | number;
+  [key: string]: unknown;
+}
+
+/**
+ * Generic raw property data structure for unknown platforms
+ */
+export interface GenericRawData {
+  name?: string;
+  title?: string;
+  location?: string;
+  address?: string;
+  type?: string;
+  description?: string;
+  rating?: string | number;
+  reviews?: string | number;
+  price?: string | number;
+  amenities?: AmenitiesData;
+  photos?: PhotosData;
+  [key: string]: unknown;
+}
+
+/**
+ * Union type for all platform raw data
+ */
+export type RawPropertyData = BookingComRawData | AirbnbRawData | VrboRawData | GenericRawData;
+
+/**
+ * Processed property data with standardized structure
+ */
 export interface ProcessedPropertyData {
   basicInfo: {
     name: string;
@@ -26,14 +191,16 @@ export interface ProcessedPropertyData {
     cancellationPolicy?: string;
     houseRules?: string[];
   };
-  rawData: Record<string, any>;
+  rawData: RawPropertyData;
 }
 
 export class DataProcessor {
-  // Process Booking.com data
-  static processBookingData(rawData: any): ProcessedPropertyData {
-    console.log('[DataProcessor] Processing Booking.com data:', rawData);
-    
+  /**
+   * Process Booking.com scraped data into standardized format
+   * @param rawData - Raw data scraped from Booking.com
+   * @returns Processed property data with standardized structure
+   */
+  static processBookingData(rawData: BookingComRawData): ProcessedPropertyData {
     return {
       basicInfo: {
         name: rawData.hotel_name || rawData.name || 'Unknown Property',
@@ -65,10 +232,12 @@ export class DataProcessor {
     };
   }
 
-  // Process Airbnb data
-  static processAirbnbData(rawData: any): ProcessedPropertyData {
-    console.log('[DataProcessor] Processing Airbnb data:', rawData);
-    
+  /**
+   * Process Airbnb scraped data into standardized format
+   * @param rawData - Raw data scraped from Airbnb
+   * @returns Processed property data with standardized structure
+   */
+  static processAirbnbData(rawData: AirbnbRawData): ProcessedPropertyData {
     return {
       basicInfo: {
         name: rawData.name || rawData.title || 'Unknown Property',
@@ -103,10 +272,12 @@ export class DataProcessor {
     };
   }
 
-  // Process VRBO data
-  static processVrboData(rawData: any): ProcessedPropertyData {
-    console.log('[DataProcessor] Processing VRBO data:', rawData);
-    
+  /**
+   * Process VRBO scraped data into standardized format
+   * @param rawData - Raw data scraped from VRBO
+   * @returns Processed property data with standardized structure
+   */
+  static processVrboData(rawData: VrboRawData): ProcessedPropertyData {
     return {
       basicInfo: {
         name: rawData.headline || rawData.name || 'Unknown Property',
@@ -138,7 +309,11 @@ export class DataProcessor {
     };
   }
 
-  // Helper methods
+  /**
+   * Extract numeric price from various string formats
+   * @param priceString - Price as string, number, or undefined
+   * @returns Parsed numeric price or undefined
+   */
   private static extractPrice(priceString: string | number | undefined): number | undefined {
     if (!priceString) return undefined;
     
@@ -147,7 +322,12 @@ export class DataProcessor {
     return isNaN(num) ? undefined : num;
   }
 
-  private static extractAmenities(amenitiesData: any): string[] {
+  /**
+   * Extract and normalize amenities from various data formats
+   * @param amenitiesData - Amenities as array or object
+   * @returns Array of amenity strings
+   */
+  private static extractAmenities(amenitiesData: AmenitiesData): string[] {
     if (Array.isArray(amenitiesData)) {
       return amenitiesData.map(a => typeof a === 'string' ? a : a.name || a.title).filter(Boolean);
     }
@@ -157,14 +337,24 @@ export class DataProcessor {
     return [];
   }
 
-  private static extractPhotos(photosData: any): string[] {
+  /**
+   * Extract photo URLs from various data formats
+   * @param photosData - Photos as array of strings or objects
+   * @returns Array of photo URL strings
+   */
+  private static extractPhotos(photosData: PhotosData): string[] {
     if (Array.isArray(photosData)) {
       return photosData.map(p => typeof p === 'string' ? p : p.url || p.src).filter(Boolean);
     }
     return [];
   }
 
-  private static estimateOccupancy(data: any): number | undefined {
+  /**
+   * Estimate occupancy rate based on available data
+   * @param data - Raw property data with availability or review information
+   * @returns Estimated occupancy rate percentage or undefined
+   */
+  private static estimateOccupancy(data: RawPropertyData): number | undefined {
     // Simple occupancy estimation based on available data
     if (data.occupancy_rate) return data.occupancy_rate;
     if (data.availability) {
@@ -183,17 +373,20 @@ export class DataProcessor {
     return 45;
   }
 
-  // Main processing method
-  static processScrapedData(platform: string, rawData: any): ProcessedPropertyData {
-    console.log(`[DataProcessor] Processing data for platform: ${platform}`);
-    
+  /**
+   * Main processing method - routes data to appropriate platform processor
+   * @param platform - Platform name (booking, airbnb, vrbo, etc.)
+   * @param rawData - Raw scraped data from any platform
+   * @returns Processed property data with standardized structure
+   */
+  static processScrapedData(platform: string, rawData: RawPropertyData): ProcessedPropertyData {
     switch (platform.toLowerCase()) {
       case 'booking':
-        return this.processBookingData(rawData);
+        return this.processBookingData(rawData as BookingComRawData);
       case 'airbnb':
-        return this.processAirbnbData(rawData);
+        return this.processAirbnbData(rawData as AirbnbRawData);
       case 'vrbo':
-        return this.processVrboData(rawData);
+        return this.processVrboData(rawData as VrboRawData);
       default:
         // Generic processing for unknown platforms
         return {

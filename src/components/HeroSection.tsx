@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
+import OptimizedImage from '@/components/ui/optimized-image';
 
 interface HeroSectionProps {
   language: "en" | "pt";
@@ -49,8 +50,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language, scrollToForm }) => 
             {currentContent.description}
           </p>
           <ul className="space-y-3 mb-8">
+            {/* Using benefit text as key - it's unique and stable for this static content */}
             {currentContent.benefits.map((benefit, index) => (
-              <li key={index} className="flex items-center font-inter text-gray-700">
+              <li key={`benefit-${benefit}`} className="flex items-center font-inter text-gray-700">
                 <CheckCircle className="h-5 w-5 mr-2 text-brand-pink" />
                 <span>{benefit}</span>
               </li>
@@ -66,10 +68,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language, scrollToForm }) => 
         </div>
         <div className="hidden md:block md:w-1/2">
           <div className="rounded-lg bg-gradient-to-br from-brand-pink/20 to-brand-blue/20 p-6 h-96 flex items-center justify-center">
-            <img 
+            <OptimizedImage
               src="https://images.unsplash.com/photo-1721322800607-8c38375eef04"
-              alt="Short-Term Rental Accommodation" 
-              className="max-h-full object-contain rounded-lg shadow-lg"
+              alt="Short-Term Rental Accommodation"
+              width={1200}
+              height={800}
+              priority
+              className="rounded-lg shadow-lg"
+              objectFit="contain"
+              sizes="(max-width: 768px) 0vw, 50vw"
             />
           </div>
         </div>

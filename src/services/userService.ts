@@ -1,13 +1,28 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import type { User, Bookmark } from '@/types/database';
+import type { User, Bookmark, Property, AnalysisReport } from '@/types/database';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-const client: any = supabase;
+/**
+ * Supabase client instance with proper typing
+ */
+const client: SupabaseClient = supabase;
+
+/**
+ * Bookmark with related property and analysis report data
+ */
+export interface BookmarkWithRelations extends Bookmark {
+  properties?: Property | Property[] | null;
+  analysis_reports?: AnalysisReport | AnalysisReport[] | null;
+}
 
 export class UserService {
-  // Create or update user
-  static async upsertUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) {
-    console.log('[UserService] upsertUser payload:', userData);
+  /**
+   * Create or update user in the database
+   * @param userData - User data without id and timestamps
+   * @returns Created or updated user
+   */
+  static async upsertUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
     const { data, error } = await client
       .from('users')
       .upsert(userData, { onConflict: 'email' })
@@ -18,9 +33,12 @@ export class UserService {
     return data as User;
   }
 
-  // Get user by email
-  static async getUserByEmail(email: string) {
-    console.log('[UserService] getUserByEmail:', email);
+  /**
+   * Get user by email address
+   * @param email - User's email address
+   * @returns User object or null if not found
+   */
+  static async getUserByEmail(email: string): Promise<User | null> {
     const { data, error } = await client
       .from('users')
       .select('*')
@@ -32,14 +50,20 @@ export class UserService {
     return (data as User) || null;
   }
 
-  // Update subscription
+  /**
+   * Update user subscription information
+   * @param userId - User's ID
+   * @param subscriptionTier - New subscription tier
+   * @param subscriptionStatus - New subscription status (default: 'active')
+   * @param endDate - Optional subscription end date
+   * @returns Updated user object
+   */
   static async updateSubscription(
-    userId: string, 
+    userId: string,
     subscriptionTier: User['subscription_tier'],
     subscriptionStatus: User['subscription_status'] = 'active',
     endDate?: string
-  ) {
-    console.log('[UserService] updateSubscription:', { userId, subscriptionTier, subscriptionStatus, endDate });
+  ): Promise<User> {
     const { data, error } = await client
       .from('users')
       .update({
@@ -55,9 +79,19 @@ export class UserService {
     return data as User;
   }
 
-  // Check subscription limits
-  static async checkSubscriptionLimits(userId: string) {
-    console.log('[UserService] checkSubscriptionLimits for user:', userId);
+  /**
+   * Check subscription limits for a user
+   * @param userId - User's ID
+   * @returns Object containing tier and property limits
+   */
+  static async checkSubscriptionLimits(userId: string): Promise<{
+    tier: User['subscription_tier'];
+    properties: {
+      current: number;
+      limit: number;
+      canAdd: boolean;
+    };
+  }> {
     const user = await this.getUserById(userId);
     if (!user) throw new Error('User not found');
 
@@ -89,9 +123,12 @@ export class UserService {
     };
   }
 
-  // Get user by ID
-  static async getUserById(userId: string) {
-    console.log('[UserService] getUserById:', userId);
+  /**
+   * Get user by ID
+   * @param userId - User's ID
+   * @returns User object or null if not found
+   */
+  static async getUserById(userId: string): Promise<User | null> {
     const { data, error } = await client
       .from('users')
       .select('*')
@@ -102,9 +139,12 @@ export class UserService {
     return (data as User) || null;
   }
 
-  // Add bookmark
-  static async addBookmark(bookmarkData: Omit<Bookmark, 'id' | 'created_at'>) {
-    console.log('[UserService] addBookmark payload:', bookmarkData);
+  /**
+   * Add a new bookmark
+   * @param bookmarkData - Bookmark data without id and created_at
+   * @returns Created bookmark
+   */
+  static async addBookmark(bookmarkData: Omit<Bookmark, 'id' | 'created_at'>): Promise<Bookmark> {
     const { data, error } = await client
       .from('bookmarks')
       .insert(bookmarkData)
@@ -115,9 +155,12 @@ export class UserService {
     return data as Bookmark;
   }
 
-  // Get user bookmarks
-  static async getUserBookmarks(userId: string) {
-    console.log('[UserService] getUserBookmarks for user:', userId);
+  /**
+   * Get user bookmarks with related properties and analysis reports
+   * @param userId - User ID to fetch bookmarks for
+   * @returns Array of bookmarks with related data
+   */
+  static async getUserBookmarks(userId: string): Promise<BookmarkWithRelations[]> {
     const { data, error } = await client
       .from('bookmarks')
       .select(`
@@ -129,12 +172,14 @@ export class UserService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data as any[];
+    return (data as BookmarkWithRelations[]) || [];
   }
 
-  // Remove bookmark
-  static async removeBookmark(bookmarkId: string) {
-    console.log('[UserService] removeBookmark id:', bookmarkId);
+  /**
+   * Remove a bookmark
+   * @param bookmarkId - Bookmark ID to remove
+   */
+  static async removeBookmark(bookmarkId: string): Promise<void> {
     const { error } = await client
       .from('bookmarks')
       .delete()

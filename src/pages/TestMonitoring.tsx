@@ -242,8 +242,9 @@ const TestMonitoring: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
+              {/* Using composite key with message snippet and index for test results */}
               {results.map((result, index) => (
-                <Alert key={index} variant={result.type === 'success' ? 'default' : 'destructive'}>
+                <Alert key={`result-${result.message.slice(0, 30)}-${index}`} variant={result.type === 'success' ? 'default' : 'destructive'}>
                   <AlertTitle className="flex items-center gap-2">
                     {result.type === 'success' ? (
                       <CheckCircle className="h-4 w-4" />

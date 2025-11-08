@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - Alojamento Insight Analyzer</title>
+  <meta name="theme-color" content="#2563eb">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 48px 32px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .icon-container {
+      width: 80px;
+      height: 80px;
+      background: #fee2e2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .icon {
+      width: 48px;
+      height: 48px;
+      stroke: #dc2626;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    p {
+      font-size: 16px;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 32px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #dc2626;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    button {
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .features {
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .features-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #4b5563;
+    }
+
+    .feature-icon {
+      width: 20px;
+      height: 20px;
+      background: #dbeafe;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feature-icon::after {
+      content: '✓';
+      color: #2563eb;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 32px 24px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      p {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon-container">
+      <svg class="icon" viewBox="0 0 24 24">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="9" x2="12" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <h1>You're Offline</h1>
+    <p>It looks like you've lost your internet connection. Don't worry, you can still access some features!</p>
+
+    <div class="status">
+      <span class="status-dot"></span>
+      <span>No Internet Connection</span>
+    </div>
+
+    <div class="buttons">
+      <button class="btn-primary" onclick="retry()">
+        Try Again
+      </button>
+      <button class="btn-secondary" onclick="goHome()">
+        Go to Homepage
+      </button>
+    </div>
+
+    <div class="features">
+      <p class="features-title">What's Available Offline:</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon"></div>
+          <span>View previously loaded analysis results</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"></div>
+          <span>Access cached property data</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"></div>
+          <span>Browse saved reports</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check network status on load
+    window.addEventListener('load', () => {
+      if (navigator.onLine) {
+        window.location.reload();
+      }
+    });
+
+    // Listen for online event
+    window.addEventListener('online', () => {
+      console.log('Network connection restored');
+      window.location.reload();
+    });
+
+    // Retry button handler
+    function retry() {
+      console.log('Retrying connection...');
+      window.location.reload();
+    }
+
+    // Go home button handler
+    function goHome() {
+      console.log('Navigating to homepage...');
+      window.location.href = '/';
+    }
+
+    // Log offline page view
+    console.log('[PWA] Offline page displayed');
+
+    // Track in analytics if available
+    if (typeof gtag === 'function') {
+      gtag('event', 'page_view', {
+        page_title: 'Offline',
+        page_location: window.location.href,
+        page_path: '/offline'
+      });
+    }
+  </script>
+</body>
+</html>

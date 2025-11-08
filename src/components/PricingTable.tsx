@@ -77,12 +77,13 @@ const PricingTable: React.FC<PricingTableProps> = ({ language, scrollToForm }) =
       </h2>
       
       <div className="grid md:grid-cols-3 gap-6">
+        {/* Using plan name as stable key (Free/Premium/Implementation) */}
         {currentContent.plans.map((plan, index) => (
-          <div 
-            key={index} 
+          <div
+            key={`plan-${plan.name}`}
             className={`flex flex-col p-6 rounded-lg border ${
-              plan.highlighted 
-                ? 'border-brand-pink border-2 shadow-md' 
+              plan.highlighted
+                ? 'border-brand-pink border-2 shadow-md'
                 : 'border-gray-200 shadow-sm'
             } bg-white`}
           >
@@ -99,21 +100,22 @@ const PricingTable: React.FC<PricingTableProps> = ({ language, scrollToForm }) =
                 {plan.description}
               </p>
             </div>
-            
+
             <ul className="mb-6 space-y-3 flex-1">
+              {/* Using composite key with plan name and feature text for stable keys */}
               {plan.features.map((feature, idx) => (
-                <li key={idx} className="flex items-start">
+                <li key={`${plan.name}-feature-${feature.slice(0, 20)}-${idx}`} className="flex items-start">
                   <Check className="h-5 w-5 text-brand-pink mr-2 mt-0.5 flex-shrink-0" />
                   <span className="text-gray-600 font-inter">{feature}</span>
                 </li>
               ))}
             </ul>
-            
-            <Button 
+
+            <Button
               onClick={scrollToForm}
               className={`mt-auto ${
-                plan.highlighted 
-                  ? 'bg-brand-pink hover:bg-opacity-90 text-brand-black' 
+                plan.highlighted
+                  ? 'bg-brand-pink hover:bg-opacity-90 text-brand-black'
                   : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
               variant={plan.highlighted ? "default" : "outline"}

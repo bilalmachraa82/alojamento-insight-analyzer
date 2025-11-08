@@ -74,8 +74,9 @@ const CompetitorAnalysis = ({
             <div className="bg-green-50 p-4 rounded-md">
               <h4 className="font-medium text-green-800 mb-2">Strengths</h4>
               <ul className="list-disc list-inside space-y-1">
+                {/* Using composite key with content snippet for stable keys */}
                 {advantages.map((item, index) => (
-                  <li key={index} className="text-gray-700">{item}</li>
+                  <li key={`advantage-${item.slice(0, 30)}-${index}`} className="text-gray-700">{item}</li>
                 ))}
               </ul>
             </div>
@@ -83,8 +84,9 @@ const CompetitorAnalysis = ({
             <div className="bg-red-50 p-4 rounded-md">
               <h4 className="font-medium text-red-800 mb-2">Weaknesses</h4>
               <ul className="list-disc list-inside space-y-1">
+                {/* Using composite key with content snippet for stable keys */}
                 {disadvantages.map((item, index) => (
-                  <li key={index} className="text-gray-700">{item}</li>
+                  <li key={`disadvantage-${item.slice(0, 30)}-${index}`} className="text-gray-700">{item}</li>
                 ))}
               </ul>
             </div>
@@ -92,8 +94,9 @@ const CompetitorAnalysis = ({
             <div className="bg-blue-50 p-4 rounded-md">
               <h4 className="font-medium text-blue-800 mb-2">Opportunities</h4>
               <ul className="list-disc list-inside space-y-1">
+                {/* Using composite key with content snippet for stable keys */}
                 {opportunities.map((item, index) => (
-                  <li key={index} className="text-gray-700">{item}</li>
+                  <li key={`opportunity-${item.slice(0, 30)}-${index}`} className="text-gray-700">{item}</li>
                 ))}
               </ul>
             </div>
@@ -101,8 +104,9 @@ const CompetitorAnalysis = ({
             <div className="bg-amber-50 p-4 rounded-md">
               <h4 className="font-medium text-amber-800 mb-2">Threats</h4>
               <ul className="list-disc list-inside space-y-1">
+                {/* Using composite key with content snippet for stable keys */}
                 {threats.map((item, index) => (
-                  <li key={index} className="text-gray-700">{item}</li>
+                  <li key={`threat-${item.slice(0, 30)}-${index}`} className="text-gray-700">{item}</li>
                 ))}
               </ul>
             </div>
@@ -141,14 +145,15 @@ const CompetitorAnalysis = ({
       <div>
         <h3 className="text-lg font-medium mb-3">Top Competitors</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Using competitor name as stable key (should be unique per competitor) */}
           {directCompetitors.map((competitor, index) => (
-            <div key={index} className="border rounded-md p-4">
+            <div key={`competitor-${competitor.name}-${index}`} className="border rounded-md p-4">
               <h4 className="font-medium text-lg mb-1">{competitor.name}</h4>
               <p className="text-sm text-gray-600 mb-2">Price: {competitor.price}</p>
-              
+
               <h5 className="text-sm font-medium mb-1">Key Strengths</h5>
               <p className="text-sm text-gray-700 mb-3">{competitor.strengths}</p>
-              
+
               <div className="mt-2">
                 <h5 className="text-sm font-medium">Weaknesses</h5>
                 <p className="text-sm text-gray-700">{competitor.weaknesses}</p>
@@ -161,8 +166,9 @@ const CompetitorAnalysis = ({
       <div>
         <h3 className="text-lg font-medium mb-3">Market Insights</h3>
         <ul className="list-disc list-inside space-y-2">
+          {/* Using composite key with content snippet for stable keys */}
           {marketInsights.map((insight, index) => (
-            <li key={index} className="text-gray-700">{insight}</li>
+            <li key={`market-insight-${insight.slice(0, 30)}-${index}`} className="text-gray-700">{insight}</li>
           ))}
         </ul>
       </div>

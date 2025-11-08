@@ -133,8 +133,9 @@ export const ErrorLog = () => {
           <div className="mb-6">
             <h3 className="text-sm font-medium mb-3">Error Summary (Last 7 Days)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Using composite key with error type and severity for stable keys */}
               {errorData.summary.slice(0, 6).map((summary, idx) => (
-                <div key={idx} className="p-3 border rounded-lg">
+                <div key={`error-summary-${summary.error_type}-${summary.severity}-${idx}`} className="p-3 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant={getSeverityVariant(summary.severity)}>
                       {summary.severity}

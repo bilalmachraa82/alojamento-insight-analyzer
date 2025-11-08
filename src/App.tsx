@@ -8,6 +8,7 @@
  * 4. Error tracking with Sentry
  * 5. Analytics tracking with Google Analytics 4
  * 6. GDPR-compliant cookie consent
+ * 7. Progressive Web App (PWA) capabilities - offline support & installability
  */
 
 import { Toaster } from "@/components/ui/toaster";
@@ -16,11 +17,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import CookieConsent from "@/components/CookieConsent";
 import { usePageTracking } from "@/hooks/useAnalytics";
+import { registerServiceWorker, setupNetworkListeners } from "@/utils/registerServiceWorker";
+import InstallPrompt from "@/components/PWA/InstallPrompt";
+import PerformanceMonitor from "@/components/performance/PerformanceMonitor";
 
 // Lazy load all route components for optimal code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -51,6 +55,35 @@ const PageTracker: React.FC = () => {
   return null;
 };
 
+/**
+ * PWA Initializer - Register service worker and setup network listeners
+ */
+const PWAInitializer: React.FC = () => {
+  useEffect(() => {
+    // Register service worker
+    registerServiceWorker({
+      onSuccess: (registration) => {
+        console.log('[PWA] Service worker registered successfully');
+      },
+      onUpdate: (registration) => {
+        console.log('[PWA] New version available');
+      },
+    });
+
+    // Setup network status listeners
+    setupNetworkListeners({
+      onOnline: () => {
+        console.log('[PWA] Network connection restored');
+      },
+      onOffline: () => {
+        console.log('[PWA] Network connection lost');
+      },
+    });
+  }, []);
+
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -61,6 +94,8 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <PageTracker />
+              <PWAInitializer />
+              <PerformanceMonitor />
               {/* Suspense wrapper for lazy-loaded routes with loading fallback */}
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
@@ -75,6 +110,7 @@ const App = () => (
                 </Routes>
               </Suspense>
               <CookieConsent />
+              <InstallPrompt />
             </BrowserRouter>
           </TooltipProvider>
         </React.StrictMode>

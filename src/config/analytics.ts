@@ -39,6 +39,14 @@ export const GA4_EVENTS = {
   FILE_DOWNLOAD: 'file_download',
   OUTBOUND_LINK: 'outbound_link',
   SEARCH: 'search',
+
+  // Performance - Core Web Vitals
+  WEB_VITAL: 'web_vital',
+  WEB_VITAL_LCP: 'web_vital_lcp',
+  WEB_VITAL_INP: 'web_vital_inp',
+  WEB_VITAL_CLS: 'web_vital_cls',
+  WEB_VITAL_FCP: 'web_vital_fcp',
+  WEB_VITAL_TTFB: 'web_vital_ttfb',
 } as const;
 
 export type GA4EventName = typeof GA4_EVENTS[keyof typeof GA4_EVENTS];
@@ -59,7 +67,7 @@ export const setAnalyticsCookieConsent = (consent: boolean) => {
 
   // If consent is revoked, disable GA
   if (!consent && ReactGA.isInitialized) {
-    console.log('Analytics consent revoked. Disabling tracking.');
+    // Analytics consent revoked, tracking disabled
   }
 };
 
@@ -86,14 +94,12 @@ export const initGA4 = () => {
 
   // Don't initialize GA4 if measurement ID is not configured
   if (!measurementId) {
-    console.warn('GA4 Measurement ID not configured. Skipping GA4 initialization.');
     return;
   }
 
   // Check for cookie consent
   const hasConsent = getAnalyticsCookieConsent();
   if (!hasConsent && isProduction) {
-    console.warn('Analytics cookie consent not granted. GA4 will not be initialized until consent is given.');
     return;
   }
 
@@ -117,8 +123,6 @@ export const initGA4 = () => {
         allow_ad_personalization_signals: false, // Disable ad personalization
       },
     });
-
-    console.log(`✅ Google Analytics 4 initialized for ${environment} environment`);
   } catch (error) {
     console.error('Failed to initialize Google Analytics 4:', error);
   }
@@ -410,18 +414,87 @@ export const trackTiming = (
 };
 
 /**
+ * Track Web Vital metric - 2025 Core Web Vitals
+ */
+export interface WebVitalMetric {
+  id: string;
+  name: 'LCP' | 'INP' | 'CLS' | 'FCP' | 'TTFB';
+  value: number;
+  rating: 'good' | 'needs-improvement' | 'poor';
+  delta?: number;
+  navigationType?: string;
+  attribution?: any;
+}
+
+export const trackWebVital = (metric: WebVitalMetric) => {
+  if (!ReactGA.isInitialized || (!cookieConsentGiven && import.meta.env.MODE === 'production')) {
+    return;
+  }
+
+  try {
+    // Track generic web vital event
+    trackEvent(GA4_EVENTS.WEB_VITAL, {
+      metric_name: metric.name,
+      metric_value: Math.round(metric.value),
+      metric_rating: metric.rating,
+      metric_delta: metric.delta ? Math.round(metric.delta) : undefined,
+      navigation_type: metric.navigationType,
+      metric_id: metric.id,
+    });
+
+    // Track specific metric event for easier filtering in GA4
+    const specificEventMap: Record<string, string> = {
+      LCP: GA4_EVENTS.WEB_VITAL_LCP,
+      INP: GA4_EVENTS.WEB_VITAL_INP,
+      CLS: GA4_EVENTS.WEB_VITAL_CLS,
+      FCP: GA4_EVENTS.WEB_VITAL_FCP,
+      TTFB: GA4_EVENTS.WEB_VITAL_TTFB,
+    };
+
+    const specificEvent = specificEventMap[metric.name];
+    if (specificEvent) {
+      trackEvent(specificEvent, {
+        value: metric.name === 'CLS' ? metric.value : Math.round(metric.value),
+        rating: metric.rating,
+        delta: metric.delta ? (metric.name === 'CLS' ? metric.delta : Math.round(metric.delta)) : undefined,
+        navigation_type: metric.navigationType,
+      });
+    }
+
+    // Track as custom measurement for GA4 reporting
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', metric.name, {
+        value: Math.round(metric.value),
+        metric_rating: metric.rating,
+        event_category: 'Web Vitals',
+        event_label: metric.id,
+        non_interaction: true, // Don't affect bounce rate
+      });
+    }
+  } catch (error) {
+    console.error(`Failed to track Web Vital "${metric.name}":`, error);
+  }
+};
+
+/**
+ * Get Web Vitals thresholds for categorization
+ */
+export const getWebVitalsThresholds = () => ({
+  LCP: { good: 2500, needsImprovement: 4000 }, // milliseconds
+  INP: { good: 200, needsImprovement: 500 }, // milliseconds
+  CLS: { good: 0.1, needsImprovement: 0.25 }, // score
+  FCP: { good: 1800, needsImprovement: 3000 }, // milliseconds
+  TTFB: { good: 800, needsImprovement: 1800 }, // milliseconds
+});
+
+/**
  * Test if GA4 is properly initialized
  */
 export const testGA4 = () => {
-  console.log('Testing GA4 initialization...');
-  console.log('Is initialized:', ReactGA.isInitialized);
-  console.log('Cookie consent:', cookieConsentGiven);
-
   if (ReactGA.isInitialized) {
     trackEvent('test_event', {
       test: true,
       timestamp: new Date().toISOString(),
     });
-    console.log('Test event sent successfully!');
   }
 };

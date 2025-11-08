@@ -15,7 +15,6 @@ export const initSentry = () => {
 
   // Don't initialize Sentry if DSN is not configured
   if (!dsn) {
-    console.warn('Sentry DSN not configured. Skipping Sentry initialization.');
     return;
   }
 
@@ -61,6 +60,12 @@ export const initSentry = () => {
 
     // Set sample rate for profiling
     profilesSampleRate: isProduction ? 0.1 : 1.0,
+
+    // Enable performance measurements for Web Vitals
+    _experiments: {
+      // Enable custom measurements
+      measurementLimit: 100,
+    },
 
     // Capture breadcrumbs for better debugging
     beforeBreadcrumb(breadcrumb, hint) {
@@ -144,8 +149,6 @@ export const initSentry = () => {
       height: window.screen.height,
     },
   });
-
-  console.log(`✅ Sentry initialized for ${environment} environment`);
 };
 
 /**
@@ -297,5 +300,128 @@ function sanitizeData(data: Record<string, any>): Record<string, any> {
 
   return sanitized;
 }
+
+/**
+ * Track Web Vital metric to Sentry
+ */
+export interface WebVitalMetric {
+  id: string;
+  name: 'LCP' | 'INP' | 'CLS' | 'FCP' | 'TTFB';
+  value: number;
+  rating: 'good' | 'needs-improvement' | 'poor';
+  delta?: number;
+  navigationType?: string;
+  attribution?: any;
+}
+
+export const trackWebVitalToSentry = (metric: WebVitalMetric) => {
+  const isProduction = import.meta.env.MODE === 'production';
+
+  try {
+    // Set measurements globally (Sentry automatically attaches to active span)
+    Sentry.setMeasurement(
+      metric.name,
+      metric.value,
+      metric.name === 'CLS' ? '' : 'millisecond'
+    );
+
+    // Add breadcrumb for Web Vital
+    Sentry.addBreadcrumb({
+      category: 'web-vitals',
+      message: `${metric.name}: ${metric.value} (${metric.rating})`,
+      level: metric.rating === 'poor' ? 'warning' : 'info',
+      data: {
+        name: metric.name,
+        value: metric.value,
+        rating: metric.rating,
+        delta: metric.delta,
+        navigationType: metric.navigationType,
+        id: metric.id,
+      },
+    });
+
+    // Set context with Web Vitals data
+    Sentry.setContext('web-vitals', {
+      [metric.name]: {
+        value: metric.value,
+        rating: metric.rating,
+        delta: metric.delta,
+      },
+    });
+
+    // If metric is poor, capture as a performance issue (only in production)
+    if (isProduction && metric.rating === 'poor') {
+      Sentry.captureMessage(
+        `Poor Web Vital detected: ${metric.name}`,
+        {
+          level: 'warning',
+          tags: {
+            'web-vital': metric.name,
+            'web-vital.rating': metric.rating,
+          },
+          contexts: {
+            'web-vital': {
+              name: metric.name,
+              value: metric.value,
+              rating: metric.rating,
+              delta: metric.delta,
+              navigationType: metric.navigationType,
+            },
+            attribution: metric.attribution ? sanitizeData(metric.attribution) : undefined,
+          },
+        }
+      );
+    }
+
+    // Add attribution data if available (for debugging)
+    if (metric.attribution) {
+      Sentry.setContext(`web-vitals-attribution-${metric.name.toLowerCase()}`,
+        sanitizeData(metric.attribution)
+      );
+    }
+  } catch (error) {
+    console.error(`[Sentry] Failed to track Web Vital "${metric.name}":`, error);
+  }
+};
+
+/**
+ * Create a custom Sentry span for performance monitoring
+ * Note: In Sentry v8+, use startSpan() for manual instrumentation
+ */
+export const startPerformanceSpan = (
+  name: string,
+  operation: string = 'pageload'
+) => {
+  try {
+    // Start a new span with the given name and operation
+    return Sentry.startSpan(
+      {
+        name,
+        op: operation,
+      },
+      (span) => {
+        return span;
+      }
+    );
+  } catch (error) {
+    console.error('[Sentry] Failed to start performance span:', error);
+    return null;
+  }
+};
+
+/**
+ * Track a custom performance measurement
+ */
+export const trackPerformanceMeasurement = (
+  name: string,
+  value: number,
+  unit: string = 'millisecond'
+) => {
+  try {
+    Sentry.setMeasurement(name, value, unit);
+  } catch (error) {
+    console.error('[Sentry] Failed to track performance measurement:', error);
+  }
+};
 
 export default Sentry;

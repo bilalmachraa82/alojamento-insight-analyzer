@@ -20,8 +20,6 @@ export interface MarketInsights {
 export class MarketIntelligenceService {
   // Analyze local market for a property
   static async analyzeMarket(property: Property, location: string): Promise<MarketInsights> {
-    console.log('[MarketIntelligenceService] Analyzing market for:', property.id, location);
-    
     try {
       // Get existing market data for the location
       const { data: existingMarketData } = await client
@@ -225,8 +223,6 @@ export class MarketIntelligenceService {
     property: Property,
     competitors: Property[]
   ): Promise<CompetitorAnalysis[]> {
-    console.log('[MarketIntelligenceService] Generating competitor analysis for:', property.id);
-    
     const analyses: CompetitorAnalysis[] = [];
     
     for (const competitor of competitors.slice(0, 5)) { // Analyze top 5 competitors
