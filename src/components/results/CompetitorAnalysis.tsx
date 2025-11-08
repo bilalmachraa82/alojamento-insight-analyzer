@@ -1,3 +1,9 @@
+/**
+ * CompetitorAnalysis Component
+ *
+ * Performance Optimization: Wrapped with React.memo to prevent unnecessary re-renders
+ * This component only re-renders when props change
+ */
 
 import React from "react";
 import { 
@@ -164,4 +170,5 @@ const CompetitorAnalysis = ({
   );
 };
 
-export default CompetitorAnalysis;
+// Performance optimization: Memoize component to prevent unnecessary re-renders
+export default React.memo(CompetitorAnalysis);

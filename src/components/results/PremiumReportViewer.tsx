@@ -1,3 +1,10 @@
+/**
+ * PremiumReportViewer Component
+ *
+ * Performance Optimization: Wrapped with React.memo to prevent unnecessary re-renders
+ * This component only re-renders when analysisData props change
+ */
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -357,4 +364,5 @@ const PremiumReportViewer: React.FC<PremiumReportViewerProps> = ({ analysisData 
   );
 };
 
-export default PremiumReportViewer;
+// Performance optimization: Memoize component to prevent unnecessary re-renders
+export default React.memo(PremiumReportViewer);

@@ -16,6 +16,7 @@ import {
 } from '@/components/admin';
 import { useToast } from '@/hooks/use-toast';
 import { useRecentSubmissions } from '@/hooks/admin';
+import MetaTags from '@/components/SEO/MetaTags';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -187,7 +188,13 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <MetaTags
+        title="Admin Dashboard | Maria Faz"
+        description="Admin dashboard for system monitoring and management."
+        noindex={true}
+      />
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 max-w-[1600px]">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -328,6 +335,7 @@ const Admin = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

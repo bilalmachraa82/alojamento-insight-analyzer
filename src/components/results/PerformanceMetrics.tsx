@@ -1,3 +1,9 @@
+/**
+ * PerformanceMetrics Component
+ *
+ * Performance Optimization: Wrapped with React.memo to prevent unnecessary re-renders
+ * This component only re-renders when props change
+ */
 
 import React from "react";
 import { 
@@ -128,4 +134,5 @@ const PerformanceMetrics = ({
   );
 };
 
-export default PerformanceMetrics;
+// Performance optimization: Memoize component to prevent unnecessary re-renders
+export default React.memo(PerformanceMetrics);

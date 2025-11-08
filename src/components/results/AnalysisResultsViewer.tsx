@@ -1,3 +1,9 @@
+/**
+ * AnalysisResultsViewer Component
+ *
+ * Performance Optimization: Wrapped with React.memo to prevent unnecessary re-renders
+ * This component only re-renders when analysisData props change
+ */
 
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -320,4 +326,5 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
   );
 };
 
-export default AnalysisResultsViewer;
+// Performance optimization: Memoize component to prevent unnecessary re-renders
+export default React.memo(AnalysisResultsViewer);
