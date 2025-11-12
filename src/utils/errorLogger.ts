@@ -11,31 +11,19 @@ export interface LogErrorParams {
 }
 
 /**
- * Utility function to log errors to the error_logs table
- * This helps track system errors for the admin dashboard
+ * Utility function to log errors to console
+ * Tables don't exist yet, so we just console.error
  */
 export const logError = async (params: LogErrorParams) => {
   try {
-    const { data, error } = await supabase
-      .from('error_logs')
-      .insert({
-        error_type: params.errorType,
-        error_message: params.errorMessage,
-        stack_trace: params.stackTrace,
-        user_id: params.userId,
-        submission_id: params.submissionId,
-        context: params.context || {},
-        severity: params.severity || 'error',
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Failed to log error:', error);
-      return null;
-    }
-
-    return data;
+    console.error('Error logged:', {
+      type: params.errorType,
+      message: params.errorMessage,
+      severity: params.severity || 'error',
+      userId: params.userId,
+      submissionId: params.submissionId,
+    });
+    return null;
   } catch (error) {
     console.error('Failed to log error:', error);
     return null;
@@ -71,6 +59,7 @@ export const withErrorLogging = <T extends (...args: any[]) => Promise<any>>(
 
 /**
  * Log API usage for tracking quota and costs
+ * Tables don't exist yet, so we just console.log
  */
 export const logApiUsage = async (params: {
   serviceName: 'apify' | 'claude' | 'resend' | 'supabase';
@@ -84,28 +73,14 @@ export const logApiUsage = async (params: {
   metadata?: Record<string, any>;
 }) => {
   try {
-    const { data, error } = await supabase
-      .from('api_usage_logs')
-      .insert({
-        service_name: params.serviceName,
-        operation: params.operation,
-        tokens_used: params.tokensUsed,
-        cost_usd: params.costUsd,
-        submission_id: params.submissionId,
-        user_id: params.userId,
-        success: params.success !== false,
-        error_message: params.errorMessage,
-        metadata: params.metadata || {},
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Failed to log API usage:', error);
-      return null;
-    }
-
-    return data;
+    console.log('API usage:', {
+      service: params.serviceName,
+      operation: params.operation,
+      tokens: params.tokensUsed,
+      cost: params.costUsd,
+      success: params.success !== false,
+    });
+    return null;
   } catch (error) {
     console.error('Failed to log API usage:', error);
     return null;

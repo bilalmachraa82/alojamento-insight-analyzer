@@ -20,12 +20,10 @@ describe('useUser', () => {
   const mockUser = {
     id: 'user-123',
     email: 'test@example.com',
-    full_name: 'Test User',
+    name: 'Test User',
     subscription_tier: 'free' as const,
     subscription_status: 'active' as const,
-    subscription_end_date: null,
-    analyses_used: 0,
-    last_analysis_date: null,
+    subscription_end_date: undefined,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -101,12 +99,10 @@ describe('useUser', () => {
     it('should create a new user', async () => {
       const newUserData = {
         email: 'new@example.com',
-        full_name: 'New User',
+        name: 'New User',
         subscription_tier: 'free' as const,
         subscription_status: 'active' as const,
-        subscription_end_date: null,
-        analyses_used: 0,
-        last_analysis_date: null,
+        subscription_end_date: undefined,
       };
 
       vi.mocked(UserService.upsertUser).mockResolvedValue({
@@ -135,12 +131,10 @@ describe('useUser', () => {
       await expect(
         result.current.createUser({
           email: 'test@example.com',
-          full_name: 'Test',
+          name: 'Test',
           subscription_tier: 'free',
           subscription_status: 'active',
-          subscription_end_date: null,
-          analyses_used: 0,
-          last_analysis_date: null,
+          subscription_end_date: undefined,
         })
       ).rejects.toThrow('Failed to create user');
 
@@ -187,7 +181,7 @@ describe('useUser', () => {
       vi.mocked(UserService.updateSubscription).mockResolvedValue({
         ...mockUser,
         subscription_tier: 'premium',
-        subscription_status: 'trial',
+        subscription_status: 'cancelled',
         subscription_end_date: '2024-12-31',
       });
 
@@ -199,14 +193,14 @@ describe('useUser', () => {
 
       await result.current.updateSubscription(
         'premium',
-        'trial',
+        'cancelled',
         '2024-12-31'
       );
 
       expect(UserService.updateSubscription).toHaveBeenCalledWith(
         'user-123',
         'premium',
-        'trial',
+        'cancelled',
         '2024-12-31'
       );
     });
@@ -215,11 +209,12 @@ describe('useUser', () => {
   describe('checkLimits', () => {
     it('should check subscription limits', async () => {
       const limits = {
-        tier: 'free',
-        maxAnalyses: 3,
-        analysesUsed: 1,
-        analysesRemaining: 2,
-        canAnalyze: true,
+        tier: 'free' as const,
+        properties: {
+          current: 1,
+          limit: 3,
+          canAdd: true,
+        },
       };
 
       vi.mocked(UserService.getUserByEmail).mockResolvedValue(mockUser);
@@ -270,7 +265,7 @@ describe('useUser', () => {
       const activeUser = { ...mockUser, subscription_status: 'active' as const };
       const inactiveUser = {
         ...mockUser,
-        subscription_status: 'inactive' as const,
+        subscription_status: 'cancelled' as const,
       };
 
       vi.mocked(UserService.getUserByEmail).mockResolvedValue(activeUser);

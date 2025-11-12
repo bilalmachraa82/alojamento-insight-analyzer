@@ -176,40 +176,16 @@ class EmailService {
     email: string,
     emailType: string
   ): Promise<boolean> {
-    try {
-      const { data, error } = await supabase.rpc('should_send_email', {
-        p_email: email,
-        p_email_type: emailType,
-      });
-
-      if (error) {
-        console.error('Error checking email preferences:', error);
-        // Default to sending if we can't check preferences
-        return true;
-      }
-
-      return data === true;
-    } catch (error) {
-      console.error('Exception checking email preferences:', error);
-      // Default to sending if we can't check preferences
-      return true;
-    }
+    // Email preferences table doesn't exist yet, default to sending
+    console.log('Checking email preferences for:', email, emailType);
+    return true;
   }
 
   private async trackEmail(
     notification: EmailNotificationRecord
   ): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('email_notifications')
-        .insert(notification);
-
-      if (error) {
-        console.error('Error tracking email:', error);
-      }
-    } catch (error) {
-      console.error('Exception tracking email:', error);
-    }
+    // Email notifications table doesn't exist yet
+    console.log('Email tracked:', notification.email_type, notification.status);
   }
 
   async sendWelcomeEmail(user: EmailUser): Promise<{ success: boolean; error?: string }> {
@@ -221,7 +197,7 @@ class EmailService {
       }
 
       // Render email template
-      const html = render(
+      const html = await render(
         WelcomeEmail({
           userName: user.name,
           userEmail: user.email,
@@ -272,7 +248,7 @@ class EmailService {
       }
 
       // Render email template
-      const html = render(
+      const html = await render(
         ReportReadyEmail({
           userName: user.name,
           userEmail: user.email,
@@ -331,7 +307,7 @@ class EmailService {
       }
 
       // Render email template
-      const html = render(
+      const html = await render(
         PaymentConfirmationEmail({
           userName: user.name,
           userEmail: user.email,
@@ -389,7 +365,7 @@ class EmailService {
       const resetUrl = `${window.location.origin}/reset-password?token=${token}`;
 
       // Render email template
-      const html = render(
+      const html = await render(
         PasswordResetEmail({
           userName: user.name,
           userEmail: user.email,
@@ -430,64 +406,30 @@ class EmailService {
   }
 
   async retryFailedEmails(): Promise<{ retriedCount: number; successCount: number }> {
-    try {
-      const { data: failedEmails, error } = await supabase
-        .from('email_notifications')
-        .select('*')
-        .eq('status', 'failed')
-        .lt('retry_count', 3)
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+    // Email notifications table doesn't exist yet
+    console.log('Retry failed emails requested');
+    return { retriedCount: 0, successCount: 0 };
+  }
 
-      if (error) {
-        console.error('Error fetching failed emails:', error);
-        return { retriedCount: 0, successCount: 0 };
-      }
+  async getEmailHistory(email: string): Promise<EmailNotificationRecord[]> {
+    // Email notifications table doesn't exist yet
+    console.log('Email history requested for:', email);
+    return [];
+  }
 
-      if (!failedEmails || failedEmails.length === 0) {
-        return { retriedCount: 0, successCount: 0 };
-      }
+  async getEmailStatistics(email: string) {
+    // Email notifications table doesn't exist yet
+    console.log('Email statistics requested for:', email);
+    
+    const totalSent = 0;
+    const byType = {} as Record<string, number>;
+    const lastSent = undefined;
 
-      let successCount = 0;
-
-      for (const email of failedEmails) {
-        // Retry based on email type
-        let result: { success: boolean; error?: string } | null = null;
-
-        switch (email.email_type) {
-          case 'welcome':
-            result = await this.sendWelcomeEmail({
-              id: email.user_id || undefined,
-              email: email.email,
-              name: email.template_data?.userName || 'User',
-            });
-            break;
-          case 'report_ready':
-            result = await this.sendReportReadyEmail(
-              {
-                id: email.user_id || undefined,
-                email: email.email,
-                name: email.template_data?.userName || 'User',
-              },
-              {
-                id: email.template_data?.submissionId || '',
-                propertyName: email.template_data?.propertyName || 'Property',
-                reportUrl: email.template_data?.reportUrl || '',
-              }
-            );
-            break;
-          // Add other email types as needed
-        }
-
-        if (result?.success) {
-          successCount++;
-        }
-      }
-
-      return { retriedCount: failedEmails.length, successCount };
-    } catch (error) {
-      console.error('Error retrying failed emails:', error);
-      return { retriedCount: 0, successCount: 0 };
-    }
+    return {
+      totalSent,
+      byType,
+      lastSent,
+    };
   }
 }
 

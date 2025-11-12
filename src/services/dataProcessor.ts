@@ -209,8 +209,8 @@ export class DataProcessor {
         description: rawData.description || rawData.hotel_description
       },
       performance: {
-        rating: parseFloat(rawData.rating || rawData.review_score || '0'),
-        reviewCount: parseInt(rawData.review_count || rawData.reviews_count || '0'),
+        rating: parseFloat(String(rawData.rating || rawData.review_score || '0')),
+        reviewCount: parseInt(String(rawData.review_count || rawData.reviews_count || '0')),
         occupancyRate: this.estimateOccupancy(rawData),
         averageDailyRate: this.extractPrice(rawData.price || rawData.rate)
       },
@@ -246,8 +246,8 @@ export class DataProcessor {
         description: rawData.description || rawData.summary
       },
       performance: {
-        rating: parseFloat(rawData.rating || rawData.review_scores_rating || '0') / 20, // Airbnb uses 100-point scale
-        reviewCount: parseInt(rawData.number_of_reviews || rawData.reviews_count || '0'),
+        rating: parseFloat(String(rawData.rating || rawData.review_scores_rating || '0')) / 20, // Airbnb uses 100-point scale
+        reviewCount: parseInt(String(rawData.number_of_reviews || rawData.reviews_count || '0')),
         occupancyRate: this.estimateOccupancy(rawData),
         averageDailyRate: this.extractPrice(rawData.price)
       },
@@ -286,8 +286,8 @@ export class DataProcessor {
         description: rawData.description
       },
       performance: {
-        rating: parseFloat(rawData.averageRating || rawData.rating || '0'),
-        reviewCount: parseInt(rawData.reviewCount || rawData.reviews_count || '0'),
+        rating: parseFloat(String(rawData.averageRating || rawData.rating || '0')),
+        reviewCount: parseInt(String(rawData.reviewCount || rawData.reviews_count || '0')),
         occupancyRate: this.estimateOccupancy(rawData),
         averageDailyRate: this.extractPrice(rawData.nightlyRate || rawData.price)
       },
@@ -356,16 +356,17 @@ export class DataProcessor {
    */
   private static estimateOccupancy(data: RawPropertyData): number | undefined {
     // Simple occupancy estimation based on available data
-    if (data.occupancy_rate) return data.occupancy_rate;
+    if (data.occupancy_rate) return Number(data.occupancy_rate);
     if (data.availability) {
-      const available = data.availability.available_days || 0;
-      const total = data.availability.total_days || 365;
+      const avail = data.availability as any;
+      const available = Number(avail?.available_days || 0);
+      const total = Number(avail?.total_days || 365);
       return Math.round(((total - available) / total) * 100);
     }
     
     // Fallback estimation based on reviews and rating
-    const reviews = parseInt(data.review_count || data.number_of_reviews || '0');
-    const rating = parseFloat(data.rating || data.review_scores_rating || '0');
+    const reviews = parseInt(String(data.review_count || data.number_of_reviews || '0'));
+    const rating = parseFloat(String(data.rating || data.review_scores_rating || '0'));
     
     if (reviews > 50 && rating > 4.0) return 75;
     if (reviews > 20 && rating > 3.5) return 65;
@@ -391,14 +392,14 @@ export class DataProcessor {
         // Generic processing for unknown platforms
         return {
           basicInfo: {
-            name: rawData.name || rawData.title || 'Unknown Property',
-            location: rawData.location || rawData.address || 'Unknown Location',
-            propertyType: rawData.type || 'Property',
-            description: rawData.description
+            name: String(rawData.name || rawData.title || 'Unknown Property'),
+            location: String(rawData.location || rawData.address || 'Unknown Location'),
+            propertyType: String(rawData.type || 'Property'),
+            description: String(rawData.description || '')
           },
           performance: {
             rating: this.extractPrice(rawData.rating),
-            reviewCount: parseInt(rawData.reviews || '0'),
+            reviewCount: parseInt(String(rawData.reviews || '0')),
             averageDailyRate: this.extractPrice(rawData.price)
           },
           amenities: this.extractAmenities(rawData.amenities || []),

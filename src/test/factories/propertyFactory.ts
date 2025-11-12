@@ -3,7 +3,7 @@ export const createMockProperty = (overrides = {}) => ({
   user_id: 'test-user-id',
   name: 'Test Property',
   property_url: 'https://booking.com/test-property',
-  platform: 'booking',
+  platform: 'booking' as 'booking' | 'airbnb' | 'vrbo',
   location: 'Lisbon, Portugal',
   property_type: 'apartment',
   bedrooms: 2,

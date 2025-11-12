@@ -17,26 +17,35 @@ import { componentTagger } from "lovable-tagger";
 import { visualizer } from "rollup-plugin-visualizer";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 
+import type { PluginOption } from 'vite';
+
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [
+export default defineConfig(({ mode }) => {
+  const plugins: PluginOption[] = [
     react(),
-    mode === 'development' && componentTagger(),
-    // Bundle analyzer - generates stats.html when running build:analyze
-    mode === 'analyze' && visualizer({
-      filename: './dist/stats.html',
-      open: true,
-      gzipSize: true,
-      brotliSize: true,
-    }),
-    // Sentry plugin for source maps upload (only in production builds with Sentry configured)
+  ];
+
+  if (mode === 'development') {
+    plugins.push(componentTagger());
+  }
+
+  if (mode === 'analyze') {
+    plugins.push(
+      visualizer({
+        filename: './dist/stats.html',
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      })
+    );
+  }
+
+  if (
     mode === 'production' &&
-      process.env.VITE_SENTRY_DSN &&
-      process.env.SENTRY_AUTH_TOKEN &&
+    process.env.VITE_SENTRY_DSN &&
+    process.env.SENTRY_AUTH_TOKEN
+  ) {
+    plugins.push(
       sentryVitePlugin({
         org: process.env.SENTRY_ORG,
         project: process.env.SENTRY_PROJECT,
@@ -46,16 +55,24 @@ export default defineConfig(({ mode }) => ({
           filesToDeleteAfterUpload: './dist/**/*.map',
         },
         telemetry: false,
-      }),
-  ].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+      })
+    );
+  }
+
+  return {
+    server: {
+      host: "::",
+      port: 8080,
     },
-  },
-  // Production build optimizations
-  build: {
-    target: 'es2020', // Modern browsers only, smaller bundle
+    plugins,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
+    // Production build optimizations
+    build: {
+      target: 'es2020', // Modern browsers only, smaller bundle
     sourcemap: true, // Generate source maps for Sentry (will be removed after upload in production)
     rollupOptions: {
       output: {
@@ -123,17 +140,18 @@ export default defineConfig(({ mode }) => ({
       },
     },
     // Warn on chunks larger than 500kb
-    chunkSizeWarningLimit: 500,
-    // Optimize CSS code splitting
-    cssCodeSplit: true,
-  },
-  // Optimize dependencies
-  optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      '@tanstack/react-query',
-    ],
-  },
-}));
+      chunkSizeWarningLimit: 500,
+      // Optimize CSS code splitting
+      cssCodeSplit: true,
+    },
+    // Optimize dependencies
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@tanstack/react-query',
+      ],
+    },
+  };
+});
