@@ -25,6 +25,7 @@ import { usePageTracking } from "@/hooks/useAnalytics";
 import { registerServiceWorker, setupNetworkListeners } from "@/utils/registerServiceWorker";
 import InstallPrompt from "@/components/PWA/InstallPrompt";
 import PerformanceMonitor from "@/components/performance/PerformanceMonitor";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 // Lazy load all route components for optimal code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -89,11 +90,12 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
-        <React.StrictMode>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <React.StrictMode>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
               <PageTracker />
               <PWAInitializer />
               <PerformanceMonitor />
@@ -116,6 +118,7 @@ const App = () => (
             </BrowserRouter>
           </TooltipProvider>
         </React.StrictMode>
+        </ThemeProvider>
       </HelmetProvider>
     </QueryClientProvider>
   </ErrorBoundary>

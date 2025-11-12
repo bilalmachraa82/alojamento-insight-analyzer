@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   SystemHealthCard,
   SubmissionMetrics,
@@ -44,9 +45,20 @@ const Admin = () => {
         return;
       }
 
-      // Skip admin check since user_profiles table doesn't exist
-      // In production, you would check user role here
-      const hasAdminRole = true; // TODO: Implement proper admin role check
+      // Check if user has admin role using security definer function
+      const { data: hasAdminRole, error: roleError } = await supabase
+        .rpc('is_admin', { _user_id: user.id });
+
+      if (roleError) {
+        console.error('Error checking admin role:', roleError);
+        toast({
+          title: 'Error',
+          description: 'Failed to verify admin access',
+          variant: 'destructive',
+        });
+        navigate('/');
+        return;
+      }
       
       if (!hasAdminRole) {
         toast({
@@ -205,6 +217,7 @@ const Admin = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => navigate('/')}>
               <Home className="h-4 w-4 mr-2" />
               Home

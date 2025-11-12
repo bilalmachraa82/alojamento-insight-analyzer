@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          resource_id: string | null
+          resource_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+        }
+        Relationships: []
+      }
+      api_usage_logs: {
+        Row: {
+          cost_usd: number | null
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          operation: string
+          service_name: string
+          submission_id: string | null
+          success: boolean
+          tokens_used: number | null
+        }
+        Insert: {
+          cost_usd?: number | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          operation: string
+          service_name: string
+          submission_id?: string | null
+          success?: boolean
+          tokens_used?: number | null
+        }
+        Update: {
+          cost_usd?: number | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          operation?: string
+          service_name?: string
+          submission_id?: string | null
+          success?: boolean
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_logs_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostic_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diagnostic_submissions: {
         Row: {
           actor_id: string | null
@@ -282,6 +365,59 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          error_message: string
+          error_type: string
+          id: string
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          stack_trace: string | null
+          submission_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          error_message: string
+          error_type: string
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          stack_trace?: string | null
+          submission_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          error_message?: string
+          error_type?: string
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack_trace?: string | null
+          submission_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_logs_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostic_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fact_channel_daily: {
         Row: {
@@ -635,8 +771,93 @@ export type Database = {
           },
         ]
       }
+      system_health_checks: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          response_time_ms: number | null
+          service_name: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
+      admin_api_usage_summary: {
+        Row: {
+          avg_cost_per_call: number | null
+          service_name: string | null
+          successful_calls: number | null
+          total_calls: number | null
+          total_cost_usd: number | null
+          total_tokens: number | null
+        }
+        Relationships: []
+      }
+      admin_error_summary: {
+        Row: {
+          critical_count: number | null
+          error_count: number | null
+          unique_error_types: number | null
+          unresolved_count: number | null
+          warning_count: number | null
+        }
+        Relationships: []
+      }
+      admin_submissions_summary: {
+        Row: {
+          avg_processing_time_minutes: number | null
+          failed_30d: number | null
+          pending_count: number | null
+          successful_30d: number | null
+          total_submissions_30d: number | null
+        }
+        Relationships: []
+      }
       kpi_channel_daily: {
         Row: {
           acquisition_cost: number | null
@@ -683,10 +904,19 @@ export type Database = {
       }
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      promote_to_admin: { Args: { _user_id: string }; Returns: undefined }
       refresh_all_kpi_views: { Args: never; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "user" | "admin" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -813,6 +1043,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["user", "admin", "super_admin"],
+    },
   },
 } as const

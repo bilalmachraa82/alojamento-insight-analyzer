@@ -10,6 +10,7 @@ import PricingTable from "@/components/PricingTable";
 import DiagnosticForm from "@/components/DiagnosticForm";
 import { Separator } from "@/components/ui/separator";
 import MetaTags from "@/components/SEO/MetaTags";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   organizationSchema,
   websiteSchema,
@@ -55,7 +56,10 @@ const Index: React.FC = () => {
       {/* Header */}
       <header className="w-full py-4 px-6 md:px-8 flex justify-between items-center shadow-sm bg-white sticky top-0 z-10">
         <MariaFazLogo />
-        <LanguageToggle language={language} setLanguage={setLanguage} />
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <LanguageToggle language={language} setLanguage={setLanguage} />
+        </div>
       </header>
 
       <main className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
