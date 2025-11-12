@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, FileText, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import MetaTags from '@/components/SEO/MetaTags';
 
 const TestPremiumPDF: React.FC = () => {
   const [submissionId, setSubmissionId] = useState('');
@@ -136,7 +137,13 @@ const TestPremiumPDF: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50 p-8">
+    <>
+      <MetaTags
+        title="Test PDF Generation | Maria Faz"
+        description="Internal testing page for PDF generation."
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-white to-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         <Card>
           <CardHeader>
@@ -239,6 +246,7 @@ const TestPremiumPDF: React.FC = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

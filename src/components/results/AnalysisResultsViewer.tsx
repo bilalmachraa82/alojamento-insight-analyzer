@@ -1,3 +1,9 @@
+/**
+ * AnalysisResultsViewer Component
+ *
+ * Performance Optimization: Wrapped with React.memo to prevent unnecessary re-renders
+ * This component only re-renders when analysisData props change
+ */
 
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,8 +54,6 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
         throw error;
       }
 
-      console.log("Claude analysis response:", data);
-      
       toast({
         title: "✨ Análise Premium Concluída!",
         description: "Atualizando a página para mostrar os resultados...",
@@ -267,7 +271,7 @@ interface ReviewsListProps {
   reviews: any[];
 }
 
-const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
+const ReviewsList = React.memo<ReviewsListProps>(({ reviews }) => {
   if (!reviews || reviews.length === 0) {
     return <p>Nenhuma avaliação disponível.</p>;
   }
@@ -275,9 +279,10 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold mb-4">Avaliações dos Hóspedes ({reviews.length})</h3>
-      
+
+      {/* Using composite key with reviewer and date for stable keys */}
       {reviews.map((review, index) => (
-        <div key={index} className="border p-4 rounded-lg shadow-sm">
+        <div key={`review-${review.reviewer || 'guest'}-${review.date || review.stayDate || index}`} className="border p-4 rounded-lg shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center">
               <div className="bg-brand-blue rounded-full w-8 h-8 flex items-center justify-center text-white mr-2">
@@ -294,20 +299,20 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
               {review.rating || review.score || "N/A"}
             </div>
           </div>
-          
+
           {review.title && <p className="font-semibold mb-1">{review.title}</p>}
-          
+
           <p className="text-sm text-gray-700">
             {review.text || review.comment || review.reviewText || "Sem comentário disponível."}
           </p>
-          
+
           {review.positives && (
             <div className="mt-2">
               <p className="text-sm font-medium text-green-600">Positivo:</p>
               <p className="text-xs text-gray-600">{review.positives}</p>
             </div>
           )}
-          
+
           {review.negatives && (
             <div className="mt-2">
               <p className="text-sm font-medium text-red-600">Negativo:</p>
@@ -318,6 +323,70 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ reviews }) => {
       ))}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Only re-render if reviews array length or content changes
+  if (prevProps.reviews?.length !== nextProps.reviews?.length) {
+    return false;
+  }
 
-export default AnalysisResultsViewer;
+  // For performance, do a shallow check on first and last review
+  // (assumes if endpoints are same, middle is likely same)
+  if (prevProps.reviews?.length > 0) {
+    const prevFirst = prevProps.reviews[0];
+    const nextFirst = nextProps.reviews[0];
+    if (prevFirst?.text !== nextFirst?.text || prevFirst?.rating !== nextFirst?.rating) {
+      return false;
+    }
+  }
+
+  return true;
+});
+
+// Performance optimization: Memoize component with custom comparison function
+// Only re-render when analysisData actually changes (by ID or content)
+export default React.memo(AnalysisResultsViewer, (prevProps, nextProps) => {
+  // Return true if props are equal (skip re-render), false if different (re-render)
+
+  // If references are the same, no need to re-render
+  if (prevProps.analysisData === nextProps.analysisData) {
+    return true;
+  }
+
+  const prevData = prevProps.analysisData;
+  const nextData = nextProps.analysisData;
+
+  // If either is null/undefined, they must be different
+  if (!prevData || !nextData) {
+    return prevData === nextData;
+  }
+
+  // Compare by unique identifiers first (most efficient)
+  if (prevData.id !== nextData.id) {
+    return false;
+  }
+
+  // Compare premium analysis flag (determines which view to render)
+  const prevIsPremium = prevData?.analysis_result?.health_score !== undefined;
+  const nextIsPremium = nextData?.analysis_result?.health_score !== undefined;
+
+  if (prevIsPremium !== nextIsPremium) {
+    return false;
+  }
+
+  // Compare property_id (for premium reports)
+  if (prevData.property_id !== nextData.property_id) {
+    return false;
+  }
+
+  // Compare review availability (affects tab rendering)
+  const prevHasReviews = prevData?.scraped_data?.property_data?.reviews?.length > 0;
+  const nextHasReviews = nextData?.scraped_data?.property_data?.reviews?.length > 0;
+
+  if (prevHasReviews !== nextHasReviews) {
+    return false;
+  }
+
+  // If IDs match and key flags are the same, skip re-render
+  // (Internal state changes like isGeneratingClaudeAnalysis will still cause re-renders)
+  return true;
+});

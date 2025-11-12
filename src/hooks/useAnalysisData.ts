@@ -1,20 +1,103 @@
 import { useMemo } from "react";
 import { SeasonalPricing } from "@/components/results/PricingStrategy";
 
-interface AnalysisData {
-  analysis_result?: {
-    property_data?: {
-      property_name?: string;
-      location?: string;
-      property_type?: string;
-      rating?: number;
-    };
-    performance_metrics?: any;
-    recommendations?: any;
-    pricing_strategy?: any;
-    competitor_analysis?: any;
-    [key: string]: any;
+/**
+ * Performance metrics for a property
+ */
+interface PerformanceMetrics {
+  occupancyRate?: number;
+  averageRating?: number;
+  reviewCount?: number;
+  responseRate?: number;
+  averageDailyRate?: string | number;
+  revenueGrowth?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Recommendation item with category and list of suggestions
+ */
+interface RecommendationCategory {
+  category: string;
+  items: string[];
+}
+
+/**
+ * Raw seasonal pricing data from API
+ */
+interface RawSeasonalPricing {
+  season?: string;
+  months?: string[];
+  price?: number;
+  strategy?: string;
+}
+
+/**
+ * Pricing strategy data structure
+ */
+interface PricingStrategyData {
+  base_price?: string;
+  current_analysis?: string;
+  seasonal_pricing?: RawSeasonalPricing[];
+  special_events?: Record<string, string> | null;
+  discount_policies?: Record<string, string> | null;
+  weekly_price?: string;
+  monthly_price?: string;
+  min_stay?: string;
+}
+
+/**
+ * Competitor information
+ */
+interface Competitor {
+  name: string;
+  price: string;
+  rating: number;
+  strengths: string;
+  weaknesses: string;
+}
+
+/**
+ * Competitor analysis data
+ */
+interface CompetitorAnalysisData {
+  directCompetitors?: Competitor[];
+  marketInsights?: string[];
+  direct_competitors?: Competitor[];
+  market_insights?: string[];
+}
+
+/**
+ * Initial diagnostic data (diagnostico_inicial)
+ */
+interface DiagnosticoInicial {
+  taxa_ocupacao_estimada?: number;
+  [key: string]: unknown;
+}
+
+/**
+ * Complete analysis result structure
+ */
+interface AnalysisResult {
+  property_data?: {
+    property_name?: string;
+    location?: string;
+    property_type?: string;
+    rating?: number;
   };
+  performance_metrics?: PerformanceMetrics;
+  recommendations?: RecommendationCategory[];
+  pricing_strategy?: PricingStrategyData;
+  competitor_analysis?: CompetitorAnalysisData;
+  diagnostico_inicial?: DiagnosticoInicial;
+  [key: string]: unknown;
+}
+
+/**
+ * Main analysis data wrapper
+ */
+interface AnalysisData {
+  analysis_result?: AnalysisResult;
 }
 
 export const useAnalysisData = (analysisData: AnalysisData | null) => {
@@ -142,7 +225,7 @@ export const useAnalysisData = (analysisData: AnalysisData | null) => {
     // Make sure seasonalPricing conforms to the expected format
     let formattedSeasonalPricing: SeasonalPricing[] = [];
     if (result.pricing_strategy?.seasonal_pricing && Array.isArray(result.pricing_strategy.seasonal_pricing)) {
-      formattedSeasonalPricing = result.pricing_strategy.seasonal_pricing.map((season: any) => ({
+      formattedSeasonalPricing = result.pricing_strategy.seasonal_pricing.map((season: RawSeasonalPricing) => ({
         season: (season.season?.toLowerCase() || "medium") as "high" | "medium" | "low",
         months: season.months || [],
         price: season.price || 0,

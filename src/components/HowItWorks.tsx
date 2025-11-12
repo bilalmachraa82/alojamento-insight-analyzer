@@ -59,9 +59,10 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ language }) => {
       </h2>
       
       <div className="grid md:grid-cols-3 gap-8">
+        {/* Using step title as key - it's unique and stable for this static content */}
         {currentContent.steps.map((step, index) => (
-          <div 
-            key={index} 
+          <div
+            key={`step-${step.title}`}
             className="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="mb-4 p-4 rounded-full bg-gray-50">

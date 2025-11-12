@@ -7,7 +7,6 @@ const client: any = supabase;
 export class PropertyService {
   // Create a new property
   static async createProperty(propertyData: Omit<Property, 'id' | 'created_at' | 'updated_at'>) {
-    console.log('[PropertyService] createProperty payload:', propertyData);
     const { data, error } = await client
       .from('properties')
       .insert(propertyData)
@@ -20,7 +19,6 @@ export class PropertyService {
 
   // Get all properties for a user
   static async getUserProperties(userId: string) {
-    console.log('[PropertyService] getUserProperties for user:', userId);
     const { data, error } = await client
       .from('properties')
       .select('*')
@@ -34,8 +32,6 @@ export class PropertyService {
 
   // Get property by ID with related data
   static async getPropertyDetails(propertyId: string) {
-    console.log('[PropertyService] getPropertyDetails id:', propertyId);
-
     const { data: property, error: propertyError } = await client
       .from('properties')
       .select('*')
@@ -79,7 +75,6 @@ export class PropertyService {
 
   // Update property
   static async updateProperty(propertyId: string, updates: Partial<Property>) {
-    console.log('[PropertyService] updateProperty id/updates:', propertyId, updates);
     const { data, error } = await client
       .from('properties')
       .update(updates)
@@ -93,7 +88,6 @@ export class PropertyService {
 
   // Add market data
   static async addMarketData(marketData: Omit<MarketData, 'id' | 'created_at'>) {
-    console.log('[PropertyService] addMarketData payload:', marketData);
     const { data, error } = await client
       .from('market_data')
       .insert(marketData)
@@ -106,7 +100,6 @@ export class PropertyService {
 
   // Add competitor analysis
   static async addCompetitorAnalysis(competitorData: Omit<CompetitorAnalysis, 'id' | 'created_at' | 'updated_at'>) {
-    console.log('[PropertyService] addCompetitorAnalysis payload:', competitorData);
     const { data, error } = await client
       .from('competitor_analysis')
       .insert(competitorData)
@@ -119,7 +112,6 @@ export class PropertyService {
 
   // Get pricing history
   static async getPricingHistory(propertyId: string, days: number = 90) {
-    console.log('[PropertyService] getPricingHistory for property:', propertyId, 'days:', days);
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
     const { data, error } = await client
@@ -146,7 +138,6 @@ export class PropertyService {
 
   // Add performance metrics
   static async addPerformanceMetrics(metricsData: Omit<PerformanceMetrics, 'id' | 'created_at'>) {
-    console.log('[PropertyService] addPerformanceMetrics payload:', metricsData);
     const { data, error } = await client
       .from('performance_metrics')
       .insert(metricsData)

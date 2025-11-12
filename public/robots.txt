@@ -1,14 +1,38 @@
+# Robots.txt for Alojamento Insight Analyzer
+# This file controls how search engine bots crawl and index our site
+
+# Allow all major search engines
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /test-pdf
+Disallow: /test-emails
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /test-pdf
+Disallow: /test-emails
 
+# Social media crawlers - allow all for proper preview generation
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: LinkedInBot
+Allow: /
+
+# Default rule for all other bots
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /test-pdf
+Disallow: /test-emails
+
+# Crawl-delay to be respectful of server resources
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://alojamento-insight-analyzer.mariafaz.com/sitemap.xml

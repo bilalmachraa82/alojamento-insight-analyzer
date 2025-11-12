@@ -8,6 +8,8 @@ import AnalysisResultsViewer from "@/components/results/AnalysisResultsViewer";
 import { useToast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
 import ProcessingStatus from "@/components/diagnostic/ProcessingStatus";
+import MetaTags from "@/components/SEO/MetaTags";
+import { createArticleSchema, createBreadcrumbSchema } from "@/components/SEO/structuredData";
 
 interface AnalysisData {
   id: string;
@@ -133,8 +135,6 @@ const AnalysisResult = () => {
       if (error) throw error;
 
       if (data) {
-        console.log("Status check response:", data);
-        
         if (data.status === "scraping") {
           setProgressValue(50);
         } else if (data.status === "scraping_completed") {
@@ -235,32 +235,74 @@ const AnalysisResult = () => {
     return analysisData.error_message;
   };
 
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://alojamento-insight-analyzer.mariafaz.com';
+  const propertyName = getPropertyName();
+  const propertyLocation = getPropertyLocation();
+  const propertyType = getPropertyType();
+  const currentUrl = `${siteUrl}/results/${id}`;
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-brand-pink mb-4" />
-        <p className="text-lg text-center">Carregando resultados da análise...</p>
-      </div>
+      <>
+        <MetaTags
+          title="Carregando Análise | Maria Faz"
+          description="Carregando os resultados da análise da sua propriedade."
+          noindex={true}
+        />
+        <div className="flex flex-col items-center justify-center min-h-screen p-4">
+          <Loader2 className="h-12 w-12 animate-spin text-brand-pink mb-4" />
+          <p className="text-lg text-center">Carregando resultados da análise...</p>
+        </div>
+      </>
     );
   }
 
   if (error || !analysisData) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 className="text-2xl font-bold text-red-600 mb-4">Erro</h1>
-        <p className="text-lg text-center mb-6">{error || "Falha ao carregar dados da análise"}</p>
-        <Button asChild>
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar para Início
-          </Link>
-        </Button>
-      </div>
+      <>
+        <MetaTags
+          title="Erro - Análise não encontrada | Maria Faz"
+          description="Não foi possível carregar a análise solicitada."
+          noindex={true}
+        />
+        <div className="flex flex-col items-center justify-center min-h-screen p-4">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Erro</h1>
+          <p className="text-lg text-center mb-6">{error || "Falha ao carregar dados da análise"}</p>
+          <Button asChild>
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar para Início
+            </Link>
+          </Button>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
+    <>
+      <MetaTags
+        title={`Análise: ${propertyName} - ${propertyLocation} | Maria Faz`}
+        description={`Análise completa de ${propertyType} em ${propertyLocation}. Insights de mercado, recomendações de preço e análise competitiva para otimização do seu alojamento local.`}
+        keywords={`${propertyName}, ${propertyLocation}, análise de propriedade, ${propertyType}, alojamento local, análise de mercado`}
+        canonicalUrl={currentUrl}
+        ogUrl={currentUrl}
+        noindex={analyzing || analysisData.status !== "completed"}
+        structuredData={[
+          createArticleSchema({
+            title: `Análise: ${propertyName}`,
+            description: `Análise de ${propertyType} em ${propertyLocation}`,
+            datePublished: analysisData.submission_date,
+            dateModified: analysisData.submission_date,
+            url: currentUrl,
+          }),
+          createBreadcrumbSchema([
+            { name: "Home", url: siteUrl },
+            { name: "Análise", url: currentUrl },
+          ]),
+        ]}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
       <header className="w-full py-4 px-6 md:px-8 bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Button variant="ghost" asChild>
@@ -376,6 +418,7 @@ const AnalysisResult = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };
 

@@ -11,7 +11,6 @@ const EmailTester = () => {
   const sendTestEmail = async () => {
     setIsLoading(true);
     try {
-      console.log("Sending test email...");
       const { data, error } = await supabase.functions.invoke("send-diagnostic-email/test");
       
       if (error) {
@@ -23,8 +22,7 @@ const EmailTester = () => {
         });
         return;
       }
-      
-      console.log("Test email response:", data);
+
       toast({
         title: "Test Email Sent",
         description: "Check your inbox for the test email.",

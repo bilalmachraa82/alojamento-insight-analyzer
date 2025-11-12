@@ -109,8 +109,6 @@ class EmailService {
     const apiKey = import.meta.env.VITE_RESEND_API_KEY;
     if (apiKey) {
       this.resend = new ResendClient(apiKey);
-    } else {
-      console.warn('RESEND_API_KEY not found. Email sending will be simulated.');
     }
   }
 
@@ -125,7 +123,6 @@ class EmailService {
     retryCount = 0
   ): Promise<{ success: boolean; resendId?: string; error?: string }> {
     if (!this.resend) {
-      console.log('Email simulation:', emailParams.subject, 'to', emailParams.to);
       return {
         success: true,
         resendId: `sim_${Date.now()}`
@@ -141,7 +138,6 @@ class EmailService {
         // Check if we should retry
         if (retryCount < MAX_RETRIES) {
           const delay = RETRY_DELAYS[retryCount] || RETRY_DELAYS[RETRY_DELAYS.length - 1];
-          console.warn(`Email send failed, retrying in ${delay}ms...`, result.error);
 
           await new Promise(resolve => setTimeout(resolve, delay));
           return this.sendWithRetry(emailParams, retryCount + 1);
@@ -164,7 +160,6 @@ class EmailService {
 
       if (retryCount < MAX_RETRIES) {
         const delay = RETRY_DELAYS[retryCount] || RETRY_DELAYS[RETRY_DELAYS.length - 1];
-        console.warn(`Email send exception, retrying in ${delay}ms...`, errorMessage);
 
         await new Promise(resolve => setTimeout(resolve, delay));
         return this.sendWithRetry(emailParams, retryCount + 1);
@@ -222,7 +217,6 @@ class EmailService {
       // Check email preferences
       const shouldSend = await this.checkEmailPreferences(user.email, 'welcome');
       if (!shouldSend) {
-        console.log('User has opted out of welcome emails:', user.email);
         return { success: false, error: 'User has opted out' };
       }
 
@@ -274,7 +268,6 @@ class EmailService {
       // Check email preferences
       const shouldSend = await this.checkEmailPreferences(user.email, 'report_ready');
       if (!shouldSend) {
-        console.log('User has opted out of report notifications:', user.email);
         return { success: false, error: 'User has opted out' };
       }
 
@@ -334,7 +327,6 @@ class EmailService {
       // Check email preferences
       const shouldSend = await this.checkEmailPreferences(user.email, 'payment_confirmation');
       if (!shouldSend) {
-        console.log('User has opted out of payment notifications:', user.email);
         return { success: false, error: 'User has opted out' };
       }
 

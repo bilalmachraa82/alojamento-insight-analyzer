@@ -74,6 +74,8 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
+  // Safe: CSS is generated from developer-provided config, not user input
+  // The config object is controlled by the application, making this XSS-safe
   return (
     <style
       dangerouslySetInnerHTML={{

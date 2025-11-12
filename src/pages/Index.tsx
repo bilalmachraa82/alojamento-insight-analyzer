@@ -9,6 +9,14 @@ import HowItWorks from "@/components/HowItWorks";
 import PricingTable from "@/components/PricingTable";
 import DiagnosticForm from "@/components/DiagnosticForm";
 import { Separator } from "@/components/ui/separator";
+import MetaTags from "@/components/SEO/MetaTags";
+import {
+  organizationSchema,
+  websiteSchema,
+  softwareApplicationSchema,
+  serviceSchema,
+  premiumProductSchema
+} from "@/components/SEO/structuredData";
 
 const Index: React.FC = () => {
   const [language, setLanguage] = useState<"en" | "pt">("pt");
@@ -18,8 +26,32 @@ const Index: React.FC = () => {
     form?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://alojamento-insight-analyzer.mariafaz.com';
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-white to-gray-50">
+    <>
+      <MetaTags
+        title={language === "en"
+          ? "Alojamento Insight Analyzer - AI-Powered Short-Term Rental Analysis | Maria Faz"
+          : "Análise de Alojamento Local - Diagnóstico Inteligente com IA | Maria Faz"
+        }
+        description={language === "en"
+          ? "Optimize your short-term rental property with AI-powered insights. Get comprehensive market analysis, pricing recommendations, and competitive intelligence for your Airbnb or Booking.com listing in Portugal."
+          : "Otimize o seu alojamento local com análise inteligente por IA. Obtenha diagnóstico completo de mercado, recomendações de preços e análise competitiva para o seu Airbnb ou Booking.com em Portugal."
+        }
+        keywords="alojamento local, short-term rental, airbnb portugal, booking.com, análise de mercado, otimização de preços, gestão de propriedades, turismo portugal, rental analytics, property optimization, AI analysis"
+        canonicalUrl={siteUrl}
+        ogImage={`${siteUrl}/og-image.jpg`}
+        ogUrl={siteUrl}
+        structuredData={[
+          organizationSchema,
+          websiteSchema,
+          softwareApplicationSchema,
+          serviceSchema,
+          premiumProductSchema
+        ]}
+      />
+      <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-white to-gray-50">
       {/* Header */}
       <header className="w-full py-4 px-6 md:px-8 flex justify-between items-center shadow-sm bg-white sticky top-0 z-10">
         <MariaFazLogo />
@@ -61,6 +93,7 @@ const Index: React.FC = () => {
         </div>
       </footer>
     </div>
+    </>
   );
 };
 

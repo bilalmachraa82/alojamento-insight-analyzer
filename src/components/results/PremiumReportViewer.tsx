@@ -1,3 +1,10 @@
+/**
+ * PremiumReportViewer Component
+ *
+ * Performance Optimization: Wrapped with React.memo to prevent unnecessary re-renders
+ * This component only re-renders when analysisData props change
+ */
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -189,8 +196,9 @@ const PremiumReportViewer: React.FC<PremiumReportViewerProps> = ({ analysisData 
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
+              {/* Using composite key with content hash for stable keys */}
               {analysisData.diagnostico_inicial.pontos_fortes.map((ponto, index) => (
-                <li key={index} className="flex items-start gap-2">
+                <li key={`ponto-forte-${ponto.slice(0, 30)}-${index}`} className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
                   <span className="text-sm">{ponto}</span>
                 </li>
@@ -208,8 +216,9 @@ const PremiumReportViewer: React.FC<PremiumReportViewerProps> = ({ analysisData 
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
+              {/* Using composite key with content hash for stable keys */}
               {analysisData.diagnostico_inicial.problemas_criticos.map((problema, index) => (
-                <li key={index} className="flex items-start gap-2">
+                <li key={`problema-critico-${problema.slice(0, 30)}-${index}`} className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-500 mt-1 flex-shrink-0" />
                   <span className="text-sm">{problema}</span>
                 </li>
@@ -233,8 +242,9 @@ const PremiumReportViewer: React.FC<PremiumReportViewerProps> = ({ analysisData 
             <div>
               <h4 className="font-semibold text-green-600 mb-2">Comentários Positivos</h4>
               <ul className="space-y-1">
+                {/* Using composite key with content snippet for stable keys (top 3 comments) */}
                 {analysisData.reputacao_reviews.comentarios_positivos.slice(0, 3).map((comentario, index) => (
-                  <li key={index} className="text-sm text-gray-600">• {comentario}</li>
+                  <li key={`comentario-positivo-${comentario.slice(0, 30)}-${index}`} className="text-sm text-gray-600">• {comentario}</li>
                 ))}
               </ul>
             </div>
@@ -242,8 +252,9 @@ const PremiumReportViewer: React.FC<PremiumReportViewerProps> = ({ analysisData 
             <div>
               <h4 className="font-semibold text-red-600 mb-2">Pontos de Melhoria</h4>
               <ul className="space-y-1">
+                {/* Using composite key with content snippet for stable keys (top 3 comments) */}
                 {analysisData.reputacao_reviews.comentarios_negativos.slice(0, 3).map((comentario, index) => (
-                  <li key={index} className="text-sm text-gray-600">• {comentario}</li>
+                  <li key={`comentario-negativo-${comentario.slice(0, 30)}-${index}`} className="text-sm text-gray-600">• {comentario}</li>
                 ))}
               </ul>
             </div>
@@ -304,8 +315,9 @@ const PremiumReportViewer: React.FC<PremiumReportViewerProps> = ({ analysisData 
             <div className="mt-4">
               <h4 className="font-semibold mb-2">Estratégias Complementares</h4>
               <ul className="space-y-1">
+                {/* Using composite key with content snippet for stable keys */}
                 {analysisData.estrategia_precos.estrategias_complementares.map((estrategia, index) => (
-                  <li key={index} className="text-sm text-gray-600">• {estrategia}</li>
+                  <li key={`estrategia-complementar-${estrategia.slice(0, 30)}-${index}`} className="text-sm text-gray-600">• {estrategia}</li>
                 ))}
               </ul>
             </div>
@@ -357,4 +369,38 @@ const PremiumReportViewer: React.FC<PremiumReportViewerProps> = ({ analysisData 
   );
 };
 
-export default PremiumReportViewer;
+// Performance optimization: Memoize component with custom comparison function
+// Only re-render if the analysisData object reference changes or key fields are different
+export default React.memo(PremiumReportViewer, (prevProps, nextProps) => {
+  // Return true if props are equal (skip re-render), false if different (re-render)
+
+  // If references are the same, no need to re-render
+  if (prevProps.analysisData === nextProps.analysisData) {
+    return true;
+  }
+
+  // Deep comparison of critical fields that affect rendering
+  const prevData = prevProps.analysisData;
+  const nextData = nextProps.analysisData;
+
+  // Compare health score (main metric)
+  if (prevData.health_score?.total !== nextData.health_score?.total ||
+      prevData.health_score?.categoria !== nextData.health_score?.categoria) {
+    return false;
+  }
+
+  // Compare property identity
+  if (prevData.property_data?.property_name !== nextData.property_data?.property_name ||
+      prevData.property_data?.rating !== nextData.property_data?.rating) {
+    return false;
+  }
+
+  // Compare key financial metrics
+  if (prevData.diagnostico_inicial?.receita_anual_estimada !== nextData.diagnostico_inicial?.receita_anual_estimada ||
+      prevData.diagnostico_inicial?.taxa_ocupacao_estimada !== nextData.diagnostico_inicial?.taxa_ocupacao_estimada) {
+    return false;
+  }
+
+  // If all critical fields are the same, skip re-render
+  return true;
+});

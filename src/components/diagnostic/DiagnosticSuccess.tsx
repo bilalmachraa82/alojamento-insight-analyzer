@@ -39,9 +39,7 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
     
     try {
       setCheckingStatus(true);
-      
-      console.log("Checking status for submission:", id);
-      
+
       // First, check from database directly (faster response)
       const { data: dbData, error: dbError } = await supabase
         .from("diagnostic_submissions")
@@ -92,7 +90,6 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
       if (statusError) throw statusError;
 
       if (statusData) {
-        console.log("Status check response:", statusData);
         setProcessingStatus(statusData.status);
         
         switch (statusData.status) {

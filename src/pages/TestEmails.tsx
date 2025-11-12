@@ -11,6 +11,7 @@ import ReportReadyEmail from '@/emails/ReportReadyEmail';
 import PaymentConfirmationEmail from '@/emails/PaymentConfirmationEmail';
 import PasswordResetEmail from '@/emails/PasswordResetEmail';
 import { emailService } from '@/services/emailService';
+import MetaTags from '@/components/SEO/MetaTags';
 
 export default function TestEmails() {
   const [testEmail, setTestEmail] = useState('test@example.com');
@@ -152,7 +153,13 @@ export default function TestEmails() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <>
+      <MetaTags
+        title="Test Email Templates | Maria Faz"
+        description="Internal testing page for email templates."
+        noindex={true}
+      />
+      <div className="container mx-auto py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Email Templates</h1>
@@ -324,5 +331,6 @@ export default function TestEmails() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

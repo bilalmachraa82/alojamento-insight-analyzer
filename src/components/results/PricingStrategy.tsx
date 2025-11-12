@@ -72,8 +72,9 @@ const PricingStrategy = ({
 
       <h3 className="text-lg font-medium mt-6">Seasonal Pricing Strategy</h3>
       <div className="space-y-4">
+        {/* Using season name as stable key (high/medium/low) */}
         {formattedSeasonalPricing.map((season, index) => (
-          <Card key={index}>
+          <Card key={`season-${season.season}`}>
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -98,8 +99,9 @@ const PricingStrategy = ({
           <CardContent className="pt-6">
             <h4 className="font-medium">Special Events</h4>
             <div className="mt-2 space-y-2">
+              {/* Using event name as stable key */}
               {specialEvents && Object.entries(specialEvents).map(([event, price], index) => (
-                <div key={index} className="flex justify-between">
+                <div key={`special-event-${event}`} className="flex justify-between">
                   <span>{event}</span>
                   <span className="font-medium">{String(price)}</span>
                 </div>
@@ -115,8 +117,9 @@ const PricingStrategy = ({
           <CardContent className="pt-6">
             <h4 className="font-medium">Discount Policies</h4>
             <div className="mt-2 space-y-2">
+              {/* Using policy name as stable key */}
               {discountPolicies && Object.entries(discountPolicies).map(([policy, discount], index) => (
-                <div key={index} className="flex justify-between">
+                <div key={`discount-policy-${policy}`} className="flex justify-between">
                   <span>{policy}</span>
                   <span className="font-medium">{String(discount)}</span>
                 </div>

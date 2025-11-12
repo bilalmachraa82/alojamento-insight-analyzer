@@ -81,10 +81,14 @@ const config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
-        sans: ["Inter", ...fontFamily.sans],
-        montserrat: ["Montserrat", ...fontFamily.sans],
-        inter: ["Inter", ...fontFamily.sans],
-        playfair: ["Playfair Display", "serif"]
+        // Optimized font stack with system font fallbacks to prevent CLS
+        // Inter is now self-hosted, system fonts provide instant fallback
+        sans: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        inter: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        // System font fallbacks for headings (Montserrat replacement)
+        montserrat: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        // Serif fallback for decorative text
+        playfair: ["Georgia", "Cambria", "Times New Roman", "Times", "serif"]
       },
     },
   },

@@ -37,9 +37,10 @@ const ReviewInsights: React.FC<ReviewInsightsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
+            {/* Using composite key with aspect content for stable keys */}
             {topPositiveAspects.map((aspect, index) => (
               <div
-                key={index}
+                key={`positive-aspect-${aspect.slice(0, 30)}-${index}`}
                 className="flex items-start space-x-2 p-3 bg-green-50 rounded-lg border border-green-200"
               >
                 <span className="text-green-600 font-bold text-lg">{index + 1}.</span>
@@ -63,9 +64,10 @@ const ReviewInsights: React.FC<ReviewInsightsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
+            {/* Using composite key with area content for stable keys */}
             {areasForImprovement.map((area, index) => (
               <div
-                key={index}
+                key={`improvement-area-${area.slice(0, 30)}-${index}`}
                 className="flex items-start space-x-2 p-3 bg-red-50 rounded-lg border border-red-200"
               >
                 <span className="text-red-600 font-bold text-lg">{index + 1}.</span>
@@ -86,9 +88,10 @@ const ReviewInsights: React.FC<ReviewInsightsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Using composite key with quote text snippet and sentiment for stable keys */}
             {notableQuotes.map((quote, index) => (
               <blockquote
-                key={index}
+                key={`quote-${quote.sentiment}-${quote.text.slice(0, 30)}-${index}`}
                 className={`
                   p-4 rounded-lg border-l-4
                   ${quote.sentiment === 'positive'
@@ -122,9 +125,10 @@ const ReviewInsights: React.FC<ReviewInsightsProps> = ({
         </AlertTitle>
         <AlertDescription>
           <ol className="space-y-3">
+            {/* Using composite key with action content for stable keys */}
             {actionItems.map((action, index) => (
               <li
-                key={index}
+                key={`action-item-${action.slice(0, 30)}-${index}`}
                 className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-blue-200"
               >
                 <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">

@@ -13,7 +13,6 @@ export const useFormSubmission = (language: Language) => {
 
   const sendConfirmationEmail = async (email: string, name: string, submissionId: string) => {
     try {
-      console.log("Sending confirmation email to:", email);
       const { data, error } = await supabase.functions.invoke("send-diagnostic-email", {
         body: {
           email,
@@ -35,7 +34,6 @@ export const useFormSubmission = (language: Language) => {
         return false;
       }
 
-      console.log("Confirmation email sent:", data);
       return true;
     } catch (err) {
       console.error("Exception sending confirmation email:", err);
@@ -76,8 +74,6 @@ export const useFormSubmission = (language: Language) => {
   };
 
   const handleSubmit = async (data: FormValues) => {
-    console.log("Form data being submitted:", data);
-    
     // Trim the URL to remove any leading/trailing whitespace
     const trimmedUrl = data.link.trim();
     
@@ -114,11 +110,6 @@ export const useFormSubmission = (language: Language) => {
       setSubmissionId(newSubmissionId);
       
       sendConfirmationEmail(data.email, data.nome, newSubmissionId)
-        .then(emailSuccess => {
-          if (emailSuccess) {
-            console.log("Email sent successfully");
-          }
-        })
         .catch(e => {
           console.error("Email sending error caught:", e);
         });
