@@ -683,10 +683,7 @@ export type Database = {
       }
     }
     Functions: {
-      refresh_all_kpi_views: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      refresh_all_kpi_views: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
