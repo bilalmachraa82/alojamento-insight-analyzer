@@ -28,7 +28,7 @@ export const SubmissionMetrics = () => {
   }
 
   // Prepare chart data
-  const chartData = stats?.reduce((acc: any[], stat) => {
+  const chartData = (stats as any[])?.reduce((acc: any[], stat) => {
     const existingDate = acc.find(item => item.date === stat.date);
     if (existingDate) {
       if (stat.status === 'completed') existingDate.completed = stat.count;

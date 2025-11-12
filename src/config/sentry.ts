@@ -25,24 +25,13 @@ export const initSentry = () => {
     // Integrations
     integrations: [
       // Browser tracing for performance monitoring
-      Sentry.browserTracingIntegration({
-        // Trace all navigation and interactions
-        tracePropagationTargets: [
-          'localhost',
-          /^\//,
-          /^https:\/\/[^/]*\.vercel\.app/,
-        ],
-      }),
+      Sentry.browserTracingIntegration(),
 
       // Session replay for debugging
       Sentry.replayIntegration({
         // Only record sessions with errors in production
         maskAllText: true,
         blockAllMedia: true,
-        // Sample rate for sessions with errors
-        replaysSessionSampleRate: isProduction ? 0.1 : 1.0,
-        // Sample rate for sessions with errors
-        replaysOnErrorSampleRate: 1.0,
       }),
 
       // Breadcrumbs for tracking user actions
@@ -57,6 +46,10 @@ export const initSentry = () => {
 
     // Performance Monitoring
     tracesSampleRate: isProduction ? 0.1 : 1.0, // 10% in production, 100% in development
+    
+    // Session replay sample rates
+    replaysSessionSampleRate: isProduction ? 0.1 : 1.0,
+    replaysOnErrorSampleRate: 1.0,
 
     // Set sample rate for profiling
     profilesSampleRate: isProduction ? 0.1 : 1.0,

@@ -247,7 +247,7 @@ const SentimentAnalysisDashboard: React.FC<SentimentAnalysisDashboardProps> = ({
             </CardHeader>
             <CardContent>
               <TopicSentimentGrid
-                topics={topics}
+                topics={(topics as any[]).map(t => ({ ...t, mentionCount: t.mentions }))}
                 onTopicClick={(topic) => setSelectedTopic(topic)}
               />
             </CardContent>
@@ -265,7 +265,7 @@ const SentimentAnalysisDashboard: React.FC<SentimentAnalysisDashboardProps> = ({
             </CardHeader>
             <CardContent>
               <TopicSentimentGrid
-                topics={topics}
+                topics={(topics as any[]).map(t => ({ ...t, mentionCount: t.mentions }))}
                 onTopicClick={(topic) => setSelectedTopic(topic)}
               />
 

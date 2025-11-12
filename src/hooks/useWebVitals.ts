@@ -91,8 +91,8 @@ const logMetric = (metric: WebVitalsMetric, isDevelopment: boolean) => {
   );
 
   // Log attribution data if available
-  if (metric.attribution) {
-    console.log(`  Attribution:`, metric.attribution);
+  if ('attribution' in metric && metric.attribution) {
+    console.log(`  Attribution:`, (metric as any).attribution);
   }
 };
 

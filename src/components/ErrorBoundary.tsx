@@ -168,9 +168,15 @@ export const SentryErrorBoundary: React.FC<{
   fallback?: ReactNode;
   showDialog?: boolean;
 }> = ({ children, fallback, showDialog = false }) => {
+  const fallbackComponent = ({ error, resetError }: { error: unknown; resetError: () => void }) => {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    if (fallback) return <>{fallback}</>;
+    return <ErrorFallback error={errorObj} resetError={resetError} />;
+  };
+
   return (
     <Sentry.ErrorBoundary
-      fallback={fallback || <ErrorFallback />}
+      fallback={fallbackComponent}
       showDialog={showDialog}
       beforeCapture={(scope) => {
         scope.setTag('error_boundary', 'sentry_wrapper');

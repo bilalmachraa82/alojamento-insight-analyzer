@@ -235,17 +235,24 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
         <TabsContent value="overview" className="pt-4">
           <div className="space-y-6">
             <AnalysisSection title="Métricas de Desempenho" initiallyExpanded={true}>
-              <PerformanceMetrics {...performanceMetrics} />
+              <PerformanceMetrics 
+                occupancyRate={performanceMetrics.occupancyRate || 0}
+                averageRating={performanceMetrics.averageRating || 0}
+                reviewCount={performanceMetrics.reviewCount || 0}
+                responseRate={performanceMetrics.responseRate || 0}
+                averageDailyRate={String(performanceMetrics.averageDailyRate || "N/A")}
+                revenueGrowth={String(performanceMetrics.revenueGrowth || "N/A")}
+              />
             </AnalysisSection>
             
             <AnalysisSection title="Recomendações Principais" initiallyExpanded={true}>
-              <RecommendationsList recommendations={recommendations} />
+              <RecommendationsList recommendations={recommendations as any} />
             </AnalysisSection>
           </div>
         </TabsContent>
         
         <TabsContent value="recommendations" className="pt-4">
-          <RecommendationsList recommendations={recommendations} expanded={true} />
+          <RecommendationsList recommendations={recommendations as any} expanded={true} />
         </TabsContent>
         
         <TabsContent value="pricing" className="pt-4">
@@ -253,7 +260,10 @@ const AnalysisResultsViewer: React.FC<AnalysisResultsViewerProps> = ({ analysisD
         </TabsContent>
         
         <TabsContent value="competitors" className="pt-4">
-          <CompetitorAnalysis {...competitorAnalysis} />
+          <CompetitorAnalysis 
+            directCompetitors={(competitorAnalysis as any).directCompetitors || (competitorAnalysis as any).direct_competitors || []}
+            marketInsights={(competitorAnalysis as any).marketInsights || (competitorAnalysis as any).market_insights || []}
+          />
         </TabsContent>
         
         {hasReviews && (

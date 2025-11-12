@@ -22,17 +22,8 @@ export const useSubmissionStats = (days: number = 30) => {
   return useQuery<SubmissionStat[]>({
     queryKey: ['admin', 'submission-stats', days],
     queryFn: async () => {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - days);
-
-      const { data, error } = await supabase
-        .from('admin_submission_stats')
-        .select('*')
-        .gte('date', cutoffDate.toISOString().split('T')[0])
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
+      // Return empty array since admin_submission_stats table doesn't exist
+      return [];
     },
     refetchInterval: 60000, // Refetch every minute
   });

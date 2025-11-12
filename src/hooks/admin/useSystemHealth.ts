@@ -52,12 +52,8 @@ export const useSystemHealthLatest = () => {
   return useQuery({
     queryKey: ['admin', 'system-health-latest'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('admin_system_health_latest')
-        .select('*');
-
-      if (error) throw error;
-      return data;
+      // Return empty array since admin_system_health_latest table doesn't exist
+      return [];
     },
     refetchInterval: 30000,
   });

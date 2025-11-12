@@ -27,7 +27,7 @@ export const UserMetrics = () => {
   }
 
   // Prepare chart data (last 30 days)
-  const chartData = activity?.slice(0, 30).map(day => ({
+  const chartData = (activity as any[])?.slice(0, 30).map(day => ({
     date: new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     newSignups: day.new_signups,
     activeUsers: day.active_users_7d,

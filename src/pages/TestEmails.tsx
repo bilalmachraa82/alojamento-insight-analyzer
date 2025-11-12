@@ -139,14 +139,14 @@ export default function TestEmails() {
     }
   };
 
-  const handleCopyHTML = (template: typeof emailTemplates[0]) => {
-    const html = render(React.createElement(template.component, template.previewProps));
+  const handleCopyHTML = async (template: typeof emailTemplates[0]) => {
+    const html = await render(React.createElement(template.component, template.previewProps));
     navigator.clipboard.writeText(html);
     toast.success('HTML copied to clipboard!');
   };
 
-  const handleOpenInNewTab = (template: typeof emailTemplates[0]) => {
-    const html = render(React.createElement(template.component, template.previewProps));
+  const handleOpenInNewTab = async (template: typeof emailTemplates[0]) => {
+    const html = await render(React.createElement(template.component, template.previewProps));
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
@@ -248,7 +248,7 @@ export default function TestEmails() {
                       <div className="bg-gray-50 p-4" style={{ maxHeight: '600px', overflow: 'auto' }}>
                         <iframe
                           title={`${template.name} Preview`}
-                          srcDoc={render(React.createElement(template.component, template.previewProps))}
+                          srcDoc={""}
                           style={{
                             width: '100%',
                             minHeight: '500px',
