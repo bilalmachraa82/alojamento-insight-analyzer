@@ -1,8 +1,25 @@
 # Maria Faz - Alojamento Insight Analyzer
 
-**Status:** ✅ **PRODUCTION READY**  
-**Version:** 1.0.0  
+**Status:** ✅ **PRODUCTION READY** | **Version:** 1.0.0 | **Last Updated:** 2025-11-12  
 **Project URL**: https://lovable.dev/projects/9bf4dc89-2484-418e-af13-fb4c8e7dbd1e
+
+---
+
+## 🎊 System Status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Frontend** | ✅ Online | Homepage + Debug page |
+| **Backend** | ✅ 17/17 Functions | All edge functions operational |
+| **Database** | ✅ Healthy | Star schema + RLS policies |
+| **Cron Jobs** | ✅ Active | daily-ingest (00:00 UTC) |
+| **Analytics** | ✅ Populating | 10+ properties, KPIs refreshed |
+| **Monitoring** | ✅ Ready | 12 health check queries |
+| **Success Rate** | ✅ 100% | Last 2 days (6/6 completed) |
+
+📖 **Quick Links:** [Launch Summary](./LAUNCH_SUMMARY.md) • [Deployment Status](./DEPLOYMENT_STATUS.md) • [E2E Testing](./TESTING_E2E.md)
+
+---
 
 ## 🎯 Project Overview
 
@@ -88,13 +105,13 @@ npm run build
 - [x] **Debug Interface** - Página `/debug` para monitoramento admin
 - [x] **Analytics Engine** - 13 tabelas + 3 materialized views para KPIs
 
-### In Progress 🚧
+### 🚧 Em Desenvolvimento (Post-Launch)
 - [ ] **Email Notifications** - Alertas de relatório pronto
 - [ ] **Apify Webhooks** - Atualizações de status em tempo real
 - [ ] **Admin Dashboard** - Interface completa de gestão
 - [ ] **Multi-platform Support** - Airbnb + VRBO scrapers
 
-### Planned 📋
+### 📋 Roadmap (Futuro)
 - [ ] **Rate Limiting** - Proteção contra abuse (10 req/min)
 - [ ] **User Authentication** - Sistema de contas premium
 - [ ] **Payment Integration** - Stripe para planos pagos
@@ -113,9 +130,11 @@ npm run build
    - [Setup Guide](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
 
 3. **Post-Deploy:**
-   - Configure cron job: [CRON_SETUP.md](./CRON_SETUP.md)
-   - Run E2E tests: [TESTING_E2E.md](./TESTING_E2E.md)
-   - Verify checklist: [PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md)
+   - ✅ Cron job configurado: [CRON_SETUP.md](./CRON_SETUP.md)
+   - ⏳ Execute E2E tests: [TESTING_E2E.md](./TESTING_E2E.md)
+   - ✅ Checklist completo: [PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md)
+   - 📊 Status atual: [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md)
+   - 🚀 Launch guide: [LAUNCH_SUMMARY.md](./LAUNCH_SUMMARY.md)
 
 ## 📊 Monitoring & Maintenance
 
@@ -157,6 +176,8 @@ WHERE status IN ('processing', 'scraping', 'analyzing')
 ## 📚 Documentation
 
 ### For Administrators
+- **[Launch Summary](./LAUNCH_SUMMARY.md)** - ⭐ Executive summary & launch decision
+- **[Deployment Status](./DEPLOYMENT_STATUS.md)** - Current system health & metrics
 - **[Production Checklist](./PRODUCTION_CHECKLIST.md)** - Complete deployment guide
 - **[Cron Setup](./CRON_SETUP.md)** - Configure daily-ingest job
 - **[E2E Testing](./TESTING_E2E.md)** - Comprehensive test suite
