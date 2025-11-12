@@ -34,6 +34,7 @@ const TestPremiumPDF = lazy(() => import("./pages/TestPremiumPDF"));
 const TestEmails = lazy(() => import("./pages/TestEmails"));
 const TestMonitoring = lazy(() => import("./pages/TestMonitoring"));
 const Admin = lazy(() => import("./pages/Admin"));
+const DebugSubmissions = lazy(() => import("./pages/DebugSubmissions"));
 
 // Optimized QueryClient configuration
 const queryClient = new QueryClient({
@@ -105,6 +106,7 @@ const App = () => (
                   <Route path="/test-emails" element={<TestEmails />} />
                   <Route path="/test-monitoring" element={<TestMonitoring />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/debug" element={<DebugSubmissions />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
