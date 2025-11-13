@@ -15,7 +15,9 @@ export async function startApifyRun(platform: string, startUrl: string) {
   };
 
   // Use the correct Apify Actor Runs API endpoint with Authorization header
-  const apiUrl = `https://api.apify.com/v2/acts/${actorId}/runs`;
+  // IMPORTANT: Apify API uses ~ instead of / in actor IDs for the endpoint
+  const apiActorId = actorId.replace('/', '~');
+  const apiUrl = `https://api.apify.com/v2/acts/${apiActorId}/runs`;
   
   try {
     console.log(`Starting Apify run for actor: ${actorId}`);
