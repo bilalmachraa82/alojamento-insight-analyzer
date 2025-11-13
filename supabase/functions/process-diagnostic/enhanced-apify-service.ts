@@ -40,76 +40,43 @@ export async function startEnhancedApifyRun(platform: string, startUrl: string, 
 
   console.log(`[EnhancedApify] Starting extraction for ${platform} with ${dataPoints.length} data points`);
 
-  // Try enhanced API endpoint first
-  const enhancedApiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}&waitForFinish=120`;
+  // Start actor run without waiting (async processing)
+  const enhancedApiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
   
   try {
     const runResponse = await fetch(enhancedApiUrl, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${APIFY_API_TOKEN}`,
         "X-Apify-Submission-Id": submissionId 
       },
       body: JSON.stringify(actorInput),
     });
 
-    if (runResponse.ok) {
-      const runData = await runResponse.json();
-      console.log(`[EnhancedApify] Enhanced extraction completed successfully`);
-      
-      return { 
-        success: true, 
-        data: runData,
-        extractedDataPoints: dataPoints,
-        processingTime: runData.stats?.runTimeSecs || 0
-      };
+    if (!runResponse.ok) {
+      const errorText = await runResponse.text();
+      console.error(`[EnhancedApify] API error: ${errorText}`);
+      throw new Error(`Actor start failed: ${runResponse.status} - ${errorText}`);
     }
 
-    // Fallback to basic extraction
-    console.log("Enhanced extraction failed, falling back to basic mode");
-    return await fallbackBasicExtraction(platform, startUrl, submissionId);
+    const runData = await runResponse.json();
+    const runId = runData.data.id;
+    console.log(`[EnhancedApify] Run started successfully. Run ID: ${runId}`);
+    
+    return { 
+      success: true, 
+      data: runData.data,
+      runId,
+      extractedDataPoints: dataPoints,
+      actorId
+    };
     
   } catch (error) {
-    console.error("Enhanced Apify extraction error:", error);
-    return await fallbackBasicExtraction(platform, startUrl, submissionId);
-  }
-}
-
-async function fallbackBasicExtraction(platform: string, startUrl: string, submissionId: string) {
-  const basicApiUrl = `https://api.apify.com/v2/acts/apify/website-content-crawler/runs?token=${APIFY_API_TOKEN}`;
-  
-  const basicInput = {
-    startUrls: [{ url: startUrl }],
-    maxCrawlPages: 1,
-    crawlerType: "playwright:chrome",
-    saveMarkdown: true,
-    waitForDynamicContent: true
-  };
-
-  try {
-    const response = await fetch(basicApiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(basicInput),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return { 
-        success: true, 
-        data,
-        extractedDataPoints: ['basic_content'],
-        processingTime: 0,
-        fallbackMode: true
-      };
-    }
-
-    throw new Error(`Basic extraction also failed: ${response.status}`);
-  } catch (error) {
+    console.error("[EnhancedApify] Error starting run:", error);
     return { 
       success: false, 
-      error: String(error),
-      endpoints: [basicApiUrl]
+      error: String(error)
     };
   }
 }

@@ -106,15 +106,12 @@ serve(async (req: Request) => {
     }
     
     if (!apifyResult || !apifyResult.success) {
+      console.error(`All ${MAX_RETRY_ATTEMPTS} attempts failed. Last error:`, lastError);
       await updateSubmissionStatus(id, "pending_manual_review", {
         error: lastError,
         error_at: new Date().toISOString(),
-        reason: "scraping_failed_after_retries",
-        url: startUrl,
-        message: "Não foi possível acessar os dados da propriedade após múltiplas tentativas.",
-        actor_id: actorId,
-        retry_attempts: MAX_RETRY_ATTEMPTS,
-        api_urls_tried: apifyResult?.endpoints
+        retry_count: MAX_RETRY_ATTEMPTS,
+        reason: "apify_failure"
       });
       
       return new Response(
@@ -131,9 +128,11 @@ serve(async (req: Request) => {
     }
 
     // Update submission with successful run data
-    const runId = apifyResult.data.data.id;
+    const runId = apifyResult.runId || apifyResult.data?.id;
+    console.log(`Apify run started successfully. Run ID: ${runId}, Actor: ${actorId}`);
+    
     await updateSubmissionStatus(id, "scraping", {
-      apify_run_id: runId,
+      actor_run_id: runId,
       actor_id: actorId,
       started_at: new Date().toISOString(),
       url: startUrl,
