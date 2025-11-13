@@ -4,6 +4,7 @@ import App from './App.tsx';
 import './index.css';
 import { initSentry } from './config/sentry';
 import { initGA4 } from './config/analytics';
+import { ThemeProvider } from './components/ThemeProvider';
 
 // Initialize Sentry for error tracking
 initSentry();
@@ -12,4 +13,8 @@ initSentry();
 // GA4 will check for cookie consent before actually initializing
 initGA4();
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <App />
+  </ThemeProvider>
+);

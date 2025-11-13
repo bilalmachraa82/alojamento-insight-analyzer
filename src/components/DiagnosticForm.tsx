@@ -96,7 +96,7 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <BookingWarning 
           show={showBookingWarning} 
           language={language}
@@ -107,15 +107,20 @@ const DiagnosticForm: React.FC<DiagnosticFormProps> = ({ language }) => {
         <Button 
           type="submit" 
           disabled={isLoading} 
-          className="w-full bg-brand-pink hover:bg-opacity-90 text-brand-black font-medium"
+          className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-3 h-5 w-5 animate-spin" />
               {t.processing}
             </>
           ) : (
-            t.submit
+            <>
+              {t.submit}
+              <svg className="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </>
           )}
         </Button>
       </form>

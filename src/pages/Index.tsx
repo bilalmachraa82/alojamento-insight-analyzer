@@ -92,9 +92,9 @@ const Index: React.FC = () => {
           premiumProductSchema
         ]}
       />
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="w-full py-4 px-6 md:px-8 flex justify-between items-center shadow-sm bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
+      <header className="w-full py-4 px-6 md:px-8 flex justify-between items-center shadow-sm bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
         <MariaFazLogo />
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -164,32 +164,41 @@ const Index: React.FC = () => {
         <FAQ language={language} />
         
         {/* Diagnostic Form */}
-        <section id="diagnosticoForm" className="py-20 bg-gradient-to-br from-brand-cream/30 via-white to-brand-beige/20">
+        <section id="diagnosticoForm" className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               {/* Header */}
-              <div className="text-center mb-12 space-y-4">
-                <div className="inline-flex items-center gap-2 bg-brand-pink/10 text-brand-pink px-4 py-2 rounded-full text-sm font-medium">
-                  {language === "en" ? "Get Started" : "Comece Agora"}
+              <div className="text-center mb-16 space-y-6 animate-fade-in">
+                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary/20 to-secondary/20 backdrop-blur-sm border border-primary/20 px-6 py-3 rounded-full text-sm font-semibold shadow-lg">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                  </span>
+                  {language === "en" ? "Get Started Now" : "Comece Agora"}
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold text-brand-black font-playfair">
-                  {language === "en" ? "Smart Property Diagnostic" : "Diagnóstico Inteligente"}
+                <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent font-playfair leading-tight">
+                  {language === "en" ? "AI-Powered Property Analysis" : "Análise Inteligente com IA"}
                 </h2>
-                <p className="text-lg text-gray-600 font-inter">
-                  {language === "en" ? "Enter your property details and get instant AI-powered insights" : "Insira os detalhes da sua propriedade e obtenha insights instantâneos com IA"}
+                <p className="text-xl text-muted-foreground font-inter max-w-2xl mx-auto">
+                  {language === "en" 
+                    ? "Enter your property details and receive a comprehensive AI-powered market analysis in minutes" 
+                    : "Insira os detalhes da sua propriedade e receba uma análise de mercado completa com IA em minutos"}
                 </p>
               </div>
               
               {/* Form Card */}
-              <div className="bg-white shadow-2xl rounded-3xl p-8 md:p-12 border-2 border-gray-100">
-                <DiagnosticForm language={language} />
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary via-secondary to-primary rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+                <div className="relative bg-card shadow-2xl rounded-3xl p-8 md:p-12 border border-border backdrop-blur-xl">
+                  <DiagnosticForm language={language} />
+                </div>
               </div>
             </div>
           </div>
         </section>
       </main>
       
-      <footer className="w-full py-12 px-4 bg-gradient-to-br from-brand-black to-gray-900 text-white">
+      <footer className="w-full py-12 px-4 bg-gradient-to-br from-gray-900 to-gray-950 dark:from-gray-950 dark:to-black text-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             {/* Brand Column */}
