@@ -84,7 +84,7 @@ const FeaturesBanner: React.FC<FeaturesBannerProps> = ({ language }) => {
   return (
     <section className="py-16 md:py-20 bg-gradient-to-r from-brand-pink/5 via-brand-blue/5 to-brand-pink/5">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-brand-black font-playfair">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground font-playfair">
           {currentContent.title}
         </h2>
         
@@ -92,16 +92,16 @@ const FeaturesBanner: React.FC<FeaturesBannerProps> = ({ language }) => {
           {currentContent.features.map((feature, index) => (
             <div
               key={index}
-              className="group text-center space-y-3 p-4 rounded-xl hover:bg-white hover:shadow-lg transition-all duration-300"
+              className="group text-center space-y-3 p-4 rounded-xl hover:bg-card hover:shadow-lg transition-all duration-300"
             >
               <div className="w-14 h-14 mx-auto bg-gradient-to-br from-brand-pink/10 to-brand-blue/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <feature.icon className="h-7 w-7 text-brand-pink" />
               </div>
               <div>
-                <div className="font-semibold text-brand-black text-sm mb-1 font-montserrat">
+                <div className="font-semibold text-foreground text-sm mb-1 font-montserrat">
                   {feature.title}
                 </div>
-                <div className="text-xs text-gray-600 font-inter leading-tight">
+                <div className="text-xs text-muted-foreground font-inter leading-tight">
                   {feature.description}
                 </div>
               </div>

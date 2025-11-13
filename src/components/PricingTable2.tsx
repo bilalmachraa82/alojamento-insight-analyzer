@@ -144,10 +144,10 @@ const PricingTable2: React.FC<PricingTable2Props> = ({ language, scrollToForm })
           <div className="inline-flex items-center gap-2 bg-brand-pink/10 text-brand-pink px-4 py-2 rounded-full text-sm font-medium">
             {currentContent.badge}
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-brand-black font-playfair">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground font-playfair">
             {currentContent.title}
           </h2>
-          <p className="text-lg text-gray-600 font-inter">
+          <p className="text-lg text-muted-foreground font-inter">
             {currentContent.subtitle}
           </p>
         </div>
@@ -193,10 +193,10 @@ const PricingTable2: React.FC<PricingTable2Props> = ({ language, scrollToForm })
                 
                 {/* Header */}
                 <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-brand-black font-montserrat mb-2">
+                  <h3 className="text-2xl font-bold text-foreground font-montserrat mb-2">
                     {plan.name}
                   </h3>
-                  <p className="text-gray-600 font-inter text-sm">
+                  <p className="text-muted-foreground font-inter text-sm">
                     {plan.description}
                   </p>
                 </div>
@@ -204,11 +204,11 @@ const PricingTable2: React.FC<PricingTable2Props> = ({ language, scrollToForm })
                 {/* Price */}
                 <div className="mb-8">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold text-brand-black">
+                    <span className="text-5xl font-bold text-foreground">
                       {plan.price}
                     </span>
                     {plan.period !== "quote" && (
-                      <span className="text-gray-500 text-sm">
+                      <span className="text-muted-foreground text-sm">
                         / {plan.period}
                       </span>
                     )}
@@ -219,10 +219,10 @@ const PricingTable2: React.FC<PricingTable2Props> = ({ language, scrollToForm })
                 <ul className="space-y-4 mb-8 flex-1">
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-                        <Check className="h-3 w-3 text-green-600" />
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mt-0.5">
+                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
                       </div>
-                      <span className="text-gray-700 font-inter text-sm leading-relaxed">
+                      <span className="text-muted-foreground font-inter text-sm leading-relaxed">
                         {feature}
                       </span>
                     </li>
@@ -235,7 +235,7 @@ const PricingTable2: React.FC<PricingTable2Props> = ({ language, scrollToForm })
                   className={`w-full py-6 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 ${
                     plan.popular
                       ? 'bg-gradient-to-r from-brand-pink to-brand-blue hover:from-brand-pink/90 hover:to-brand-blue/90 text-white'
-                      : 'bg-white hover:bg-gray-50 text-brand-black border-2 border-gray-200'
+                      : 'bg-card hover:bg-accent text-foreground border-2 border-border'
                   }`}
                 >
                   {plan.buttonText}
@@ -247,7 +247,7 @@ const PricingTable2: React.FC<PricingTable2Props> = ({ language, scrollToForm })
         
         {/* Guarantee */}
         <div className="text-center mt-12">
-          <div className="inline-flex items-center gap-2 text-gray-600 bg-white px-6 py-3 rounded-full shadow-md">
+          <div className="inline-flex items-center gap-2 text-muted-foreground bg-card px-6 py-3 rounded-full shadow-md">
             <Check className="h-5 w-5 text-green-500" />
             <span className="font-inter">{currentContent.guarantee}</span>
           </div>

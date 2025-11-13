@@ -80,7 +80,7 @@ const FAQ: React.FC<FAQProps> = ({ language }) => {
   const currentContent = language === "en" ? content.en : content.pt;
   
   return (
-    <section className="py-20 md:py-28 bg-white">
+    <section className="py-20 md:py-28 bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
@@ -88,10 +88,10 @@ const FAQ: React.FC<FAQProps> = ({ language }) => {
             <HelpCircle className="h-4 w-4" />
             {currentContent.badge}
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-brand-black font-playfair">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground font-playfair">
             {currentContent.title}
           </h2>
-          <p className="text-lg text-gray-600 font-inter">
+          <p className="text-lg text-muted-foreground font-inter">
             {currentContent.subtitle}
           </p>
         </div>
@@ -103,14 +103,14 @@ const FAQ: React.FC<FAQProps> = ({ language }) => {
               <AccordionItem 
                 key={index} 
                 value={`item-${index}`}
-                className="bg-gradient-to-br from-gray-50 to-white border-2 border-gray-100 rounded-xl px-6 hover:border-brand-pink/20 transition-colors"
+                className="bg-card border-2 border-border rounded-xl px-6 hover:border-brand-pink/20 transition-colors"
               >
                 <AccordionTrigger className="text-left hover:no-underline py-5">
-                  <span className="font-semibold text-brand-black font-montserrat">
+                  <span className="font-semibold text-foreground font-montserrat">
                     {item.q}
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="text-gray-600 font-inter leading-relaxed pb-5">
+                <AccordionContent className="text-muted-foreground font-inter leading-relaxed pb-5">
                   {item.a}
                 </AccordionContent>
               </AccordionItem>

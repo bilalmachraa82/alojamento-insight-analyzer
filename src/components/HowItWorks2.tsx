@@ -70,9 +70,9 @@ const HowItWorks2: React.FC<HowItWorks2Props> = ({ language }) => {
   const currentContent = language === "en" ? content.en : content.pt;
   
   return (
-    <section className="relative py-20 md:py-28 bg-white overflow-hidden">
+    <section className="relative py-20 md:py-28 bg-background overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-brand-cream/30 to-transparent"></div>
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-brand-cream/30 dark:from-brand-cream/10 to-transparent"></div>
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
@@ -80,10 +80,10 @@ const HowItWorks2: React.FC<HowItWorks2Props> = ({ language }) => {
           <div className="inline-flex items-center gap-2 bg-brand-blue/10 text-brand-blue px-4 py-2 rounded-full text-sm font-medium">
             {currentContent.badge}
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-brand-black font-playfair">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground font-playfair">
             {currentContent.title}
           </h2>
-          <p className="text-lg text-gray-600 font-inter">
+          <p className="text-lg text-muted-foreground font-inter">
             {currentContent.subtitle}
           </p>
         </div>
@@ -103,7 +103,7 @@ const HowItWorks2: React.FC<HowItWorks2Props> = ({ language }) => {
               )}
               
               {/* Card */}
-              <div className="relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-gray-100 group-hover:border-brand-pink/20">
+              <div className="relative bg-card rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-border group-hover:border-brand-pink/20">
                 {/* Number Badge */}
                 <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-brand-pink to-brand-pink/70 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   {step.number}
@@ -115,10 +115,10 @@ const HowItWorks2: React.FC<HowItWorks2Props> = ({ language }) => {
                 </div>
                 
                 {/* Content */}
-                <h3 className="text-xl font-bold mb-3 text-brand-black font-montserrat">
+                <h3 className="text-xl font-bold mb-3 text-foreground font-montserrat">
                   {step.title}
                 </h3>
-                <p className="text-gray-600 font-inter mb-4 leading-relaxed">
+                <p className="text-muted-foreground font-inter mb-4 leading-relaxed">
                   {step.description}
                 </p>
                 
@@ -145,16 +145,16 @@ const HowItWorks2: React.FC<HowItWorks2Props> = ({ language }) => {
             </div>
             
             {/* Floating badge */}
-            <div className="absolute -bottom-6 left-6 bg-white rounded-xl shadow-xl p-4">
+            <div className="absolute -bottom-6 left-6 bg-card rounded-xl shadow-xl p-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-brand-pink/10 rounded-lg flex items-center justify-center">
                   <BarChart3 className="h-6 w-6 text-brand-pink" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-brand-black">
+                  <div className="text-sm font-bold text-foreground">
                     {language === "en" ? "Real-time Analysis" : "Análise em Tempo Real"}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     {language === "en" ? "Powered by AI" : "Powered by IA"}
                   </div>
                 </div>
@@ -175,10 +175,10 @@ const HowItWorks2: React.FC<HowItWorks2Props> = ({ language }) => {
             
             {/* Content */}
             <div className="mt-6 space-y-4">
-              <h3 className="text-2xl font-bold text-brand-black font-playfair">
+              <h3 className="text-2xl font-bold text-foreground font-playfair">
                 {language === "en" ? "Powered by Advanced AI" : "Powered by IA Avançada"}
               </h3>
-              <p className="text-gray-600 font-inter leading-relaxed">
+              <p className="text-muted-foreground font-inter leading-relaxed">
                 {language === "en" 
                   ? "Our AI assistant analyzes thousands of data points from your property, reviews, pricing, and competition to provide you with actionable insights that drive real results."
                   : "O nosso assistente de IA analisa milhares de pontos de dados da sua propriedade, avaliações, preços e concorrência para fornecer insights acionáveis que geram resultados reais."

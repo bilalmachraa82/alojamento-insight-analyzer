@@ -41,10 +41,10 @@ const HeroSection2: React.FC<HeroSection2Props> = ({ language, scrollToForm }) =
   const currentContent = language === "en" ? content.en : content.pt;
   
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-brand-cream via-white to-brand-beige/30">
+    <section className="relative overflow-hidden bg-gradient-to-br from-brand-cream/50 via-background to-brand-beige/20 dark:from-background dark:via-background dark:to-background">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]"></div>
+      <div className="absolute inset-0 opacity-5 dark:opacity-10">
+        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:16px_16px]"></div>
       </div>
       
       <div className="relative container mx-auto px-4 py-16 md:py-24">
@@ -59,7 +59,7 @@ const HeroSection2: React.FC<HeroSection2Props> = ({ language, scrollToForm }) =
             
             {/* Title */}
             <div className="space-y-3">
-              <h1 className="text-4xl md:text-6xl font-bold text-brand-black font-playfair leading-tight">
+              <h1 className="text-4xl md:text-6xl font-bold text-foreground font-playfair leading-tight">
                 {currentContent.title}
               </h1>
               <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-brand-pink to-brand-blue bg-clip-text text-transparent font-playfair leading-tight">
@@ -68,7 +68,7 @@ const HeroSection2: React.FC<HeroSection2Props> = ({ language, scrollToForm }) =
             </div>
             
             {/* Subtitle */}
-            <p className="text-lg md:text-xl text-gray-600 font-inter leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground font-inter leading-relaxed">
               {currentContent.subtitle}
             </p>
             
@@ -79,7 +79,7 @@ const HeroSection2: React.FC<HeroSection2Props> = ({ language, scrollToForm }) =
                   <div className="flex-shrink-0 w-10 h-10 bg-brand-pink/10 rounded-lg flex items-center justify-center group-hover:bg-brand-pink/20 transition-colors">
                     <benefit.icon className="h-5 w-5 text-brand-pink" />
                   </div>
-                  <span className="text-gray-700 font-inter font-medium">{benefit.text}</span>
+                  <span className="text-muted-foreground font-inter font-medium">{benefit.text}</span>
                 </div>
               ))}
             </div>
@@ -96,7 +96,7 @@ const HeroSection2: React.FC<HeroSection2Props> = ({ language, scrollToForm }) =
               </Button>
               
               {/* Trust Badge */}
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span>{currentContent.trustBadge}</span>
               </div>
@@ -106,14 +106,14 @@ const HeroSection2: React.FC<HeroSection2Props> = ({ language, scrollToForm }) =
           {/* Right Column - Image */}
           <div className="relative animate-fade-in" style={{ animationDelay: '0.2s' }}>
             {/* Floating Badge */}
-            <div className="absolute -top-6 -left-6 z-10 bg-white rounded-2xl shadow-xl p-4 animate-[bounce_3s_ease-in-out_infinite]">
+            <div className="absolute -top-6 -left-6 z-10 bg-card rounded-2xl shadow-xl p-4 animate-[bounce_3s_ease-in-out_infinite]">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-green-600">+30%</div>
-                  <div className="text-xs text-gray-600">{language === "en" ? "Revenue" : "Receitas"}</div>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">+30%</div>
+                  <div className="text-xs text-muted-foreground">{language === "en" ? "Revenue" : "Receitas"}</div>
                 </div>
               </div>
             </div>
@@ -132,16 +132,16 @@ const HeroSection2: React.FC<HeroSection2Props> = ({ language, scrollToForm }) =
             </div>
             
             {/* Floating Stats */}
-            <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl shadow-xl p-6 animate-[bounce_3s_ease-in-out_infinite] [animation-delay:1.5s]">
+            <div className="absolute -bottom-6 -right-6 bg-card rounded-2xl shadow-xl p-6 animate-[bounce_3s_ease-in-out_infinite] [animation-delay:1.5s]">
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-brand-pink">4.9</div>
-                  <div className="text-xs text-gray-600">Rating</div>
+                  <div className="text-xs text-muted-foreground">Rating</div>
                 </div>
-                <div className="w-px h-12 bg-gray-200"></div>
+                <div className="w-px h-12 bg-border"></div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-brand-blue">500+</div>
-                  <div className="text-xs text-gray-600">{language === "en" ? "Clients" : "Clientes"}</div>
+                  <div className="text-xs text-muted-foreground">{language === "en" ? "Clients" : "Clientes"}</div>
                 </div>
               </div>
             </div>
