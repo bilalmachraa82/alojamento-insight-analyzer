@@ -41,9 +41,11 @@ export async function startEnhancedApifyRun(platform: string, startUrl: string, 
   console.log(`[EnhancedApify] Starting extraction for ${platform} with ${dataPoints.length} data points`);
 
   // Start actor run without waiting (async processing)
-  const enhancedApiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
+  // IMPORTANT: Apify API uses ~ instead of / in actor IDs for the endpoint
+  const apiActorId = actorId.replace('/', '~');
+  const enhancedApiUrl = `https://api.apify.com/v2/acts/${apiActorId}/runs?token=${APIFY_API_TOKEN}`;
   console.log(`[EnhancedApify] API URL: ${enhancedApiUrl.replace(APIFY_API_TOKEN, 'HIDDEN')}`);
-  console.log(`[EnhancedApify] Actor ID: ${actorId}`);
+  console.log(`[EnhancedApify] Actor ID: ${actorId} -> API: ${apiActorId}`);
   
   try {
     const runResponse = await fetch(enhancedApiUrl, {
