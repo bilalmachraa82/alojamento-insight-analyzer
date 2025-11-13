@@ -29,6 +29,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 
 // Lazy load all route components for optimal code splitting
 const Index = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const MySubmissions = lazy(() => import("./pages/MySubmissions"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AnalysisResult = lazy(() => import("./pages/AnalysisResult"));
 const TestPremiumPDF = lazy(() => import("./pages/TestPremiumPDF"));
@@ -103,6 +105,8 @@ const App = () => (
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/my-submissions" element={<MySubmissions />} />
                   <Route path="/results/:id" element={<AnalysisResult />} />
                   <Route path="/test-pdf" element={<TestPremiumPDF />} />
                   <Route path="/test-emails" element={<TestEmails />} />

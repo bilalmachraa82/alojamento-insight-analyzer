@@ -1,7 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { User, LogOut } from 'lucide-react';
+import { Session } from '@supabase/supabase-js';
 import MariaFazLogo from "@/components/MariaFazLogo";
 import LanguageToggle from "@/components/LanguageToggle";
 import HeroSection from "@/components/HeroSection";
@@ -21,6 +24,39 @@ import {
 
 const Index: React.FC = () => {
   const [language, setLanguage] = useState<"en" | "pt">("pt");
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully signed out.",
+      });
+    }
+  };
 
   const scrollToForm = () => {
     const form = document.getElementById("diagnosticoForm");
@@ -59,6 +95,45 @@ const Index: React.FC = () => {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <LanguageToggle language={language} setLanguage={setLanguage} />
+          {session ? (
+            <>
+              <Link to="/my-submissions">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <span className="hidden sm:inline">
+                    {language === "en" ? "My Submissions" : "Minhas Submissões"}
+                  </span>
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSignOut}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {language === "en" ? "Sign Out" : "Sair"}
+                </span>
+              </Button>
+            </>
+          ) : (
+            <Link to="/auth">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {language === "en" ? "Sign In" : "Entrar"}
+                </span>
+              </Button>
+            </Link>
+          )}
         </div>
       </header>
 
