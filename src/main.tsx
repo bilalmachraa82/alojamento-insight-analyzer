@@ -22,7 +22,13 @@ setTimeout(() => {
 }, 100);
 
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+  <ThemeProvider 
+    attribute="class" 
+    defaultTheme="light" 
+    enableSystem={false}
+    storageKey="mariafaz-theme"
+    disableTransitionOnChange
+  >
     <App />
   </ThemeProvider>
 );
