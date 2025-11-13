@@ -7,9 +7,13 @@ import { User, LogOut } from 'lucide-react';
 import { Session } from '@supabase/supabase-js';
 import MariaFazLogo from "@/components/MariaFazLogo";
 import LanguageToggle from "@/components/LanguageToggle";
-import HeroSection from "@/components/HeroSection";
-import HowItWorks from "@/components/HowItWorks";
-import PricingTable from "@/components/PricingTable";
+import HeroSection2 from "@/components/HeroSection2";
+import HowItWorks2 from "@/components/HowItWorks2";
+import FeaturesBanner from "@/components/FeaturesBanner";
+import SocialProof from "@/components/SocialProof";
+import PricingTable2 from "@/components/PricingTable2";
+import CTASection from "@/components/CTASection";
+import FAQ from "@/components/FAQ";
 import DiagnosticForm from "@/components/DiagnosticForm";
 import { Separator } from "@/components/ui/separator";
 import MetaTags from "@/components/SEO/MetaTags";
@@ -88,9 +92,9 @@ const Index: React.FC = () => {
           premiumProductSchema
         ]}
       />
-      <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-white to-gray-50">
+      <div className="min-h-screen flex flex-col bg-white">
       {/* Header */}
-      <header className="w-full py-4 px-6 md:px-8 flex justify-between items-center shadow-sm bg-white sticky top-0 z-10">
+      <header className="w-full py-4 px-6 md:px-8 flex justify-between items-center shadow-sm bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
         <MariaFazLogo />
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -137,38 +141,106 @@ const Index: React.FC = () => {
         </div>
       </header>
 
-      <main className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
+      <main className="w-full">
         {/* Hero Section */}
-        <HeroSection language={language} scrollToForm={scrollToForm} />
+        <HeroSection2 language={language} scrollToForm={scrollToForm} />
         
-        <Separator className="my-12" />
+        {/* Features Banner */}
+        <FeaturesBanner language={language} />
         
         {/* How It Works */}
-        <HowItWorks language={language} />
+        <HowItWorks2 language={language} />
         
-        <Separator className="my-12" />
+        {/* Social Proof */}
+        <SocialProof language={language} />
         
         {/* Pricing Table */}
-        <PricingTable language={language} scrollToForm={scrollToForm} />
+        <PricingTable2 language={language} scrollToForm={scrollToForm} />
         
-        <Separator className="my-12" />
+        {/* CTA Section */}
+        <CTASection language={language} scrollToForm={scrollToForm} />
+        
+        {/* FAQ Section */}
+        <FAQ language={language} />
         
         {/* Diagnostic Form */}
-        <div id="diagnosticoForm" className="bg-white shadow-sm rounded-xl p-8 mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 text-brand-black font-montserrat">
-            {language === "en" ? "Smart Diagnostic" : "Diagnóstico Inteligente"}
-          </h2>
-          <p className="text-lg text-center mb-8 text-gray-600 font-inter">
-            {language === "en" ? "Short-Term Rental" : "Alojamento Local"}
-          </p>
-          
-          <DiagnosticForm language={language} />
-        </div>
+        <section id="diagnosticoForm" className="py-20 bg-gradient-to-br from-brand-cream/30 via-white to-brand-beige/20">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              {/* Header */}
+              <div className="text-center mb-12 space-y-4">
+                <div className="inline-flex items-center gap-2 bg-brand-pink/10 text-brand-pink px-4 py-2 rounded-full text-sm font-medium">
+                  {language === "en" ? "Get Started" : "Comece Agora"}
+                </div>
+                <h2 className="text-4xl md:text-5xl font-bold text-brand-black font-playfair">
+                  {language === "en" ? "Smart Property Diagnostic" : "Diagnóstico Inteligente"}
+                </h2>
+                <p className="text-lg text-gray-600 font-inter">
+                  {language === "en" ? "Enter your property details and get instant AI-powered insights" : "Insira os detalhes da sua propriedade e obtenha insights instantâneos com IA"}
+                </p>
+              </div>
+              
+              {/* Form Card */}
+              <div className="bg-white shadow-2xl rounded-3xl p-8 md:p-12 border-2 border-gray-100">
+                <DiagnosticForm language={language} />
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
       
-      <footer className="w-full py-6 px-4 bg-gray-50 border-t border-gray-100">
-        <div className="max-w-7xl mx-auto text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Maria Faz. {language === "en" ? "All rights reserved." : "Todos os direitos reservados."}</p>
+      <footer className="w-full py-12 px-4 bg-gradient-to-br from-brand-black to-gray-900 text-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            {/* Brand Column */}
+            <div className="space-y-4">
+              <div className="font-playfair text-2xl font-bold">
+                <span className="text-brand-pink">A Maria</span>
+                <span className="text-brand-blue">Faz</span>
+              </div>
+              <p className="text-gray-400 text-sm font-inter">
+                {language === "en" 
+                  ? "AI-powered insights for short-term rental success"
+                  : "Insights com IA para o sucesso do seu alojamento local"
+                }
+              </p>
+            </div>
+            
+            {/* Quick Links */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-white mb-4">{language === "en" ? "Quick Links" : "Links Rápidos"}</h3>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#diagnosticoForm" className="text-gray-400 hover:text-brand-pink transition-colors">{language === "en" ? "Get Analysis" : "Obter Análise"}</a></li>
+                <li><Link to="/my-submissions" className="text-gray-400 hover:text-brand-pink transition-colors">{language === "en" ? "My Submissions" : "Minhas Submissões"}</Link></li>
+                <li><Link to="/auth" className="text-gray-400 hover:text-brand-pink transition-colors">{language === "en" ? "Sign In" : "Entrar"}</Link></li>
+              </ul>
+            </div>
+            
+            {/* Resources */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-white mb-4">{language === "en" ? "Resources" : "Recursos"}</h3>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#" className="text-gray-400 hover:text-brand-pink transition-colors">{language === "en" ? "How it Works" : "Como Funciona"}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-brand-pink transition-colors">{language === "en" ? "Pricing" : "Preços"}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-brand-pink transition-colors">{language === "en" ? "FAQ" : "Perguntas Frequentes"}</a></li>
+              </ul>
+            </div>
+            
+            {/* Contact */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-white mb-4">{language === "en" ? "Contact" : "Contacto"}</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="text-gray-400">info@mariafaz.com</li>
+                <li className="text-gray-400">+351 XXX XXX XXX</li>
+                <li className="text-gray-400">Lisboa, Portugal</li>
+              </ul>
+            </div>
+          </div>
+          
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
+            <p>© {new Date().getFullYear()} Maria Faz. {language === "en" ? "All rights reserved." : "Todos os direitos reservados."}</p>
+          </div>
         </div>
       </footer>
     </div>
