@@ -42,6 +42,8 @@ export async function startEnhancedApifyRun(platform: string, startUrl: string, 
 
   // Start actor run without waiting (async processing)
   const enhancedApiUrl = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_API_TOKEN}`;
+  console.log(`[EnhancedApify] API URL: ${enhancedApiUrl.replace(APIFY_API_TOKEN, 'HIDDEN')}`);
+  console.log(`[EnhancedApify] Actor ID: ${actorId}`);
   
   try {
     const runResponse = await fetch(enhancedApiUrl, {

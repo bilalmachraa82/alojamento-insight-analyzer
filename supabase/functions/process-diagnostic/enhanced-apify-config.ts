@@ -2,22 +2,51 @@
 // FASE 3: Enhanced data extraction configuration
 export const ENHANCED_PLATFORM_CONFIG = {
   booking: {
-    actorId: "dtrungtin/booking-scraper",
+    actorId: "apify/web-scraper",
     dataPoints: [
       "name", "location", "rating", "reviews", "price", "description",
       "amenities", "photos", "hotel_id", "check_in", "check_out",
       "type", "rooms", "facilities"
     ],
     defaultInput: {
-      search: "", // Will be replaced with property URL
-      maxItems: 1,
-      checkIn: new Date().toISOString().split('T')[0],
-      checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-      currency: "EUR",
-      language: "pt",
+      startUrls: [], // Will be set dynamically
+      linkSelector: "a[href]",
+      pseudoUrls: [],
+      pageFunction: `async function pageFunction(context) {
+        const { page, request } = context;
+        
+        // Wait for content to load
+        await page.waitForTimeout(3000);
+        
+        // Extract all visible text and structured data
+        const data = await page.evaluate(() => {
+          const result = {
+            url: window.location.href,
+            title: document.title,
+            text: document.body.innerText,
+            metadata: {}
+          };
+          
+          // Try to extract hotel-specific data
+          const nameEl = document.querySelector('.hp_hotel_name, h1[data-testid="property-title"]');
+          if (nameEl) result.metadata.name = nameEl.textContent.trim();
+          
+          const ratingEl = document.querySelector('.bui-review-score__badge, [data-testid="rating-number"]');
+          if (ratingEl) result.metadata.rating = ratingEl.textContent.trim();
+          
+          const descEl = document.querySelector('.hotel_description, [data-testid="property-description"]');
+          if (descEl) result.metadata.description = descEl.textContent.trim();
+          
+          return result;
+        });
+        
+        return data;
+      }`,
       proxyConfiguration: {
         useApifyProxy: true
-      }
+      },
+      maxRequestsPerCrawl: 1,
+      maxCrawlingDepth: 0
     }
   },
   airbnb: {
