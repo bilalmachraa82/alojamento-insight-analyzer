@@ -89,6 +89,9 @@
 @layer base {
   * {
     @apply border-border;
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
   }
 
   body {
@@ -97,5 +100,52 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-montserrat;
+  }
+
+  /* Smooth theme transitions for specific elements */
+  .theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* Prevent transitions on page load */
+  .preload * {
+    transition: none !important;
+  }
+
+  /* Card and surface transitions */
+  [class*="bg-card"],
+  [class*="bg-background"],
+  [class*="bg-muted"],
+  [class*="bg-popover"] {
+    transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
+                box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Text color transitions */
+  [class*="text-foreground"],
+  [class*="text-muted-foreground"],
+  [class*="text-primary"],
+  [class*="text-secondary"] {
+    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Border transitions */
+  [class*="border"] {
+    transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Icon and SVG transitions */
+  svg {
+    transition: fill 0.3s ease, stroke 0.3s ease, color 0.3s ease;
+  }
+
+  /* Button transitions enhanced for theme changes */
+  button {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+  }
+
+  /* Image and media smooth transitions */
+  img {
+    transition: opacity 0.3s ease;
   }
 }

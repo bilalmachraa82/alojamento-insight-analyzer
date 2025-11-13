@@ -13,6 +13,14 @@ initSentry();
 // GA4 will check for cookie consent before actually initializing
 initGA4();
 
+// Add preload class to prevent transitions on page load
+document.documentElement.classList.add('preload');
+
+// Remove preload class after initial render to enable smooth theme transitions
+setTimeout(() => {
+  document.documentElement.classList.remove('preload');
+}, 100);
+
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
     <App />
