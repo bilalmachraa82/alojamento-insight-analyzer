@@ -84,7 +84,6 @@ export const useFormSubmission = (language: Language) => {
     
     setIsLoading(true);
     try {
-      const currentDate = new Date().toISOString();
       const normalizedPlatform = data.plataforma.toLowerCase();
       const platformInfo = supportedPlatforms.find(p => p.value === normalizedPlatform);
       
@@ -92,79 +91,43 @@ export const useFormSubmission = (language: Language) => {
         throw new Error(language === "en" ? "Unsupported platform" : "Plataforma não suportada");
       }
       
-      const { data: submissionData, error } = await supabase
-        .from("diagnostic_submissions")
-        .insert({
+      // Submit via secure edge function
+      const { data: submissionResponse, error: submissionError } = await supabase.functions.invoke("submit-diagnostic", {
+        body: {
           name: data.nome,
           email: data.email,
           property_url: trimmedUrl,
-          platform: platformInfo.value,
-          submission_date: currentDate,
-          status: "pending"
-        })
-        .select();
+          platform: platformInfo.value
+        }
+      });
 
-      if (error) throw error;
+      if (submissionError) {
+        console.error("Submission error:", submissionError);
+        throw submissionError;
+      }
 
-      const newSubmissionId = submissionData[0].id;
+      if (!submissionResponse?.success) {
+        throw new Error(submissionResponse?.error || "Submission failed");
+      }
+
+      const newSubmissionId = submissionResponse.submissionId;
       setSubmissionId(newSubmissionId);
       
+      // Send confirmation email (non-blocking)
       sendConfirmationEmail(data.email, data.nome, newSubmissionId)
         .catch(e => {
           console.error("Email sending error caught:", e);
         });
       
-      try {
-        const { data: functionData, error: functionError } = await supabase.functions.invoke("process-diagnostic", {
-          body: { id: newSubmissionId }
-        });
-  
-        if (functionError) {
-          console.error("Function error:", functionError);
-          setIsSuccess(true);
-          toast({
-            title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
-            description: language === "en" 
-              ? "Your submission was received, but there was a processing delay. Our team will review it shortly."
-              : "A sua submissão foi recebida, mas houve um atraso no processamento. A nossa equipa irá analisá-la em breve.",
-            variant: "default",
-          });
-          return;
-        }
-        
-        if (!functionData?.success) {
-          console.error("Function response error:", functionData);
-          setIsSuccess(true);
-          toast({
-            title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
-            description: language === "en" 
-              ? "Your submission was received and will be processed manually by our team."
-              : "A sua submissão foi recebida e será processada manualmente pela nossa equipa.",
-            variant: "default",
-          });
-          return;
-        }
-        
-        setIsSuccess(true);
-        
-        toast({
-          title: language === "en" ? "Diagnostic submitted successfully!" : "Diagnóstico enviado com sucesso!",
-          description: language === "en" 
-            ? `Thank you! We're processing your smart diagnostic. You'll receive your personalized plan by email soon.`
-            : `Obrigado! Estamos a processar o seu diagnóstico inteligente. Em breve receberá o seu plano personalizado por email.`,
-          variant: "default",
-        });
-      } catch (functionError) {
-        console.error("Error calling function:", functionError);
-        setIsSuccess(true);
-        toast({
-          title: language === "en" ? "Diagnostic submitted!" : "Diagnóstico enviado!",
-          description: language === "en" 
-            ? "Your submission was received successfully. You can check the status later."
-            : "A sua submissão foi recebida com sucesso. Pode verificar o estado mais tarde.",
-          variant: "default",
-        });
-      }
+      // Show success message
+      setIsSuccess(true);
+      toast({
+        title: language === "en" ? "Diagnostic submitted successfully!" : "Diagnóstico enviado com sucesso!",
+        description: language === "en" 
+          ? `Thank you! We're processing your smart diagnostic. You'll receive your personalized plan by email soon.`
+          : `Obrigado! Estamos a processar o seu diagnóstico inteligente. Em breve receberá o seu plano personalizado por email.`,
+        variant: "default",
+      });
     } catch (error: any) {
       console.error("Error submitting form:", error);
       toast({
