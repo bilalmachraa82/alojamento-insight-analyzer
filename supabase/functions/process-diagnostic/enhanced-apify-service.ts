@@ -41,14 +41,25 @@ export async function startEnhancedApifyRun(platform: string, startUrl: string, 
   console.log(`[EnhancedApify] Starting extraction for ${platform} with ${dataPoints.length} data points`);
 
   // Start actor run without waiting (async processing)
-  // IMPORTANT: Apify API uses ~ instead of / in actor IDs for the endpoint
-  const apiActorId = actorId.replace('/', '~');
-  const enhancedApiUrl = `https://api.apify.com/v2/acts/${apiActorId}/runs?token=${APIFY_API_TOKEN}`;
-  console.log(`[EnhancedApify] API URL: ${enhancedApiUrl.replace(APIFY_API_TOKEN, 'HIDDEN')}`);
-  console.log(`[EnhancedApify] Actor ID: ${actorId} -> API: ${apiActorId}`);
+  // IMPORTANT: Apify API uses ~ instead of / in actor or task IDs for the endpoint
+  const envTaskId = Deno.env.get("APIFY_TASK_ID");
+  const envActorId = Deno.env.get("APIFY_ACTOR_ID");
+
+  let startEndpoint = "";
+  if (envTaskId) {
+    const apiTaskId = envTaskId.replace('/', '~');
+    startEndpoint = `https://api.apify.com/v2/actor-tasks/${apiTaskId}/runs?token=${APIFY_API_TOKEN}`;
+    console.log(`[EnhancedApify] Using TASK mode: ${envTaskId} -> API: ${apiTaskId}`);
+  } else {
+    const apiActorId = (envActorId || actorId).replace('/', '~');
+    startEndpoint = `https://api.apify.com/v2/acts/${apiActorId}/runs?token=${APIFY_API_TOKEN}`;
+    console.log(`[EnhancedApify] Using ACTOR mode: ${envActorId || actorId} -> API: ${apiActorId}`);
+  }
+
+  console.log(`[EnhancedApify] API URL: ${startEndpoint.replace(APIFY_API_TOKEN, 'HIDDEN')}`);
   
   try {
-    const runResponse = await fetch(enhancedApiUrl, {
+    const runResponse = await fetch(startEndpoint, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
@@ -86,7 +97,7 @@ export async function startEnhancedApifyRun(platform: string, startUrl: string, 
 }
 
 export async function getRunResults(runId: string) {
-  const resultsUrl = `https://api.apify.com/v2/acts/runs/${runId}/dataset/items?token=${APIFY_API_TOKEN}`;
+  const resultsUrl = `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${APIFY_API_TOKEN}`;
   
   try {
     const response = await fetch(resultsUrl);
