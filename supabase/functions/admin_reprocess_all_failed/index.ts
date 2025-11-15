@@ -118,10 +118,10 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        message: `Reprocessed ${successCount} submissions, ${failCount} failed`,
-        total: failedSubmissions.length,
-        success: successCount,
-        failed: failCount,
+        message: `Reprocessing complete: ${successCount} queued, ${failCount} failed`,
+        count: failedSubmissions.length,
+        successCount,
+        failCount,
         results,
       }),
       {
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error reprocessing failed submissions:', error);
+    console.error('Error reprocessing submissions:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

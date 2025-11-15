@@ -48,26 +48,34 @@ export const useErrorLogs = (
   return useQuery<ErrorLogsResponse>({
     queryKey: ['admin', 'error-logs', limit, severity, resolved, errorType],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        limit: limit.toString(),
-      });
+      try {
+        const params = new URLSearchParams();
+        if (limit) params.append('limit', limit.toString());
+        if (severity) params.append('severity', severity);
+        if (resolved !== undefined) params.append('resolved', resolved.toString());
+        if (errorType) params.append('error_type', errorType);
+        
+        const { data, error } = await supabase.functions.invoke(
+          `admin_get_error_logs?${params.toString()}`,
+          { method: 'GET' }
+        );
 
-      if (severity) params.append('severity', severity);
-      if (resolved !== undefined) params.append('resolved', resolved.toString());
-      if (errorType) params.append('error_type', errorType);
-
-      const { data, error } = await supabase.functions.invoke(
-        `admin/get-error-logs?${params.toString()}`,
-        {
-          method: 'GET'
+        if (error) {
+          if (error.message?.includes('404') || error.message?.includes('FunctionsRelayError')) {
+            throw new Error('Admin function not deployed yet. Please wait for deployment.');
+          }
+          throw new Error(error.message || 'Failed to fetch error logs');
         }
-      );
 
-      if (error) {
-        throw new Error(error.message || 'Failed to fetch error logs');
+        if (!data) {
+          throw new Error('No data returned from admin function');
+        }
+
+        return data as ErrorLogsResponse;
+      } catch (error: any) {
+        console.error('Error logs fetch error:', error);
+        throw error;
       }
-
-      return data;
     },
     refetchInterval: 30000,
   });

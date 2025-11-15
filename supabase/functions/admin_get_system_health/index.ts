@@ -123,43 +123,33 @@ Deno.serve(async (req) => {
       if (logs.length === 0) {
         healthChecks.push({
           service,
-          status: 'healthy',
-          details: { recentCalls: 0, note: 'No recent activity' },
+          status: 'degraded',
+          details: { message: 'No recent activity' },
         });
-      } else {
-        const successRate = logs.filter(log => log.success).length / logs.length;
-        healthChecks.push({
-          service,
-          status: successRate >= 0.9 ? 'healthy' : successRate >= 0.7 ? 'degraded' : 'down',
-          details: {
-            recentCalls: logs.length,
-            successRate: Math.round(successRate * 100),
-          },
-        });
+        continue;
       }
-    }
 
-    // Save health checks to database
-    for (const check of healthChecks) {
-      await supabaseClient.from('system_health_checks').insert({
-        service_name: check.service,
-        status: check.status,
-        response_time_ms: check.responseTime,
-        error_message: check.error,
-        metadata: check.details || {},
+      const successCount = logs.filter(log => log.success).length;
+      const successRate = successCount / logs.length;
+
+      healthChecks.push({
+        service,
+        status: successRate > 0.8 ? 'healthy' : successRate > 0.5 ? 'degraded' : 'down',
+        details: {
+          recentCalls: logs.length,
+          successRate: `${Math.round(successRate * 100)}%`,
+        },
       });
     }
 
-    // Get overall system status
-    const overallStatus = healthChecks.some(c => c.status === 'down')
-      ? 'down'
-      : healthChecks.some(c => c.status === 'degraded')
-      ? 'degraded'
-      : 'healthy';
+    // Determine overall health
+    const hasDown = healthChecks.some(check => check.status === 'down');
+    const hasDegraded = healthChecks.some(check => check.status === 'degraded');
+    const overall = hasDown ? 'down' : hasDegraded ? 'degraded' : 'healthy';
 
     return new Response(
       JSON.stringify({
-        overall: overallStatus,
+        overall,
         services: healthChecks,
         timestamp: new Date().toISOString(),
       }),
