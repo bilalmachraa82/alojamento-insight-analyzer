@@ -26,13 +26,24 @@ serve(async (req: Request) => {
       );
     }
 
+    console.log("=================================");
+    console.log(`📋 ETAPA 1: INICIAR SCRAPING`);
     console.log(`Processing diagnostic submission: ${id}`);
+    console.log("=================================");
 
     // Fetch the submission
     const submission = await getSubmission(id);
+    console.log(`✅ Submission encontrada:`, {
+      id,
+      platform: submission.platform,
+      url: submission.property_url,
+      email: submission.email,
+      status_atual: submission.status
+    });
     
     // Update status to "processing"
     await updateSubmissionStatus(id, "processing");
+    console.log(`📝 Status atualizado para: processing`);
 
     // Trim any whitespace from the URL
     const startUrl = submission.property_url.trim();
@@ -64,9 +75,14 @@ serve(async (req: Request) => {
     }
     
     // Start Apify run with retry logic (FASE 3)
-    console.log("Starting Apify scraping process with retry logic");
+    console.log("=================================");
+    console.log("🚀 ETAPA 2: INICIAR APIFY SCRAPER");
+    console.log("=================================");
     const platform = submission.platform.toLowerCase();
     const { actorId } = getActorConfig(platform);
+    console.log(`Platform: ${platform}`);
+    console.log(`Actor ID: ${actorId}`);
+    console.log(`Max Attempts: ${MAX_RETRY_ATTEMPTS}`);
     
     let apifyResult;
     let lastError;
@@ -106,7 +122,12 @@ serve(async (req: Request) => {
     }
     
     if (!apifyResult || !apifyResult.success) {
-      console.error(`All ${MAX_RETRY_ATTEMPTS} attempts failed. Last error:`, lastError);
+      console.log("=================================");
+      console.error(`❌ FALHA NO SCRAPING`);
+      console.error(`Todas as ${MAX_RETRY_ATTEMPTS} tentativas falharam`);
+      console.error(`Último erro:`, lastError);
+      console.log("=================================");
+      
       await updateSubmissionStatus(id, "pending_manual_review", {
         error: lastError,
         error_at: new Date().toISOString(),
@@ -129,7 +150,15 @@ serve(async (req: Request) => {
 
     // Update submission with successful run data
     const runId = apifyResult.runId || apifyResult.data?.id;
-    console.log(`Apify run started successfully. Run ID: ${runId}, Actor: ${actorId}`);
+    console.log("=================================");
+    console.log("✅ DADOS APIFY COLETADOS");
+    console.log("=================================");
+    console.log(`Run ID: ${runId}`);
+    console.log(`Actor: ${actorId}`);
+    console.log(`Platform: ${platform}`);
+    console.log(`Endpoint: ${apifyResult.fallbackMode ? "basic_fallback" : "enhanced"}`);
+    console.log(`Data points: ${apifyResult.extractedDataPoints?.join(', ') || 'N/A'}`);
+    console.log(`Processing time: ${apifyResult.processingTime || 0}s`);
     
     await updateSubmissionStatus(id, "scraping", {
       actor_run_id: runId,
@@ -141,6 +170,7 @@ serve(async (req: Request) => {
       extracted_data_points: apifyResult.extractedDataPoints,
       processing_time_secs: apifyResult.processingTime || 0
     });
+    console.log("📝 Status atualizado para: scraping");
     
     return new Response(
       JSON.stringify({

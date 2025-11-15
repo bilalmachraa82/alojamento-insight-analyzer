@@ -37,6 +37,7 @@ const TestPremiumPDF = lazy(() => import("./pages/TestPremiumPDF"));
 const TestEmails = lazy(() => import("./pages/TestEmails"));
 const TestMonitoring = lazy(() => import("./pages/TestMonitoring"));
 const TestScraping = lazy(() => import("./pages/TestScraping"));
+const TestPremiumFlow = lazy(() => import("./pages/TestPremiumFlow"));
 const Admin = lazy(() => import("./pages/Admin"));
 const DebugSubmissions = lazy(() => import("./pages/DebugSubmissions"));
 
@@ -112,8 +113,9 @@ const App = () => (
                   <Route path="/test-pdf" element={<TestPremiumPDF />} />
                   <Route path="/test-emails" element={<TestEmails />} />
                   <Route path="/test-monitoring" element={<TestMonitoring />} />
-                  <Route path="/test-scraping" element={<TestScraping />} />
-                  <Route path="/admin" element={<Admin />} />
+                <Route path="/test-scraping" element={<TestScraping />} />
+                <Route path="/test-premium-flow" element={<TestPremiumFlow />} />
+                <Route path="/admin" element={<Admin />} />
                   <Route path="/debug" element={<DebugSubmissions />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
