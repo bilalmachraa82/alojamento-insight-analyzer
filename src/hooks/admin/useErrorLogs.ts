@@ -48,12 +48,6 @@ export const useErrorLogs = (
   return useQuery<ErrorLogsResponse>({
     queryKey: ['admin', 'error-logs', limit, severity, resolved, errorType],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
       const params = new URLSearchParams({
         limit: limit.toString(),
       });
@@ -62,23 +56,18 @@ export const useErrorLogs = (
       if (resolved !== undefined) params.append('resolved', resolved.toString());
       if (errorType) params.append('error_type', errorType);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin/get-error-logs?${params}`,
+      const { data, error } = await supabase.functions.invoke(
+        `admin/get-error-logs?${params.toString()}`,
         {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
+          method: 'GET'
         }
       );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch error logs');
+      if (error) {
+        throw new Error(error.message || 'Failed to fetch error logs');
       }
 
-      return response.json();
+      return data;
     },
     refetchInterval: 30000,
   });

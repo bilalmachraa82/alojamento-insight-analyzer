@@ -19,29 +19,13 @@ export const useSystemHealth = (refetchInterval?: number) => {
   return useQuery<SystemHealthResponse>({
     queryKey: ['admin', 'system-health'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('admin/get-system-health');
 
-      if (!session) {
-        throw new Error('Not authenticated');
+      if (error) {
+        throw new Error(error.message || 'Failed to fetch system health');
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin/get-system-health`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch system health');
-      }
-
-      return response.json();
+      return data;
     },
     refetchInterval: refetchInterval || 30000, // Refetch every 30 seconds by default
     staleTime: 20000,

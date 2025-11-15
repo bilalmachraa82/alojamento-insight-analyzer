@@ -86,32 +86,15 @@ const Admin = () => {
 
   const handleReprocessAllFailed = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
       toast({
         title: 'Reprocessing...',
         description: 'Reprocessing all failed submissions. This may take a while.',
       });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin/reprocess-all-failed`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const { data: result, error } = await supabase.functions.invoke('admin/reprocess-all-failed');
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to reprocess submissions');
+      if (error) {
+        throw new Error(error.message || 'Failed to reprocess submissions');
       }
 
       toast({
@@ -129,12 +112,6 @@ const Admin = () => {
 
   const handleCleanupOldData = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
       const confirmed = window.confirm(
         'Are you sure you want to cleanup old data? This action cannot be undone.'
       );
@@ -146,21 +123,10 @@ const Admin = () => {
         description: 'Removing old data according to retention policies.',
       });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin/cleanup-old-data`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const { data: result, error } = await supabase.functions.invoke('admin/cleanup-old-data');
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to cleanup data');
+      if (error) {
+        throw new Error(error.message || 'Failed to cleanup data');
       }
 
       toast({
