@@ -29,13 +29,22 @@ serve(async (req: Request) => {
       );
     }
 
+    console.log("=================================");
+    console.log("🤖 ETAPA 3: ANÁLISE COM CLAUDE");
     console.log(`Analyzing property data with Claude for submission: ${id}`);
+    console.log("=================================");
 
     const { data: submission, error: fetchError } = await supabase
       .from("diagnostic_submissions")
       .select("*")
       .eq("id", id)
       .single();
+    
+    console.log(`✅ Submission carregada:`, {
+      id,
+      status: submission?.status,
+      has_property_data: !!submission?.property_data
+    });
 
     if (fetchError || !submission) {
       console.error("Error fetching submission:", fetchError);
@@ -74,8 +83,12 @@ serve(async (req: Request) => {
       .from("diagnostic_submissions")
       .update({ status: "analyzing" })
       .eq("id", id);
+    console.log("📝 Status atualizado para: analyzing");
 
     const propertyData = submission.property_data.property_data;
+    console.log("=================================");
+    console.log("📊 VALIDAÇÃO DE QUALIDADE DOS DADOS");
+    console.log("=================================");
     
     // FASE 2: Validate input data quality before analysis
     const hasValidRating = propertyData.rating && propertyData.rating > 0;
@@ -83,11 +96,11 @@ serve(async (req: Request) => {
     const hasValidAmenities = propertyData.amenities && propertyData.amenities.length > 0;
     const hasValidDescription = propertyData.description && propertyData.description.length > 50;
     
-    // Log data quality warnings
-    if (!hasValidRating) console.warn("⚠️ Missing or invalid rating data");
-    if (!hasValidReviews) console.warn("⚠️ Missing or insufficient review data");
-    if (!hasValidAmenities) console.warn("⚠️ Missing amenities data");
-    if (!hasValidDescription) console.warn("⚠️ Missing or short description");
+    // Log data quality
+    console.log(`✅ Rating: ${hasValidRating ? propertyData.rating : '❌ FALTANDO'}`);
+    console.log(`✅ Reviews: ${hasValidReviews ? propertyData.reviewCount : '❌ FALTANDO'}`);
+    console.log(`✅ Amenities: ${hasValidAmenities ? propertyData.amenities.length : '❌ FALTANDO'}`);
+    console.log(`✅ Description: ${hasValidDescription ? 'OK' : '❌ MUITO CURTA'}`);
     
     // Build property info with quality indicators
     const propertyInfo = {
@@ -391,17 +404,26 @@ IMPORTANTE:
       const analysisResult = claudeData.content[0].text;
       
       // Parse the JSON response
+      console.log("=================================");
+      console.log("📊 PROCESSAR RESPOSTA DO CLAUDE");
+      console.log("=================================");
+      
       let parsedAnalysis;
       try {
         const jsonString = analysisResult.trim().replace(/```json|```/g, '');
         parsedAnalysis = JSON.parse(jsonString);
-        console.log("Successfully parsed Claude analysis JSON");
+        console.log("✅ JSON parseado com sucesso");
+        console.log(`Secções encontradas:`, Object.keys(parsedAnalysis).join(', '));
       } catch (error) {
-        console.error("Error parsing Claude response:", error, "Raw response:", analysisResult);
+        console.log("=================================");
+        console.error("❌ ERRO AO PARSEAR JSON");
+        console.error(error);
+        console.error("Raw response:", analysisResult.substring(0, 500));
+        console.log("=================================");
         throw new Error("Failed to parse analysis result as valid JSON");
       }
       
-      console.log("Updating submission with Claude analysis results");
+      console.log("💾 Guardando análise na base de dados...");
       
       await supabase
         .from("diagnostic_submissions")
@@ -410,9 +432,12 @@ IMPORTANTE:
           analysis_result: parsedAnalysis,
         })
         .eq("id", id);
+      console.log("✅ Análise guardada com sucesso");
 
       // CRITICAL: Generate Premium PDF after successful analysis
-      console.log("Triggering premium PDF generation for submission:", id);
+      console.log("=================================");
+      console.log("📄 INICIAR GERAÇÃO DO RELATÓRIO");
+      console.log("=================================");
       try {
         const { data: pdfData, error: pdfError } = await supabase.functions.invoke("generate-premium-pdf", {
           body: {

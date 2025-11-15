@@ -27,19 +27,26 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log(`Generating premium PDF for submission: ${submissionId}`);
+    console.log("=================================");
+    console.log("📄 GERAR RELATÓRIO HTML PREMIUM");
+    console.log(`Submission ID: ${submissionId}`);
+    console.log("=================================");
 
     // Generate premium HTML report
+    console.log("🔨 Compilando template Handlebars...");
     const html = await generatePremiumHTML(analysisData);
+    console.log("✅ Template compilado com sucesso");
     
-    console.log("Preparing HTML report bytes...");
+    console.log("📦 Preparando bytes do HTML...");
     const encoder = new TextEncoder();
     const htmlBytes = encoder.encode(html);
-    console.log(`HTML generated successfully, size: ${htmlBytes.length} bytes`);
+    console.log(`✅ HTML gerado: ${htmlBytes.length} bytes (${(htmlBytes.length / 1024).toFixed(2)} KB)`);
     
     const fileName = `relatorio_premium_${analysisData.property_data.property_name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+    console.log(`📝 Nome do ficheiro: ${fileName}`);
     
     // Store the HTML report in Storage
+    console.log("☁️ Enviando para Supabase Storage (bucket: premium-reports)...");
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('premium-reports')
       .upload(fileName, htmlBytes, {
@@ -48,16 +55,22 @@ serve(async (req: Request) => {
       });
 
     if (uploadError) {
-      console.error("Error uploading report:", uploadError);
+      console.log("=================================");
+      console.error("❌ ERRO NO UPLOAD");
+      console.error(uploadError);
+      console.log("=================================");
       throw uploadError;
     }
+    console.log("✅ Upload concluído com sucesso");
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('premium-reports')
       .getPublicUrl(fileName);
+    console.log(`🌐 URL pública gerada: ${publicUrl}`);
 
     // Update submission with report URL
+    console.log("💾 Atualizando submission com URL do relatório...");
     await supabase
       .from("diagnostic_submissions")
       .update({
@@ -65,7 +78,12 @@ serve(async (req: Request) => {
         report_generated_at: new Date().toISOString()
       })
       .eq("id", submissionId);
+    console.log("✅ Submission atualizada");
 
+    console.log("=================================");
+    console.log("✅ RELATÓRIO PREMIUM CONCLUÍDO");
+    console.log("=================================");
+    
     return new Response(
       JSON.stringify({
         success: true,
