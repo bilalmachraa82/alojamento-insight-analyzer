@@ -19,13 +19,25 @@ export const useSystemHealth = (refetchInterval?: number) => {
   return useQuery<SystemHealthResponse>({
     queryKey: ['admin', 'system-health'],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('admin/get-system-health');
+      try {
+        const { data, error } = await supabase.functions.invoke('admin_get_system_health');
 
-      if (error) {
-        throw new Error(error.message || 'Failed to fetch system health');
+        if (error) {
+          if (error.message?.includes('404') || error.message?.includes('FunctionsRelayError')) {
+            throw new Error('Admin function not deployed yet. Please wait for deployment.');
+          }
+          throw new Error(error.message || 'Failed to fetch system health');
+        }
+
+        if (!data) {
+          throw new Error('No data returned from admin function');
+        }
+
+        return data;
+      } catch (error: any) {
+        console.error('System health error:', error);
+        throw error;
       }
-
-      return data;
     },
     refetchInterval: refetchInterval || 30000, // Refetch every 30 seconds by default
     staleTime: 20000,

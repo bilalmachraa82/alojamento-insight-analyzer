@@ -91,7 +91,7 @@ const Admin = () => {
         description: 'Reprocessing all failed submissions. This may take a while.',
       });
 
-      const { data: result, error } = await supabase.functions.invoke('admin/reprocess-all-failed');
+      const { data: result, error } = await supabase.functions.invoke('admin_reprocess_all_failed');
 
       if (error) {
         throw new Error(error.message || 'Failed to reprocess submissions');
@@ -123,7 +123,7 @@ const Admin = () => {
         description: 'Removing old data according to retention policies.',
       });
 
-      const { data: result, error } = await supabase.functions.invoke('admin/cleanup-old-data');
+      const { data: result, error } = await supabase.functions.invoke('admin_cleanup_old_data');
 
       if (error) {
         throw new Error(error.message || 'Failed to cleanup data');
@@ -137,6 +137,31 @@ const Admin = () => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to cleanup data',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleClearCache = async () => {
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+        toast({
+          title: 'Cache Cleared!',
+          description: 'Reloading page to apply changes...',
+        });
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        toast({
+          title: 'Service Worker Not Active',
+          description: 'Cache management is only available when the service worker is running.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to clear cache',
         variant: 'destructive',
       });
     }
@@ -195,6 +220,10 @@ const Admin = () => {
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleClearCache}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Clear Cache
             </Button>
             <Button variant="outline" size="sm" onClick={handleExportData}>
               <Download className="h-4 w-4 mr-2" />

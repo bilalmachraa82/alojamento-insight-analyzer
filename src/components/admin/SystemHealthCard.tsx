@@ -78,7 +78,11 @@ export const SystemHealthCard = () => {
         <CardContent>
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Failed to load system health: {error.message}</AlertDescription>
+            <AlertDescription>
+              {error.message.includes('404') || error.message.includes('not deployed')
+                ? 'Admin functions are being deployed. Please wait a moment and refresh the page.'
+                : `Failed to load system health: ${error.message}`}
+            </AlertDescription>
           </Alert>
         </CardContent>
       </Card>

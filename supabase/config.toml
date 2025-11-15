@@ -36,14 +36,17 @@ verify_jwt = false
 [functions.reprocess-submission]
 verify_jwt = false
 
-[functions."admin/get-system-health"]
+[functions.admin_get_system_health]
 verify_jwt = false
 
-[functions."admin/get-error-logs"]
+[functions.admin_get_error_logs]
 verify_jwt = false
 
-[functions."admin/cleanup-old-data"]
+[functions.admin_cleanup_old_data]
 verify_jwt = false
 
-[functions."admin/reprocess-all-failed"]
+[functions.admin_reprocess_all_failed]
+verify_jwt = false
+
+[functions.analyze-sentiment]
 verify_jwt = false

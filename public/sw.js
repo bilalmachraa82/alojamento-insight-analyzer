@@ -11,7 +11,7 @@
  */
 
 // Cache version - increment to force cache update on all clients
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `alojamento-insights-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 

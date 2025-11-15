@@ -16,7 +16,7 @@ export const ENHANCED_PLATFORM_CONFIG = {
     }
   },
   airbnb: {
-    actorId: "red.cars/airbnb-scraper",
+    actorId: "tri_angle/airbnb-scraper", // ✅ Officially maintained by Apify, 10K+ runs
     dataPoints: ["listing", "pricing", "amenities", "reviews", "host", "images"],
     defaultInput: {
       maxListings: 1,

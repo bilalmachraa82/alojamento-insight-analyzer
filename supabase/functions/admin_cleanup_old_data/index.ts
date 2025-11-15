@@ -116,50 +116,27 @@ Deno.serve(async (req) => {
         name: 'ANONYMIZED',
         email: 'anonymized@example.com',
       })
-      .eq('status', 'completed')
       .lt('created_at', submissionsCutoff.toISOString())
-      .neq('email', 'anonymized@example.com')
+      .in('status', ['completed', 'email_sent'])
       .select('id');
 
     if (!submissionsError) {
       results.completedSubmissions = anonymizedSubmissions?.length || 0;
     }
 
-    // Clean up old audit logs (keep last 1 year)
-    const auditLogsCutoff = new Date();
-    auditLogsCutoff.setFullYear(auditLogsCutoff.getFullYear() - 1);
-
-    const { data: deletedAuditLogs, error: auditLogsError } = await supabaseClient
-      .from('admin_audit_logs')
-      .delete()
-      .lt('created_at', auditLogsCutoff.toISOString())
-      .select('id');
-
-    if (!auditLogsError) {
-      results.auditLogs = deletedAuditLogs?.length || 0;
-    }
-
-    // Log cleanup action
+    // Log the cleanup action
     await supabaseClient.from('admin_audit_logs').insert({
       admin_id: user.id,
       action: 'CLEANUP_OLD_DATA',
       resource_type: 'system',
-      new_value: {
-        retention_days: {
-          errorLogs: errorLogsRetentionDays,
-          systemHealthChecks: systemHealthChecksRetentionDays,
-          apiUsageLogs: apiUsageLogsRetentionDays,
-          completedSubmissions: completedSubmissionsRetentionDays,
-        },
-        results,
-      },
+      new_value: results,
     });
 
     return new Response(
       JSON.stringify({
-        message: 'Cleanup completed successfully',
+        success: true,
+        message: 'Data cleanup completed successfully',
         results,
-        total: Object.values(results).reduce((sum, count) => sum + count, 0),
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -167,7 +144,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error cleaning up old data:', error);
+    console.error('Error during cleanup:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
