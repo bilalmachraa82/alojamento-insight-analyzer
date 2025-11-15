@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home } from 'lucide-react';
+import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home, TestTube } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   SystemHealthCard,
@@ -256,7 +256,7 @@ const Admin = () => {
         )}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Button
             variant="outline"
             className="w-full"
@@ -272,6 +272,14 @@ const Admin = () => {
           >
             <AlertTriangle className="h-4 w-4 mr-2" />
             Cleanup Old Data
+          </Button>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => navigate('/test-premium-flow')}
+          >
+            <TestTube className="h-4 w-4 mr-2" />
+            Test Premium Flow
           </Button>
           <Button variant="outline" className="w-full" disabled>
             <Download className="h-4 w-4 mr-2" />
@@ -299,12 +307,13 @@ const Admin = () => {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="submissions" id="submissions-tab">Submissions</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="errors">Errors</TabsTrigger>
             <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="testing">Testing</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -336,6 +345,97 @@ const Admin = () => {
               <ApiQuotaCard />
             </div>
             <PerformanceChart />
+          </TabsContent>
+
+          <TabsContent value="testing" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => navigate('/test-premium-flow')}
+              >
+                <TestTube className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Test Premium Flow</div>
+                  <div className="text-xs text-muted-foreground">Teste completo: Scraping → Claude → PDF</div>
+                </div>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => navigate('/test-scraping')}
+              >
+                <TestTube className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Test Scraping</div>
+                  <div className="text-xs text-muted-foreground">Testar apenas Apify scraping</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => navigate('/test-premium-pdf')}
+              >
+                <TestTube className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Test Premium PDF</div>
+                  <div className="text-xs text-muted-foreground">Testar geração de relatório</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => navigate('/test-emails')}
+              >
+                <TestTube className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Test Emails</div>
+                  <div className="text-xs text-muted-foreground">Testar sistema de emails</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => navigate('/test-monitoring')}
+              >
+                <TestTube className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Test Monitoring</div>
+                  <div className="text-xs text-muted-foreground">Testar sistema de monitorização</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => navigate('/debug-submissions')}
+              >
+                <TestTube className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Debug Submissions</div>
+                  <div className="text-xs text-muted-foreground">Ver detalhes de submissões</div>
+                </div>
+              </Button>
+            </div>
+
+            <Alert>
+              <TestTube className="h-4 w-4" />
+              <AlertDescription>
+                <div className="font-semibold mb-2">Ferramentas de Teste e Debug</div>
+                <ul className="text-sm space-y-1 list-disc list-inside">
+                  <li><strong>Test Premium Flow:</strong> Executa o fluxo completo com logging detalhado</li>
+                  <li><strong>Test Scraping:</strong> Testa apenas a extração de dados com Apify</li>
+                  <li><strong>Test Premium PDF:</strong> Gera relatório a partir de dados existentes</li>
+                  <li><strong>Test Emails:</strong> Envia emails de teste para validar templates</li>
+                  <li><strong>Test Monitoring:</strong> Verifica sistema de monitorização</li>
+                  <li><strong>Debug Submissions:</strong> Interface para debug de submissões</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
           </TabsContent>
         </Tabs>
 
