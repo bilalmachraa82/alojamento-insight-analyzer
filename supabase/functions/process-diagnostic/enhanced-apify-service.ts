@@ -8,37 +8,20 @@ if (!APIFY_API_TOKEN) {
 }
 
 export async function startEnhancedApifyRun(platform: string, startUrl: string, submissionId: string) {
-  const { actorId, defaultInput, dataPoints } = getEnhancedActorConfig(platform);
+  const { actorId, dataPoints, defaultInput } = getEnhancedActorConfig(platform);
   
-  // Enhanced input with comprehensive extraction
+  console.log(`[EnhancedApify] Starting scraping with actor: ${actorId}`);
+  console.log(`[EnhancedApify] Platform: ${platform}, Submission: ${submissionId}`);
+  console.log(`[EnhancedApify] URL: ${startUrl}`);
+  
+  // Configure actor input with platform-specific settings
   const actorInput = {
     ...defaultInput,
-    startUrls: [{ url: startUrl }],
-    // Increase timeout and scroll for better data extraction
-    pageLoadTimeoutSecs: 120,
-    maxScrollHeight: 15000,
-    waitForDynamicContent: true,
-    // Add extraction instructions based on platform
-    extractionRules: {
-      fields: dataPoints,
-      waitForSelectors: platform === 'booking' ? [
-        '.hp_hotel_name', '.bui-review-score__badge', '.hp-description',
-        '.hotel_description', '.c-section-title', '[data-testid="property-description"]'
-      ] :
-      platform === 'airbnb' ? [
-        '[data-testid="listing-title"]', '[data-testid="review-summary"]',
-        '[data-section-id="DESCRIPTION_DEFAULT"]', '[data-section-id="AMENITIES_DEFAULT"]'
-      ] :
-      platform === 'vrbo' ? ['.headline', '.review-summary', '.property-description'] : 
-      []
-    },
-    // Enhanced screenshots and content capture
-    saveScreenshots: true,
-    saveMarkdown: true,
-    saveHtml: true
+    startUrls: [{ url: startUrl }]
   };
 
-  console.log(`[EnhancedApify] Starting extraction for ${platform} with ${dataPoints.length} data points`);
+  console.log(`[EnhancedApify] Data points to extract: ${dataPoints.join(', ')}`);
+  console.log(`[EnhancedApify] Starting extraction for ${platform} with specific actor`);
 
   // Start actor run without waiting (async processing)
   // IMPORTANT: Apify API uses ~ instead of / in actor or task IDs for the endpoint

@@ -1,39 +1,37 @@
 
-// Universal configuration using website-content-crawler for all platforms
-const universalConfig = {
-  actorId: "apify/website-content-crawler",
-  defaultInput: {
-    maxCrawlPages: 1,
-    crawlerType: "playwright:chrome",
-    saveHtml: false,
-    saveMarkdown: true,
-    saveScreenshots: false,
-    waitForDynamicContent: true,
-    maxScrollHeight: 5000,
-    htmlTransformer: "readableText",
-    removeElements: [
-      ".cookie-banner",
-      ".cookie-consent",
-      "nav",
-      "header",
-      "footer",
-      ".advertisement",
-      ".ad-container"
-    ],
-    proxyConfiguration: { useApifyProxy: true }
-  }
-};
-
+// Platform-specific actors configuration
 export const SUPPORTED_PLATFORMS = {
-  booking: universalConfig,
-  airbnb: universalConfig,
-  vrbo: universalConfig
+  booking: {
+    actorId: "runtime/booking-scraper",
+    defaultInput: {
+      maxItems: 1,
+      language: "en-US",
+      currency: "USD",
+      proxyConfiguration: { useApifyProxy: true }
+    }
+  },
+  airbnb: {
+    actorId: "red.cars/airbnb-scraper",
+    defaultInput: {
+      maxListings: 1,
+      currency: "USD",
+      proxyConfiguration: { useApifyProxy: true }
+    }
+  },
+  vrbo: {
+    actorId: "powerai/vrbo-listing-scraper",
+    defaultInput: {
+      maxResults: 1,
+      proxyConfiguration: { useApifyProxy: true }
+    }
+  }
 };
 
 export const getActorConfig = (platform: string) => {
   const config = SUPPORTED_PLATFORMS[platform.toLowerCase()];
   if (!config) {
-    return universalConfig;
+    // Default to Booking.com actor if platform not recognized
+    return SUPPORTED_PLATFORMS.booking;
   }
   return config;
 };
