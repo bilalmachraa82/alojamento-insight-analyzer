@@ -35,3 +35,15 @@ verify_jwt = false
 
 [functions.reprocess-submission]
 verify_jwt = false
+
+[functions."admin/get-system-health"]
+verify_jwt = false
+
+[functions."admin/get-error-logs"]
+verify_jwt = false
+
+[functions."admin/cleanup-old-data"]
+verify_jwt = false
+
+[functions."admin/reprocess-all-failed"]
+verify_jwt = false
