@@ -1,35 +1,45 @@
 
-// OPÇÃO 2: Universal configuration using website-content-crawler for all platforms
-const universalEnhancedConfig = {
-  actorId: "apify/website-content-crawler",
-  dataPoints: ["content", "metadata", "structured_data"],
-  defaultInput: {
-    maxCrawlPages: 1,
-    crawlerType: "playwright:chrome",
-    saveHtml: false,
-    saveMarkdown: true,
-    saveScreenshots: false,
-    waitForDynamicContent: true,
-    maxScrollHeight: 10000,
-    htmlTransformer: "readableText",
-    removeElements: [
-      ".cookie-banner", ".cookie-consent", "nav", "header", 
-      "footer", ".advertisement", ".ad-container", ".popup"
-    ],
-    proxyConfiguration: { useApifyProxy: true }
-  }
-};
-
+// Platform-specific enhanced actors configuration
 export const ENHANCED_PLATFORM_CONFIG = {
-  booking: universalEnhancedConfig,
-  airbnb: universalEnhancedConfig,
-  vrbo: universalEnhancedConfig
+  booking: {
+    actorId: "runtime/booking-scraper",
+    dataPoints: ["property", "pricing", "amenities", "reviews", "location", "images"],
+    defaultInput: {
+      maxItems: 1,
+      language: "en-US",
+      currency: "USD",
+      checkIn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ahead
+      checkOut: new Date(Date.now() + 33 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 33 days ahead (3 nights)
+      rooms: 1,
+      adults: 2,
+      proxyConfiguration: { useApifyProxy: true }
+    }
+  },
+  airbnb: {
+    actorId: "red.cars/airbnb-scraper",
+    dataPoints: ["listing", "pricing", "amenities", "reviews", "host", "images"],
+    defaultInput: {
+      maxListings: 1,
+      currency: "USD",
+      calendarMonths: 1,
+      proxyConfiguration: { useApifyProxy: true }
+    }
+  },
+  vrbo: {
+    actorId: "powerai/vrbo-listing-scraper",
+    dataPoints: ["property", "pricing", "amenities", "reviews", "images"],
+    defaultInput: {
+      maxResults: 1,
+      proxyConfiguration: { useApifyProxy: true }
+    }
+  }
 };
 
 export const getEnhancedActorConfig = (platform: string) => {
   const config = ENHANCED_PLATFORM_CONFIG[platform.toLowerCase()];
   if (!config) {
-    return universalEnhancedConfig;
+    // Default to Booking.com actor if platform not recognized
+    return ENHANCED_PLATFORM_CONFIG.booking;
   }
   return config;
 };
