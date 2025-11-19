@@ -60,6 +60,9 @@ export default function TestPremiumFlow() {
       );
 
       if (submitError) throw submitError;
+      if (!submitData || !submitData.submission || !submitData.submission.id) {
+        throw new Error("Resposta inválida do servidor - sem submission.id");
+      }
       
       const subId = submitData.submission.id;
       setSubmissionId(subId);
