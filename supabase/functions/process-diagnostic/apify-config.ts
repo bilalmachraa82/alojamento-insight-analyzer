@@ -2,7 +2,16 @@
 // Platform-specific actors configuration
 export const SUPPORTED_PLATFORMS = {
   booking: {
-    actorId: "runtime/booking-scraper",
+    actorId: "tTRAuL9PrLC9FqWkJ", // Booking.com Review Scraper
+    defaultInput: {
+      maxItems: 1,
+      language: "en-US",
+      currency: "USD",
+      proxyConfiguration: { useApifyProxy: true }
+    }
+  },
+  agoda: {
+    actorId: "eC53oEoee74OTExo3", // Fast Agoda Reviews Scraper
     defaultInput: {
       maxItems: 1,
       language: "en-US",
@@ -11,7 +20,7 @@ export const SUPPORTED_PLATFORMS = {
     }
   },
   airbnb: {
-    actorId: "red.cars/airbnb-scraper",
+    actorId: "GsNzxEKzE2vQ5d9HN", // Airbnb Scraper
     defaultInput: {
       maxListings: 1,
       currency: "USD",

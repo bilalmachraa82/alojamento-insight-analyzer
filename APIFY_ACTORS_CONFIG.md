@@ -1,20 +1,28 @@
 # Configuração de Atores Apify
 
-## ✅ Atores Configurados (2025-11-15)
+## ✅ Atores Configurados (2025-11-19)
 
 ### 🏨 Booking.com
-- **Actor ID**: `runtime/booking-scraper`
-- **Status**: ✅ Oficial do Apify Runtime
-- **Descrição**: Actor oficial mantido pelo Apify para scraping de Booking.com
-- **Última verificação**: 2025-11-15
+- **Actor ID**: `tTRAuL9PrLC9FqWkJ`
+- **Nome**: Booking.com Review Scraper
+- **Status**: ✅ Ativo
+- **Descrição**: Actor especializado em extrair reviews do Booking.com
+- **Última verificação**: 2025-11-19
 - **Funcionalidades**: Extrai propriedades, preços, amenidades, avaliações, localização e imagens
 
+### 🏨 Agoda
+- **Actor ID**: `eC53oEoee74OTExo3`
+- **Nome**: Fast Agoda Reviews Scraper
+- **Status**: ✅ Ativo
+- **Descrição**: Actor especializado em extrair reviews do Agoda (alternativa para hotéis)
+- **Última verificação**: 2025-11-19
+- **Funcionalidades**: Extrai propriedades, preços, amenidades, avaliações e imagens
+
 ### 🏠 Airbnb
-- **Actor ID**: `tri_angle/airbnb-scraper`
-- **Status**: ✅ Mantido oficialmente pela Apify
-- **Popularidade**: 10K+ execuções
-- **Última atualização**: Há 10 dias
-- **Descrição**: Actor popular e confiável para scraping de Airbnb
+- **Actor ID**: `GsNzxEKzE2vQ5d9HN`
+- **Status**: ✅ Ativo
+- **Descrição**: Actor confiável para scraping de Airbnb
+- **Última atualização**: 2025-11-19
 - **Funcionalidades**: Extrai listagens, preços, amenidades, avaliações, host e imagens
 
 ### 🏖️ VRBO
@@ -131,6 +139,13 @@ Para verificar se os atores estão funcionando corretamente:
    - Procure por `[EnhancedApify]` nos logs
 
 ## 🔄 Changelog
+
+### 2025-11-19
+- ✅ Atualizado ator Booking: `runtime/booking-scraper` → `tTRAuL9PrLC9FqWkJ` (Booking.com Review Scraper)
+- ✅ Adicionado suporte para Agoda: `eC53oEoee74OTExo3` (Fast Agoda Reviews Scraper)
+- ✅ Atualizado ator Airbnb: `tri_angle/airbnb-scraper` → `GsNzxEKzE2vQ5d9HN` (Airbnb Scraper)
+- ✅ Mantido ator VRBO: `powerai/vrbo-listing-scraper`
+- ⚠️ Nota: Actor runtime/booking-scraper em manutenção
 
 ### 2025-11-15
 - ✅ Corrigido ator Airbnb: `red.cars/airbnb-scraper` → `tri_angle/airbnb-scraper`
