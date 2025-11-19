@@ -59,12 +59,36 @@ export default function TestPremiumFlow() {
         }
       );
 
+      // Debug: Log da resposta completa do submit-diagnostic
+      console.log('===== SUBMIT-DIAGNOSTIC RESPONSE DEBUG =====');
+      console.log('submitError:', submitError);
+      console.log('submitData (full structure):', JSON.stringify(submitData, null, 2));
+      console.log('submitData type:', typeof submitData);
+      console.log('submitData keys:', submitData ? Object.keys(submitData) : 'null');
+      console.log('submitData.submission:', submitData?.submission);
+      console.log('submitData.submissionId:', submitData?.submissionId);
+      console.log('submitData.id:', submitData?.id);
+      console.log('===========================================');
+
       if (submitError) throw submitError;
-      if (!submitData || !submitData.submission || !submitData.submission.id) {
-        throw new Error("Resposta inválida do servidor - sem submission.id");
+      
+      // Tentar diferentes estruturas de resposta
+      let subId: string | null = null;
+      
+      if (submitData?.submission?.id) {
+        subId = submitData.submission.id;
+        console.log('✅ Found ID in submitData.submission.id:', subId);
+      } else if (submitData?.submissionId) {
+        subId = submitData.submissionId;
+        console.log('✅ Found ID in submitData.submissionId:', subId);
+      } else if (submitData?.id) {
+        subId = submitData.id;
+        console.log('✅ Found ID in submitData.id:', subId);
       }
       
-      const subId = submitData.submission.id;
+      if (!subId) {
+        throw new Error(`Resposta inválida do servidor - sem submission ID. Estrutura recebida: ${JSON.stringify(submitData)}`);
+      }
       setSubmissionId(subId);
       addLog("success", "SUBMISSÃO", `✅ Submissão criada: ${subId}`);
 
