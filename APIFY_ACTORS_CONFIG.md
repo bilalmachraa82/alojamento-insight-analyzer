@@ -138,9 +138,51 @@ Para verificar se os atores estão funcionando corretamente:
    - Verifique logs de `process-diagnostic`
    - Procure por `[EnhancedApify]` nos logs
 
+## 🎯 Usar Apify Tasks (Plano Gratuito)
+
+**⚠️ IMPORTANTE**: Se estás no plano gratuito do Apify, não podes executar actors públicos diretamente.
+A solução é criar **Tasks** baseadas nos actors e usar os Task IDs.
+
+### 🚀 Quick Setup
+
+1. **Criar Tasks no Apify Console**:
+   - Booking: https://console.apify.com/actors/tasks → Create task com `tTRAuL9PrLC9FqWkJ`
+   - Airbnb: https://console.apify.com/actors/tasks → Create task com `GsNzxEKzE2vQ5d9HN`
+   - Agoda: https://console.apify.com/actors/tasks → Create task com `eC53oEoee74OTExo3`
+
+2. **Copiar Task IDs** gerados (formato: `xxxxxxxxxx`)
+
+3. **Configurar Secrets no Lovable**:
+   ```
+   APIFY_TASK_ID_BOOKING = <task-id-booking>
+   APIFY_TASK_ID_AIRBNB = <task-id-airbnb>
+   APIFY_TASK_ID_AGODA = <task-id-agoda>
+   ```
+
+4. **OU usar Task Global (mais simples)**:
+   ```
+   APIFY_TASK_ID = <task-id-qualquer>
+   ```
+
+### 📋 Sistema de Prioridades
+
+O código usa esta ordem:
+1. `APIFY_TASK_ID_BOOKING` (para platform=booking)
+2. `APIFY_TASK_ID` (task global)
+3. `APIFY_ACTOR_ID` (actor override)
+4. Actor hardcoded (fallback)
+
+**Ver guia completo**: [APIFY_TASKS_SETUP.md](./APIFY_TASKS_SETUP.md)
+
 ## 🔄 Changelog
 
-### 2025-11-19
+### 2025-11-19 (v2)
+- ✅ Adicionado sistema de Tasks para plano gratuito
+- ✅ Implementado suporte para `APIFY_TASK_ID_BOOKING`, `APIFY_TASK_ID_AIRBNB`, etc.
+- ✅ Criado sistema de prioridades: Task Platform → Task Global → Actor Override → Default
+- ✅ Criado guia completo de setup: [APIFY_TASKS_SETUP.md](./APIFY_TASKS_SETUP.md)
+
+### 2025-11-19 (v1)
 - ✅ Atualizado ator Booking: `runtime/booking-scraper` → `tTRAuL9PrLC9FqWkJ` (Booking.com Review Scraper)
 - ✅ Adicionado suporte para Agoda: `eC53oEoee74OTExo3` (Fast Agoda Reviews Scraper)
 - ✅ Atualizado ator Airbnb: `tri_angle/airbnb-scraper` → `GsNzxEKzE2vQ5d9HN` (Airbnb Scraper)

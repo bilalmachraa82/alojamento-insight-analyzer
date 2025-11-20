@@ -10,36 +10,74 @@ if (!APIFY_API_TOKEN) {
 export async function startEnhancedApifyRun(platform: string, startUrl: string, submissionId: string) {
   const { actorId, dataPoints, defaultInput } = getEnhancedActorConfig(platform);
   
-  console.log(`[EnhancedApify] Starting scraping with actor: ${actorId}`);
-  console.log(`[EnhancedApify] Platform: ${platform}, Submission: ${submissionId}`);
+  console.log(`[EnhancedApify] ============= SCRAPING START =============`);
+  console.log(`[EnhancedApify] Platform: ${platform}`);
+  console.log(`[EnhancedApify] Submission: ${submissionId}`);
   console.log(`[EnhancedApify] URL: ${startUrl}`);
+  console.log(`[EnhancedApify] Default Actor: ${actorId}`);
+  console.log(`[EnhancedApify] Data points: ${dataPoints.join(', ')}`);
+  
+  // PRIORITY OVERRIDE SYSTEM (from highest to lowest priority):
+  // 1. APIFY_TASK_ID_<PLATFORM> - Platform-specific task (e.g., APIFY_TASK_ID_BOOKING)
+  // 2. APIFY_TASK_ID - Global task (works for all platforms)
+  // 3. APIFY_ACTOR_ID - Global actor override
+  // 4. Platform default - Hardcoded actor from config (fallback)
+  
+  const platformUpper = platform.toUpperCase();
+  const platformTaskId = Deno.env.get(`APIFY_TASK_ID_${platformUpper}`);
+  const globalTaskId = Deno.env.get("APIFY_TASK_ID");
+  const globalActorId = Deno.env.get("APIFY_ACTOR_ID");
+  
+  console.log(`[EnhancedApify] ============= CONFIG PRIORITY =============`);
+  console.log(`[EnhancedApify] 1️⃣ Platform Task (APIFY_TASK_ID_${platformUpper}): ${platformTaskId || '❌ not set'}`);
+  console.log(`[EnhancedApify] 2️⃣ Global Task (APIFY_TASK_ID): ${globalTaskId || '❌ not set'}`);
+  console.log(`[EnhancedApify] 3️⃣ Global Actor (APIFY_ACTOR_ID): ${globalActorId || '❌ not set'}`);
+  console.log(`[EnhancedApify] 4️⃣ Platform Default Actor: ${actorId}`);
   
   // Configure actor input with platform-specific settings
   const actorInput = {
     ...defaultInput,
-    startUrls: [{ url: startUrl }]
+    startUrls: [{ url: startUrl }],
+    customData: {
+      submissionId,
+      platform,
+      extractionPoints: dataPoints
+    }
   };
 
-  console.log(`[EnhancedApify] Data points to extract: ${dataPoints.join(', ')}`);
-  console.log(`[EnhancedApify] Starting extraction for ${platform} with specific actor`);
-
-  // Start actor run without waiting (async processing)
-  // IMPORTANT: Apify API uses ~ instead of / in actor or task IDs for the endpoint
-  const envTaskId = Deno.env.get("APIFY_TASK_ID");
-  const envActorId = Deno.env.get("APIFY_ACTOR_ID");
-
+  // Determine which endpoint to use based on priority
   let startEndpoint = "";
-  if (envTaskId) {
-    const apiTaskId = envTaskId.replace('/', '~');
+  let selectedConfig = "";
+  
+  if (platformTaskId) {
+    // PRIORITY 1: Platform-specific task
+    const apiTaskId = platformTaskId.replace('/', '~');
     startEndpoint = `https://api.apify.com/v2/actor-tasks/${apiTaskId}/runs?token=${APIFY_API_TOKEN}`;
-    console.log(`[EnhancedApify] Using TASK mode: ${envTaskId} -> API: ${apiTaskId}`);
-  } else {
-    const apiActorId = (envActorId || actorId).replace('/', '~');
+    selectedConfig = `Platform Task (APIFY_TASK_ID_${platformUpper})`;
+    console.log(`[EnhancedApify] ✅ Using Platform Task: ${platformTaskId}`);
+  } else if (globalTaskId) {
+    // PRIORITY 2: Global task
+    const apiTaskId = globalTaskId.replace('/', '~');
+    startEndpoint = `https://api.apify.com/v2/actor-tasks/${apiTaskId}/runs?token=${APIFY_API_TOKEN}`;
+    selectedConfig = "Global Task (APIFY_TASK_ID)";
+    console.log(`[EnhancedApify] ✅ Using Global Task: ${globalTaskId}`);
+  } else if (globalActorId) {
+    // PRIORITY 3: Global actor override
+    const apiActorId = globalActorId.replace('/', '~');
     startEndpoint = `https://api.apify.com/v2/acts/${apiActorId}/runs?token=${APIFY_API_TOKEN}`;
-    console.log(`[EnhancedApify] Using ACTOR mode: ${envActorId || actorId} -> API: ${apiActorId}`);
+    selectedConfig = "Global Actor Override (APIFY_ACTOR_ID)";
+    console.log(`[EnhancedApify] ✅ Using Global Actor: ${globalActorId}`);
+  } else {
+    // PRIORITY 4: Platform default actor
+    const apiActorId = actorId.replace('/', '~');
+    startEndpoint = `https://api.apify.com/v2/acts/${apiActorId}/runs?token=${APIFY_API_TOKEN}`;
+    selectedConfig = "Platform Default Actor";
+    console.log(`[EnhancedApify] ✅ Using Platform Default: ${actorId}`);
   }
 
-  console.log(`[EnhancedApify] API URL: ${startEndpoint.replace(APIFY_API_TOKEN, 'HIDDEN')}`);
+  console.log(`[EnhancedApify] ============= FINAL CONFIG =============`);
+  console.log(`[EnhancedApify] Selected: ${selectedConfig}`);
+  console.log(`[EnhancedApify] Endpoint: ${startEndpoint.replace(APIFY_API_TOKEN, 'HIDDEN')}`);
   
   try {
     const runResponse = await fetch(startEndpoint, {
