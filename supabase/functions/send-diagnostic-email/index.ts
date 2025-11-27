@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// RESEND_API_KEY is required for production
+// Environment variables with validation
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+// Validate required environment variables
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error("CRITICAL: Missing required Supabase environment variables");
+  throw new Error(
+    "Missing required environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set"
+  );
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

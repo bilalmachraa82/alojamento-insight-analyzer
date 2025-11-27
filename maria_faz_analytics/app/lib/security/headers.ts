@@ -9,16 +9,29 @@ import { NextResponse } from 'next/server';
  * Content Security Policy
  * Prevents XSS, clickjacking, and other code injection attacks
  */
+// Environment-aware CSP configuration
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export const CSP_DIRECTIVES = {
   'default-src': ["'self'"],
-  'script-src': [
-    "'self'",
-    "'unsafe-inline'", // Required for Next.js
-    "'unsafe-eval'", // Required for development
-    'https://cdn.jsdelivr.net',
-    'https://unpkg.com',
-  ],
-  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+  'script-src': isDevelopment
+    ? [
+        "'self'",
+        "'unsafe-inline'", // Required for Next.js HMR in development
+        "'unsafe-eval'", // Required for development hot reload
+        'https://cdn.jsdelivr.net',
+        'https://unpkg.com',
+      ]
+    : [
+        "'self'",
+        // In production, use nonce-based inline scripts instead of unsafe-inline
+        // Remove unsafe-eval entirely in production for better security
+        'https://cdn.jsdelivr.net',
+        'https://unpkg.com',
+      ],
+  'style-src': isDevelopment
+    ? ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']
+    : ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'], // unsafe-inline often required for CSS-in-JS
   'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
   'img-src': ["'self'", 'data:', 'https:', 'blob:'],
   'connect-src': [
@@ -26,12 +39,16 @@ export const CSP_DIRECTIVES = {
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     process.env.NEXT_PUBLIC_API_URL || '',
     'https://*.supabase.co',
-  ],
+  ].filter(Boolean),
   'frame-ancestors': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
   'object-src': ["'none'"],
   'upgrade-insecure-requests': [],
+  // Additional security directives for production
+  ...(isDevelopment ? {} : {
+    'require-trusted-types-for': ["'script'"],
+  }),
 };
 
 /**

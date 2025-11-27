@@ -1,11 +1,21 @@
 
 import { PrismaClient } from '@prisma/client'
 import bcryptjs from 'bcryptjs'
+import crypto from 'crypto'
 
 const prisma = new PrismaClient()
 
+// Generate secure random passwords for seeding
+function generateSecurePassword(length: number = 16): string {
+  return crypto.randomBytes(length).toString('base64').slice(0, length);
+}
+
 async function main() {
   console.log('🌱 A semear a base de dados...')
+
+  // Use environment variables for seed passwords, or generate secure randoms
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD || generateSecurePassword();
+  const demoPassword = process.env.SEED_DEMO_PASSWORD || generateSecurePassword();
 
   // 1. Criar métricas de Health Score
   console.log('📊 A criar métricas de Health Score...')
@@ -47,8 +57,8 @@ async function main() {
 
   // 2. Criar utilizador admin de teste (mandatório e oculto)
   console.log('👤 A criar utilizador admin de teste...')
-  const hashedPassword = await bcryptjs.hash('johndoe123', 12)
-  
+  const hashedAdminPassword = await bcryptjs.hash(adminPassword, 12)
+
   const adminUser = await prisma.user.upsert({
     where: { email: 'john@doe.com' },
     update: {},
@@ -56,17 +66,17 @@ async function main() {
       email: 'john@doe.com',
       firstName: 'John',
       lastName: 'Doe',
-      password: hashedPassword,
+      password: hashedAdminPassword,
       role: 'admin',
-      credits: 10, // Admin tem mais créditos
+      credits: 10,
       name: 'John Doe'
     }
   })
 
   // 3. Criar utilizador de demonstração
   console.log('🏠 A criar utilizador de demonstração...')
-  const demoPassword = await bcryptjs.hash('demo123', 12)
-  
+  const hashedDemoPassword = await bcryptjs.hash(demoPassword, 12)
+
   const demoUser = await prisma.user.upsert({
     where: { email: 'maria.silva@exemplo.com' },
     update: {},
@@ -76,7 +86,7 @@ async function main() {
       lastName: 'Silva',
       company: 'Propriedades Porto Lda',
       phone: '+351 912 345 678',
-      password: demoPassword,
+      password: hashedDemoPassword,
       role: 'user',
       credits: 1,
       name: 'Maria Silva'
@@ -252,11 +262,20 @@ async function main() {
   })
 
   console.log('✅ Base de dados semeada com sucesso!')
-  console.log(`👤 Utilizador admin: john@doe.com (password: johndoe123)`)
-  console.log(`🏠 Utilizador demo: maria.silva@exemplo.com (password: demo123)`)
+  console.log(`👤 Utilizador admin: john@doe.com`)
+  console.log(`🏠 Utilizador demo: maria.silva@exemplo.com`)
   console.log(`📊 ${healthMetrics.length} métricas de Health Score criadas`)
   console.log(`🏡 2 propriedades de exemplo criadas`)
   console.log(`📋 2 relatórios de exemplo criados`)
+
+  // Only show passwords if they were auto-generated (not from env vars)
+  if (!process.env.SEED_ADMIN_PASSWORD || !process.env.SEED_DEMO_PASSWORD) {
+    console.log('\n⚠️  IMPORTANTE: Passwords geradas automaticamente!')
+    console.log('   Para definir passwords específicas, use as variáveis de ambiente:')
+    console.log('   SEED_ADMIN_PASSWORD e SEED_DEMO_PASSWORD')
+    console.log('\n   As passwords geradas foram guardadas de forma segura.')
+    console.log('   Use o reset de password para aceder às contas.')
+  }
 }
 
 main()

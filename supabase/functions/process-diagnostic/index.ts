@@ -64,12 +64,13 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
+          error: "invalid_url",
           message: "Precisamos processar sua submissão manualmente. Nossa equipe irá analisá-la em breve.",
           details: "URLs de compartilhamento do Booking.com não são suportados. Por favor, use o URL completo da propriedade na próxima vez."
         }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        {
+          status: 422, // Unprocessable Entity - client provided invalid data
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
@@ -138,12 +139,13 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
+          error: "scraping_failed",
           message: "Precisamos processar sua submissão manualmente. Nossa equipe irá analisá-la em breve.",
           details: "Erro ao acessar dados da propriedade"
         }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        {
+          status: 502, // Bad Gateway - upstream service (Apify) failed
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
@@ -187,14 +189,15 @@ serve(async (req: Request) => {
   } catch (error) {
     console.error("Error processing diagnostic:", error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
-        error: String(error),
-        message: "An error occurred, but your submission was saved" 
+        error: "internal_error",
+        message: "An error occurred, but your submission was saved",
+        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
       }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      {
+        status: 500, // Internal Server Error
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
   }

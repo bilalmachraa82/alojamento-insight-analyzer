@@ -14,7 +14,20 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
 });
 
-const API_SECRET = process.env.API_SECRET || 'change-me-in-production';
+const API_SECRET = process.env.API_SECRET;
+
+if (!API_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'CRITICAL: API_SECRET environment variable is required in production. ' +
+    'Generate a secure secret with: openssl rand -hex 32'
+  );
+}
+
+const EFFECTIVE_API_SECRET = API_SECRET || (
+  process.env.NODE_ENV === 'development'
+    ? 'dev-only-secret-do-not-use-in-production-' + Date.now()
+    : ''
+);
 
 /**
  * Generate API key
@@ -168,8 +181,8 @@ export async function rotateAPIKey(
  * Sign request payload
  */
 export function signRequest(
-  payload: Record<string, any>,
-  secret: string = API_SECRET
+  payload: Record<string, unknown>,
+  secret: string = EFFECTIVE_API_SECRET
 ): string {
   const timestamp = Date.now();
   const data = JSON.stringify({ ...payload, timestamp });
@@ -186,9 +199,9 @@ export function signRequest(
  * Verify request signature
  */
 export function verifyRequestSignature(
-  payload: Record<string, any>,
+  payload: Record<string, unknown>,
   signature: string,
-  secret: string = API_SECRET,
+  secret: string = EFFECTIVE_API_SECRET,
   maxAge: number = 300000 // 5 minutes
 ): boolean {
   try {
@@ -279,7 +292,7 @@ export async function verifyAndConsumeNonce(nonce: string): Promise<boolean> {
 /**
  * Encrypt sensitive data
  */
-export function encryptData(data: string, key: string = API_SECRET): string {
+export function encryptData(data: string, key: string = EFFECTIVE_API_SECRET): string {
   const algorithm = 'aes-256-gcm';
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(algorithm, Buffer.from(key, 'hex').slice(0, 32), iv);
@@ -295,7 +308,7 @@ export function encryptData(data: string, key: string = API_SECRET): string {
 /**
  * Decrypt sensitive data
  */
-export function decryptData(encryptedData: string, key: string = API_SECRET): string | null {
+export function decryptData(encryptedData: string, key: string = EFFECTIVE_API_SECRET): string | null {
   try {
     const algorithm = 'aes-256-gcm';
     const [ivHex, authTagHex, encrypted] = encryptedData.split(':');

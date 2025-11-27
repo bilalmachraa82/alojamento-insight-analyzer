@@ -1,8 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import type { Property, MarketData, CompetitorAnalysis, PerformanceMetrics } from '@/types/database';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
 
-const client: any = supabase;
+// Typed Supabase client - avoids any type usage
+const client: SupabaseClient<Database> = supabase;
 
 export class PropertyService {
   // Create a new property

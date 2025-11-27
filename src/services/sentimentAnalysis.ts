@@ -63,10 +63,15 @@ async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Retry configuration with exponential backoff
+const MAX_RETRIES = 5;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+const MAX_RETRY_DELAY = 30000; // 30 seconds
+
 /**
- * Call Hugging Face Inference API
+ * Call Hugging Face Inference API with exponential backoff
  */
-async function callHuggingFaceAPI(text: string): Promise<any> {
+async function callHuggingFaceAPI(text: string, retryCount = 0): Promise<HuggingFaceResponse[]> {
   // Rate limiting
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
@@ -85,21 +90,36 @@ async function callHuggingFaceAPI(text: string): Promise<any> {
   });
 
   if (!response.ok) {
-    if (response.status === 503) {
-      // Model is loading, wait and retry
-      await sleep(2000);
-      return callHuggingFaceAPI(text);
+    if (response.status === 503 && retryCount < MAX_RETRIES) {
+      // Model is loading - use exponential backoff with jitter
+      const delay = Math.min(
+        INITIAL_RETRY_DELAY * Math.pow(2, retryCount) + Math.random() * 1000,
+        MAX_RETRY_DELAY
+      );
+      console.warn(`HuggingFace API returned 503, retrying in ${Math.round(delay)}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      await sleep(delay);
+      return callHuggingFaceAPI(text, retryCount + 1);
     }
+
+    if (retryCount >= MAX_RETRIES) {
+      throw new Error(`HuggingFace API error after ${MAX_RETRIES} retries: ${response.status} ${response.statusText}`);
+    }
+
     throw new Error(`Hugging Face API error: ${response.status} ${response.statusText}`);
   }
 
   return response.json();
 }
 
+interface HuggingFaceResponse {
+  label: string;
+  score: number;
+}
+
 /**
  * Convert Hugging Face response to normalized sentiment score
  */
-function parseHuggingFaceResponse(response: any[]): SentimentResult {
+function parseHuggingFaceResponse(response: HuggingFaceResponse[]): SentimentResult {
   // Response format: [{ label: "positive", score: 0.9 }, ...]
   const scores = {
     positive: 0,

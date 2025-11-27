@@ -1,8 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import type { Property, CompetitorAnalysis, MarketData } from '@/types/database';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
 
-const client: any = supabase;
+// Typed Supabase client - avoids any type usage
+const client: SupabaseClient<Database> = supabase;
 
 export interface MarketInsights {
   averageDailyRate: number;
@@ -58,7 +61,7 @@ export class MarketIntelligenceService {
 
   // Calculate insights from available data
   private static calculateMarketInsights(
-    marketData: any[],
+    marketData: MarketData[],
     competitors: Property[],
     currentProperty: Property
   ): MarketInsights {
