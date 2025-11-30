@@ -13,7 +13,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { name, email, property_url, platform } = await req.json();
+    const { name, email, property_url, platform, user_id } = await req.json();
 
     // Input validation
     if (!name || !email || !property_url || !platform) {
@@ -73,7 +73,8 @@ serve(async (req: Request) => {
         property_url: property_url.trim(),
         platform: platform.toLowerCase(),
         submission_date: new Date().toISOString(),
-        status: "pending"
+        status: "pending",
+        user_id: user_id || null // Include user_id if provided
       })
       .select()
       .single();

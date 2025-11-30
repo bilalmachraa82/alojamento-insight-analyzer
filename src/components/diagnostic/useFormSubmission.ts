@@ -91,13 +91,17 @@ export const useFormSubmission = (language: Language) => {
         throw new Error(language === "en" ? "Unsupported platform" : "Plataforma não suportada");
       }
       
+      // Get current user session if authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      
       // Submit via secure edge function
       const { data: submissionResponse, error: submissionError } = await supabase.functions.invoke("submit-diagnostic", {
         body: {
           name: data.nome,
           email: data.email,
           property_url: trimmedUrl,
-          platform: platformInfo.value
+          platform: platformInfo.value,
+          user_id: session?.user?.id || null // Include user_id if authenticated
         }
       });
 
