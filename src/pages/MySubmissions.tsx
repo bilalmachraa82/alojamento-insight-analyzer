@@ -63,7 +63,7 @@ const MySubmissions = () => {
       const { data, error } = await supabase
         .from("diagnostic_submissions")
         .select("*")
-        .eq("email", session?.user?.email)
+        .eq("user_id", session?.user?.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
