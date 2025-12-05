@@ -107,18 +107,27 @@ serve(async (req: Request) => {
         // Process the data based on which actor was used
         let propertyInfo;
         
-        if (actorId.includes("dtrungtin/booking-scraper")) {
+        if (actorId.includes("dtrungtin/booking-scraper") || actorId.includes("booking-scraper")) {
           // Handle dtrungtin Booking Scraper format (PRIORITY)
           propertyInfo = processBookingScraperData(scrapedData);
         } else if (actorId.includes("voyager/booking-reviews-scraper")) {
           // Handle Voyager Booking Reviews Scraper format
           propertyInfo = processVoyagerBookingData(scrapedData);
-        } else if (actorId.includes("airbnb-scraper")) {
+        } else if (actorId.includes("airbnb-scraper") || actorId.includes("GsNzxEKzE2vQ5d9HN")) {
           // Handle Airbnb Scraper format
           propertyInfo = processAirbnbData(scrapedData);
-        } else if (actorId.includes("vrbo-scraper")) {
+        } else if (actorId.includes("vrbo") || actorId.includes("powerai/vrbo")) {
           // Handle VRBO Scraper format
           propertyInfo = processVrboData(scrapedData);
+        } else if (actorId.includes("agoda") || actorId.includes("eC53oEoee74OTExo3")) {
+          // Handle Agoda Scraper format
+          propertyInfo = processAgodaData(scrapedData);
+        } else if (actorId.includes("expedia") || actorId.includes("jupri/expedia")) {
+          // Handle Expedia Scraper format
+          propertyInfo = processExpediaData(scrapedData);
+        } else if (actorId.includes("hotels.com") || actorId.includes("tri_angle/expedia-hotels-com")) {
+          // Handle Hotels.com Scraper format
+          propertyInfo = processHotelsComData(scrapedData);
         } else {
           // Default Website Content Crawler processing
           propertyInfo = processWebsiteContentData(scrapedData);
@@ -441,6 +450,114 @@ function processVrboData(data: any[]): any {
     };
   } catch (e) {
     console.error("Error processing VRBO data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
+
+function processAgodaData(data: any[]): any {
+  console.log("Processing Agoda data");
+  
+  if (!data || data.length === 0) {
+    console.log("No Agoda data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    const property = data[0] || {};
+    
+    return {
+      property_name: property.hotelName || property.name || property.title || 'Unknown Property',
+      location: property.address || property.location || property.city || 'Unknown location',
+      url: property.url || property.hotelUrl || '',
+      property_type: property.propertyType || property.accommodationType || 'Hotel',
+      rating: property.rating || property.score || property.reviewScore || null,
+      review_count: property.reviewCount || property.numberOfReviews || property.totalReviews || 0,
+      reviews: (property.reviews || property.reviewsList || []).slice(0, 10),
+      amenities: property.amenities || property.facilities || [],
+      images: property.images || property.photos || [],
+      price: property.price || property.pricePerNight || property.rate || 'Preço não disponível',
+      description: property.description || property.hotelDescription || '',
+      star_rating: property.starRating || property.stars || null
+    };
+  } catch (e) {
+    console.error("Error processing Agoda data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
+
+function processExpediaData(data: any[]): any {
+  console.log("Processing Expedia data");
+  
+  if (!data || data.length === 0) {
+    console.log("No Expedia data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    const property = data[0] || {};
+    
+    return {
+      property_name: property.name || property.hotelName || property.title || 'Unknown Property',
+      location: property.address || property.location || property.neighborhood || 'Unknown location',
+      url: property.url || property.hotelUrl || '',
+      property_type: property.propertyType || property.lodgingType || 'Hotel',
+      rating: property.rating || property.guestRating || property.reviewScore || null,
+      review_count: property.reviewCount || property.numberOfReviews || property.reviewsCount || 0,
+      reviews: (property.reviews || property.guestReviews || []).slice(0, 10),
+      amenities: property.amenities || property.hotelAmenities || [],
+      images: property.images || property.photos || property.gallery || [],
+      price: property.price || property.currentPrice || property.ratePerNight || 'Preço não disponível',
+      description: property.description || property.hotelDescription || '',
+      star_rating: property.starRating || property.stars || property.hotelClass || null
+    };
+  } catch (e) {
+    console.error("Error processing Expedia data:", e);
+    return { 
+      property_name: 'Error Processing Data',
+      location: 'Unknown',
+      property_type: 'Accommodation',
+      error: String(e)
+    };
+  }
+}
+
+function processHotelsComData(data: any[]): any {
+  console.log("Processing Hotels.com data");
+  
+  if (!data || data.length === 0) {
+    console.log("No Hotels.com data found");
+    return { property_name: 'Unknown Property', location: 'Unknown location', property_type: 'Accommodation' };
+  }
+  
+  try {
+    const property = data[0] || {};
+    
+    return {
+      property_name: property.hotelName || property.name || property.title || 'Unknown Property',
+      location: property.address || property.location || property.neighborhood || 'Unknown location',
+      url: property.url || property.hotelUrl || '',
+      property_type: property.propertyType || property.accommodationType || 'Hotel',
+      rating: property.rating || property.guestRating || property.reviewScore || null,
+      review_count: property.reviewCount || property.numberOfReviews || property.totalReviews || 0,
+      reviews: (property.reviews || property.guestReviews || []).slice(0, 10),
+      amenities: property.amenities || property.hotelAmenities || property.facilities || [],
+      images: property.images || property.photos || [],
+      price: property.price || property.currentPrice || 'Preço não disponível',
+      description: property.description || '',
+      star_rating: property.starRating || property.stars || null
+    };
+  } catch (e) {
+    console.error("Error processing Hotels.com data:", e);
     return { 
       property_name: 'Error Processing Data',
       location: 'Unknown',
