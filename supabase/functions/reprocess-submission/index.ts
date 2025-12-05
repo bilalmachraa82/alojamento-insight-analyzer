@@ -46,11 +46,7 @@ serve(async (req: Request) => {
     console.log("Triggering process-diagnostic...");
     const { data, error } = await supabase.functions.invoke("process-diagnostic", {
       body: {
-        submissionId: submission.id,
-        propertyUrl: submission.property_url,
-        platform: submission.platform,
-        email: submission.email,
-        name: submission.name
+        id: submission.id  // process-diagnostic expects 'id'
       }
     });
     
