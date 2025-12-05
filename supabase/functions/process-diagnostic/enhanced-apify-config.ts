@@ -6,16 +6,11 @@ export const ENHANCED_PLATFORM_CONFIG: Record<string, {
   defaultInput: Record<string, any>;
 }> = {
   booking: {
-    actorId: "dtrungtin/booking-scraper", // Best for complete property data + reviews
+    actorId: "apify/website-content-crawler", // Free Apify official crawler
     dataPoints: ["property", "pricing", "amenities", "reviews", "location", "images"],
     defaultInput: {
-      maxItems: 1,
-      language: "pt-PT",
-      currency: "EUR",
-      checkIn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      checkOut: new Date(Date.now() + 33 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      rooms: 1,
-      adults: 2,
+      maxCrawlPages: 1,
+      crawlerType: "cheerio",
       proxyConfiguration: { useApifyProxy: true }
     }
   },

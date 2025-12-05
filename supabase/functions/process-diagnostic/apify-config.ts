@@ -2,11 +2,10 @@
 // Platform-specific actors configuration
 export const SUPPORTED_PLATFORMS = {
   booking: {
-    actorId: "tTRAuL9PrLC9FqWkJ", // Booking.com Review Scraper
+    actorId: "apify/website-content-crawler", // Free Apify official crawler
     defaultInput: {
-      maxItems: 1,
-      language: "en-US",
-      currency: "USD",
+      maxCrawlPages: 1,
+      crawlerType: "cheerio",
       proxyConfiguration: { useApifyProxy: true }
     }
   },
