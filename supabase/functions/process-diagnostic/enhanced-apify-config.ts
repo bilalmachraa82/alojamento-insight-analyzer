@@ -1,21 +1,21 @@
 // Platform-specific enhanced actors configuration
-// Updated with industry best actors for each platform
+// Using PAY-PER-RESULT actors (no monthly rental required)
 export const ENHANCED_PLATFORM_CONFIG: Record<string, {
   actorId: string;
   dataPoints: string[];
   defaultInput: Record<string, any>;
 }> = {
   booking: {
-    actorId: "apify/website-content-crawler", // Free Apify official crawler
-    dataPoints: ["property", "pricing", "amenities", "reviews", "location", "images"],
+    actorId: "crucial_binoculars/booking-com-reviews-scraper", // Pay per result: $1.00/1,000 results
+    dataPoints: ["property", "reviews", "rating"],
     defaultInput: {
-      maxCrawlPages: 1,
-      crawlerType: "cheerio",
+      maxReviews: 50,
+      language: "pt",
       proxyConfiguration: { useApifyProxy: true }
     }
   },
   airbnb: {
-    actorId: "GsNzxEKzE2vQ5d9HN", // Airbnb Scraper
+    actorId: "GsNzxEKzE2vQ5d9HN", // Airbnb Scraper - official Apify API
     dataPoints: ["listing", "pricing", "amenities", "reviews", "host", "images"],
     defaultInput: {
       maxListings: 1,
