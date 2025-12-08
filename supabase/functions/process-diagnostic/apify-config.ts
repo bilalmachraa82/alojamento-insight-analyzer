@@ -1,11 +1,15 @@
 
 // Platform-specific actors configuration
-export const SUPPORTED_PLATFORMS = {
+// Using PAY-PER-RESULT actors (no monthly rental required)
+export const SUPPORTED_PLATFORMS: Record<string, {
+  actorId: string;
+  defaultInput: Record<string, any>;
+}> = {
   booking: {
-    actorId: "apify/website-content-crawler", // Free Apify official crawler
+    actorId: "crucial_binoculars/booking-com-reviews-scraper", // Pay per result: $1.00/1,000 results
     defaultInput: {
-      maxCrawlPages: 1,
-      crawlerType: "cheerio",
+      maxReviews: 50,
+      language: "en",
       proxyConfiguration: { useApifyProxy: true }
     }
   },
@@ -19,10 +23,10 @@ export const SUPPORTED_PLATFORMS = {
     }
   },
   airbnb: {
-    actorId: "GsNzxEKzE2vQ5d9HN", // Airbnb Scraper
+    actorId: "GsNzxEKzE2vQ5d9HN", // Airbnb Scraper - official Apify API
     defaultInput: {
       maxListings: 1,
-      currency: "USD",
+      currency: "EUR",
       proxyConfiguration: { useApifyProxy: true }
     }
   },
@@ -36,7 +40,8 @@ export const SUPPORTED_PLATFORMS = {
 };
 
 export const getActorConfig = (platform: string) => {
-  const config = SUPPORTED_PLATFORMS[platform.toLowerCase()];
+  const normalizedPlatform = platform.toLowerCase().replace('.com', '');
+  const config = SUPPORTED_PLATFORMS[normalizedPlatform];
   if (!config) {
     // Default to Booking.com actor if platform not recognized
     return SUPPORTED_PLATFORMS.booking;
