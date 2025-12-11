@@ -206,39 +206,54 @@ export type Database = {
       }
       dim_competitor: {
         Row: {
+          airbnb_url: string | null
+          booking_url: string | null
           created_at: string
           distance_km: number | null
           id: string
           is_active: boolean | null
+          last_error_message: string | null
           last_scraped_at: string | null
           location: string | null
           market_id: string | null
           name: string
           property_url: string | null
+          scrape_errors: number | null
+          scrape_success_count: number | null
           updated_at: string
         }
         Insert: {
+          airbnb_url?: string | null
+          booking_url?: string | null
           created_at?: string
           distance_km?: number | null
           id?: string
           is_active?: boolean | null
+          last_error_message?: string | null
           last_scraped_at?: string | null
           location?: string | null
           market_id?: string | null
           name: string
           property_url?: string | null
+          scrape_errors?: number | null
+          scrape_success_count?: number | null
           updated_at?: string
         }
         Update: {
+          airbnb_url?: string | null
+          booking_url?: string | null
           created_at?: string
           distance_km?: number | null
           id?: string
           is_active?: boolean | null
+          last_error_message?: string | null
           last_scraped_at?: string | null
           location?: string | null
           market_id?: string | null
           name?: string
           property_url?: string | null
+          scrape_errors?: number | null
+          scrape_success_count?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -366,6 +381,42 @@ export type Database = {
           room_count?: number | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      dim_seasonality: {
+        Row: {
+          created_at: string
+          factor: number
+          holiday_premium: number
+          id: string
+          market_id: string
+          month: number
+          season_type: string
+          updated_at: string
+          weekend_premium: number
+        }
+        Insert: {
+          created_at?: string
+          factor?: number
+          holiday_premium?: number
+          id?: string
+          market_id: string
+          month: number
+          season_type: string
+          updated_at?: string
+          weekend_premium?: number
+        }
+        Update: {
+          created_at?: string
+          factor?: number
+          holiday_premium?: number
+          id?: string
+          market_id?: string
+          month?: number
+          season_type?: string
+          updated_at?: string
+          weekend_premium?: number
         }
         Relationships: []
       }
@@ -656,6 +707,74 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fact_goals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "dim_property"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_pricing_recommendations: {
+        Row: {
+          actual_price: number | null
+          applied_at: string | null
+          base_price: number
+          competitor_factor: number
+          created_at: string
+          date: string
+          day_of_week_factor: number
+          event_factor: number
+          id: string
+          lead_time_factor: number
+          occupancy_factor: number
+          property_id: string
+          relevant_events: Json | null
+          seasonality_factor: number
+          suggested_price: number
+          updated_at: string
+          was_applied: boolean | null
+        }
+        Insert: {
+          actual_price?: number | null
+          applied_at?: string | null
+          base_price: number
+          competitor_factor?: number
+          created_at?: string
+          date: string
+          day_of_week_factor?: number
+          event_factor?: number
+          id?: string
+          lead_time_factor?: number
+          occupancy_factor?: number
+          property_id: string
+          relevant_events?: Json | null
+          seasonality_factor?: number
+          suggested_price: number
+          updated_at?: string
+          was_applied?: boolean | null
+        }
+        Update: {
+          actual_price?: number | null
+          applied_at?: string | null
+          base_price?: number
+          competitor_factor?: number
+          created_at?: string
+          date?: string
+          day_of_week_factor?: number
+          event_factor?: number
+          id?: string
+          lead_time_factor?: number
+          occupancy_factor?: number
+          property_id?: string
+          relevant_events?: Json | null
+          seasonality_factor?: number
+          suggested_price?: number
+          updated_at?: string
+          was_applied?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_pricing_recommendations_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "dim_property"
