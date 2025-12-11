@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.admin-smart-alerts]
 verify_jwt = false
+
+[functions.export-data]
+verify_jwt = false

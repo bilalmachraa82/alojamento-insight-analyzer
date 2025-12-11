@@ -1,6 +1,6 @@
 /**
  * Analytics Hooks - Central Export
- * Phase 0: Premium Analytics System
+ * Phase 2: Premium Analytics System
  */
 
 // Daily KPIs
@@ -34,3 +34,39 @@ export {
   type SentimentSummary,
   type SentimentTrend,
 } from './useSentimentAnalysis';
+
+// Goals Management
+export {
+  usePropertyGoals,
+  useAllGoals,
+  useCreateGoal,
+  useUpdateGoal,
+  useDeleteGoal,
+  useGoalsSummary,
+  type Goal,
+  type CreateGoalInput,
+  type UpdateGoalInput,
+} from './useGoals';
+
+// Reviews Management
+export {
+  usePropertyReviews,
+  useAllReviews,
+  useCreateReview,
+  useUpdateReview,
+  useDeleteReview,
+  useReviewsSummary,
+  type Review,
+  type CreateReviewInput,
+} from './useReviews';
+
+// Pricing Recommendations
+export {
+  usePricingRecommendations,
+  useCalculateDynamicPrice,
+  useCalculateDateRangePrices,
+  useApplyPriceRecommendation,
+  usePricingSummary,
+  type PricingRecommendation,
+  type CalculatePriceInput,
+} from './usePricingRecommendations';
