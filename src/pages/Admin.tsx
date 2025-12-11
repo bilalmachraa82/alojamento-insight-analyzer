@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home, TestTube, BarChart3, Users2, DollarSign } from 'lucide-react';
+import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home, TestTube, BarChart3, Users2, DollarSign, Bell } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   SystemHealthCard,
@@ -17,6 +17,7 @@ import {
   PropertyKPIDashboard,
   CompetitorManager,
   DynamicPricingSimulator,
+  SmartAlertsDashboard,
 } from '@/components/admin';
 import { useToast } from '@/hooks/use-toast';
 import { useRecentSubmissions } from '@/hooks/admin';
@@ -303,8 +304,12 @@ const Admin = () => {
         )}
 
         {/* Main Dashboard Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+        <Tabs defaultValue="alerts" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-10">
+            <TabsTrigger value="alerts" className="flex items-center gap-1">
+              <Bell className="h-4 w-4" />
+              Alertas
+            </TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="kpis" className="flex items-center gap-1">
               <BarChart3 className="h-4 w-4" />
@@ -324,6 +329,11 @@ const Admin = () => {
             <TabsTrigger value="performance">Performance</TabsTrigger>
             <TabsTrigger value="testing">Testing</TabsTrigger>
           </TabsList>
+
+          {/* Smart Alerts Tab */}
+          <TabsContent value="alerts" className="space-y-6">
+            <SmartAlertsDashboard />
+          </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

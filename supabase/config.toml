@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.admin-get-all-kpis]
 verify_jwt = false
+
+[functions.admin-smart-alerts]
+verify_jwt = false

@@ -8,3 +8,4 @@ export { RevenueMetrics } from './RevenueMetrics';
 export { PropertyKPIDashboard } from './PropertyKPIDashboard';
 export { CompetitorManager } from './CompetitorManager';
 export { DynamicPricingSimulator } from './DynamicPricingSimulator';
+export { SmartAlertsDashboard } from './SmartAlertsDashboard';
