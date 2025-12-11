@@ -18,6 +18,7 @@ import {
   CompetitorManager,
   DynamicPricingSimulator,
   SmartAlertsDashboard,
+  BatchReprocessPanel,
 } from '@/components/admin';
 import { useToast } from '@/hooks/use-toast';
 import { useRecentSubmissions } from '@/hooks/admin';
@@ -305,10 +306,14 @@ const Admin = () => {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="alerts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="alerts" className="flex items-center gap-1">
               <Bell className="h-4 w-4" />
               Alertas
+            </TabsTrigger>
+            <TabsTrigger value="reprocess" className="flex items-center gap-1">
+              <RefreshCw className="h-4 w-4" />
+              Reprocess
             </TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="kpis" className="flex items-center gap-1">
@@ -333,6 +338,11 @@ const Admin = () => {
           {/* Smart Alerts Tab */}
           <TabsContent value="alerts" className="space-y-6">
             <SmartAlertsDashboard />
+          </TabsContent>
+
+          {/* Batch Reprocess Tab */}
+          <TabsContent value="reprocess" className="space-y-6">
+            <BatchReprocessPanel />
           </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
