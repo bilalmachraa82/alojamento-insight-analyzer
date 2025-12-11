@@ -18,13 +18,49 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { submissionId, analysisData } = await req.json();
+    const { submissionId, analysisData: providedAnalysisData } = await req.json();
     
-    if (!submissionId || !analysisData) {
+    if (!submissionId) {
       return new Response(
-        JSON.stringify({ error: "Missing submission ID or analysis data" }),
+        JSON.stringify({ error: "Missing submission ID" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Fetch analysis data from database if not provided
+    let analysisData = providedAnalysisData;
+    if (!analysisData) {
+      console.log(`📥 Fetching analysis data for submission: ${submissionId}`);
+      const { data: submission, error: fetchError } = await supabase
+        .from("diagnostic_submissions")
+        .select("analysis_result, property_data, name")
+        .eq("id", submissionId)
+        .single();
+
+      if (fetchError || !submission) {
+        console.error("Failed to fetch submission:", fetchError);
+        return new Response(
+          JSON.stringify({ error: "Submission not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!submission.analysis_result) {
+        return new Response(
+          JSON.stringify({ error: "No analysis data available for this submission" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Merge property_data into analysis_result for template
+      analysisData = {
+        ...submission.analysis_result,
+        property_data: {
+          ...(submission.analysis_result as any)?.property_data,
+          property_name: submission.name || (submission.analysis_result as any)?.property_data?.property_name || "Propriedade"
+        }
+      };
+      console.log("✅ Analysis data fetched successfully");
     }
 
     console.log("=================================");
@@ -50,8 +86,8 @@ serve(async (req: Request) => {
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('premium-reports')
       .upload(fileName, htmlBytes, {
-        contentType: 'text/html; charset=utf-8',
-        upsert: false
+        contentType: 'text/html',
+        upsert: true
       });
 
     if (uploadError) {
