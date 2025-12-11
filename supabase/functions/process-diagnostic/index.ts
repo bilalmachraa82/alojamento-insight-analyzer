@@ -1,11 +1,9 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "./cors.ts";
-import { startEnhancedApifyRun } from "./enhanced-apify-service.ts";
+import { scrapeWithFirecrawlDirect } from "./firecrawl-service.ts";
 import { getSubmission, updateSubmissionStatus } from "./db-service.ts";
-import { getActorConfig } from "./apify-config.ts";
 
-// FASE 3: Retry configuration
+// Retry configuration
 const MAX_RETRY_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 5000;
 
@@ -74,31 +72,29 @@ serve(async (req: Request) => {
       );
     }
     
-    // Start Apify run with retry logic (FASE 3)
+    // Start Firecrawl scraping with retry logic
     console.log("=================================");
-    console.log("🚀 ETAPA 2: INICIAR APIFY SCRAPER");
+    console.log("🔥 ETAPA 2: INICIAR FIRECRAWL SCRAPER");
     console.log("=================================");
-    const platform = submission.platform.toLowerCase();
-    const { actorId } = getActorConfig(platform);
+    const platform = submission.platform.toLowerCase().replace('.com', '');
     console.log(`Platform: ${platform}`);
-    console.log(`Actor ID: ${actorId}`);
     console.log(`Max Attempts: ${MAX_RETRY_ATTEMPTS}`);
     
-    let apifyResult;
+    let scrapeResult;
     let lastError;
     
     for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
       console.log(`Scraping attempt ${attempt}/${MAX_RETRY_ATTEMPTS}`);
       
       try {
-        apifyResult = await startEnhancedApifyRun(platform, startUrl, id);
+        scrapeResult = await scrapeWithFirecrawlDirect(startUrl, platform);
         
-        if (apifyResult.success) {
-          console.log(`Scraping succeeded on attempt ${attempt}`);
+        if (scrapeResult.success) {
+          console.log(`✅ Scraping succeeded on attempt ${attempt}`);
           break;
         }
         
-        lastError = apifyResult.error;
+        lastError = scrapeResult.error;
         console.warn(`Attempt ${attempt} failed:`, lastError);
         
         // Update status to retry if not last attempt
@@ -106,7 +102,8 @@ serve(async (req: Request) => {
           await updateSubmissionStatus(id, "scraping_retry", {
             retry_attempt: attempt,
             last_error: lastError,
-            next_retry_at: new Date(Date.now() + RETRY_DELAY_MS).toISOString()
+            next_retry_at: new Date(Date.now() + RETRY_DELAY_MS).toISOString(),
+            scraping_method: "firecrawl"
           });
           
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
@@ -121,7 +118,7 @@ serve(async (req: Request) => {
       }
     }
     
-    if (!apifyResult || !apifyResult.success) {
+    if (!scrapeResult || !scrapeResult.success) {
       console.log("=================================");
       console.error(`❌ FALHA NO SCRAPING`);
       console.error(`Todas as ${MAX_RETRY_ATTEMPTS} tentativas falharam`);
@@ -132,7 +129,8 @@ serve(async (req: Request) => {
         error: lastError,
         error_at: new Date().toISOString(),
         retry_count: MAX_RETRY_ATTEMPTS,
-        reason: "apify_failure"
+        reason: "firecrawl_failure",
+        scraping_method: "firecrawl"
       });
       
       return new Response(
@@ -148,36 +146,77 @@ serve(async (req: Request) => {
       );
     }
 
-    // Update submission with successful run data
-    const runId = apifyResult.runId || apifyResult.data?.id;
+    // Scraping succeeded - save property data and trigger analysis
     console.log("=================================");
-    console.log("✅ DADOS APIFY COLETADOS");
+    console.log("✅ DADOS FIRECRAWL COLETADOS");
     console.log("=================================");
-    console.log(`Run ID: ${runId}`);
-    console.log(`Actor: ${actorId}`);
-    console.log(`Platform: ${platform}`);
-    console.log(`Endpoint: ${apifyResult.fallbackMode ? "basic_fallback" : "enhanced"}`);
-    console.log(`Data points: ${apifyResult.extractedDataPoints?.join(', ') || 'N/A'}`);
-    console.log(`Processing time: ${apifyResult.processingTime || 0}s`);
+    console.log(`Processing time: ${scrapeResult.processingTime}s`);
+    console.log(`Data quality:`, scrapeResult.dataQuality);
+    console.log(`Property name: ${scrapeResult.propertyData?.property_name || 'N/A'}`);
+    console.log(`Rating: ${scrapeResult.propertyData?.rating || 'N/A'}`);
+    console.log(`Reviews count: ${scrapeResult.propertyData?.review_count || 'N/A'}`);
     
-    await updateSubmissionStatus(id, "scraping", {
-      actor_run_id: runId,
-      actor_id: actorId,
-      started_at: new Date().toISOString(),
+    // Update submission with property data
+    await updateSubmissionStatus(id, "analyzing", {
+      property_data: scrapeResult.propertyData,
+      scraping_method: "firecrawl",
+      scraped_at: new Date().toISOString(),
       url: startUrl,
       platform: platform,
-      endpoint_used: apifyResult.fallbackMode ? "basic_fallback" : "enhanced",
-      extracted_data_points: apifyResult.extractedDataPoints,
-      processing_time_secs: apifyResult.processingTime || 0
+      processing_time_secs: scrapeResult.processingTime || 0,
+      data_quality: scrapeResult.dataQuality
     });
-    console.log("📝 Status atualizado para: scraping");
+    console.log("📝 Status atualizado para: analyzing");
+
+    // Trigger Claude analysis directly (since Firecrawl is synchronous)
+    console.log("=================================");
+    console.log("🤖 ETAPA 3: INICIAR ANÁLISE CLAUDE");
+    console.log("=================================");
+    
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase configuration');
+      }
+
+      // Call analyze-property-claude with the scraped data
+      const analysisResponse = await fetch(`${supabaseUrl}/functions/v1/analyze-property-claude`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        body: JSON.stringify({
+          submissionId: id,
+          propertyData: scrapeResult.propertyData,
+          rawContent: scrapeResult.rawContent,
+          platform: platform
+        })
+      });
+
+      if (!analysisResponse.ok) {
+        const errorText = await analysisResponse.text();
+        console.error('❌ Claude analysis request failed:', analysisResponse.status, errorText);
+        // Don't fail the whole process - analysis can be retried
+      } else {
+        const analysisResult = await analysisResponse.json();
+        console.log('✅ Claude analysis triggered successfully');
+        console.log('Analysis result:', analysisResult.success ? 'success' : 'pending');
+      }
+    } catch (analysisError) {
+      console.error('❌ Error triggering Claude analysis:', analysisError);
+      // Don't fail - the submission data is saved and analysis can be retried
+    }
     
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Property data collection started",
-        runId,
-        actorId
+        message: "Property data collected and analysis started",
+        scrapingMethod: "firecrawl",
+        processingTime: scrapeResult.processingTime,
+        dataQuality: scrapeResult.dataQuality
       }),
       { 
         status: 200, 
