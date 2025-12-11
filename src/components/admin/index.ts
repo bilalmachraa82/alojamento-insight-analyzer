@@ -5,3 +5,6 @@ export { ErrorLog } from './ErrorLog';
 export { PerformanceChart } from './PerformanceChart';
 export { ApiQuotaCard } from './ApiQuotaCard';
 export { RevenueMetrics } from './RevenueMetrics';
+export { PropertyKPIDashboard } from './PropertyKPIDashboard';
+export { CompetitorManager } from './CompetitorManager';
+export { DynamicPricingSimulator } from './DynamicPricingSimulator';

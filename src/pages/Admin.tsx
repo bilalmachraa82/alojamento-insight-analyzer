@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home, TestTube } from 'lucide-react';
+import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home, TestTube, BarChart3, Users2, DollarSign } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   SystemHealthCard,
@@ -14,6 +14,9 @@ import {
   PerformanceChart,
   ApiQuotaCard,
   RevenueMetrics,
+  PropertyKPIDashboard,
+  CompetitorManager,
+  DynamicPricingSimulator,
 } from '@/components/admin';
 import { useToast } from '@/hooks/use-toast';
 import { useRecentSubmissions } from '@/hooks/admin';
@@ -168,7 +171,6 @@ const Admin = () => {
   };
 
   const handleExportData = () => {
-    // Placeholder for export functionality
     toast({
       title: 'Export',
       description: 'Export functionality will be implemented in a future update',
@@ -302,8 +304,20 @@ const Admin = () => {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="kpis" className="flex items-center gap-1">
+              <BarChart3 className="h-4 w-4" />
+              KPIs
+            </TabsTrigger>
+            <TabsTrigger value="pricing" className="flex items-center gap-1">
+              <DollarSign className="h-4 w-4" />
+              Pricing
+            </TabsTrigger>
+            <TabsTrigger value="competitors" className="flex items-center gap-1">
+              <Users2 className="h-4 w-4" />
+              Competidores
+            </TabsTrigger>
             <TabsTrigger value="submissions" id="submissions-tab">Submissions</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="errors">Errors</TabsTrigger>
@@ -319,6 +333,21 @@ const Admin = () => {
             <SubmissionMetrics />
             <UserMetrics />
             <RevenueMetrics />
+          </TabsContent>
+
+          {/* NEW: KPIs Tab */}
+          <TabsContent value="kpis" className="space-y-6">
+            <PropertyKPIDashboard />
+          </TabsContent>
+
+          {/* NEW: Dynamic Pricing Tab */}
+          <TabsContent value="pricing" className="space-y-6">
+            <DynamicPricingSimulator />
+          </TabsContent>
+
+          {/* NEW: Competitors Tab */}
+          <TabsContent value="competitors" className="space-y-6">
+            <CompetitorManager />
           </TabsContent>
 
           <TabsContent value="submissions" className="space-y-6">
@@ -436,7 +465,7 @@ const Admin = () => {
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Admin Dashboard v1.0.0 - Last updated: {new Date().toLocaleString()}</p>
+          <p>Admin Dashboard v2.0.0 - Dynamic Pricing Engine | Last updated: {new Date().toLocaleString()}</p>
         </div>
       </div>
     </div>

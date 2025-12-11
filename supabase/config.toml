@@ -56,3 +56,9 @@ verify_jwt = false
 
 [functions.competitor-rate-shopping]
 verify_jwt = false
+
+[functions.calculate-dynamic-price]
+verify_jwt = false
+
+[functions.admin-get-all-kpis]
+verify_jwt = false
