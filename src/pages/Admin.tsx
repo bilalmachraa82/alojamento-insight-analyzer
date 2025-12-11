@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home, TestTube, BarChart3, Users2, DollarSign, Bell } from 'lucide-react';
+import { Loader2, Shield, RefreshCw, Download, AlertTriangle, Home, TestTube, BarChart3, Users2, DollarSign, Bell, Target, MessageSquare } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   SystemHealthCard,
@@ -19,6 +19,9 @@ import {
   DynamicPricingSimulator,
   SmartAlertsDashboard,
   BatchReprocessPanel,
+  GoalsManager,
+  ReviewsManager,
+  DataExporter,
 } from '@/components/admin';
 import { useToast } from '@/hooks/use-toast';
 import { useRecentSubmissions } from '@/hooks/admin';
@@ -306,7 +309,7 @@ const Admin = () => {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="alerts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-11">
+          <TabsList className="grid w-full grid-cols-13">
             <TabsTrigger value="alerts" className="flex items-center gap-1">
               <Bell className="h-4 w-4" />
               Alertas
@@ -324,6 +327,14 @@ const Admin = () => {
               <DollarSign className="h-4 w-4" />
               Pricing
             </TabsTrigger>
+            <TabsTrigger value="goals" className="flex items-center gap-1">
+              <Target className="h-4 w-4" />
+              Objetivos
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="flex items-center gap-1">
+              <MessageSquare className="h-4 w-4" />
+              Avaliações
+            </TabsTrigger>
             <TabsTrigger value="competitors" className="flex items-center gap-1">
               <Users2 className="h-4 w-4" />
               Competidores
@@ -331,7 +342,7 @@ const Admin = () => {
             <TabsTrigger value="submissions" id="submissions-tab">Submissions</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="errors">Errors</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="export">Export</TabsTrigger>
             <TabsTrigger value="testing">Testing</TabsTrigger>
           </TabsList>
 
@@ -365,6 +376,16 @@ const Admin = () => {
             <DynamicPricingSimulator />
           </TabsContent>
 
+          {/* NEW: Goals Tab */}
+          <TabsContent value="goals" className="space-y-6">
+            <GoalsManager />
+          </TabsContent>
+
+          {/* NEW: Reviews Tab */}
+          <TabsContent value="reviews" className="space-y-6">
+            <ReviewsManager />
+          </TabsContent>
+
           {/* NEW: Competitors Tab */}
           <TabsContent value="competitors" className="space-y-6">
             <CompetitorManager />
@@ -383,12 +404,9 @@ const Admin = () => {
             <ErrorLog />
           </TabsContent>
 
-          <TabsContent value="performance" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SystemHealthCard />
-              <ApiQuotaCard />
-            </div>
-            <PerformanceChart />
+          {/* NEW: Export Tab */}
+          <TabsContent value="export" className="space-y-6">
+            <DataExporter />
           </TabsContent>
 
           <TabsContent value="testing" className="space-y-6">

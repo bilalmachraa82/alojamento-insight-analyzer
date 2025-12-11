@@ -10,3 +10,6 @@ export { CompetitorManager } from './CompetitorManager';
 export { DynamicPricingSimulator } from './DynamicPricingSimulator';
 export { SmartAlertsDashboard } from './SmartAlertsDashboard';
 export { BatchReprocessPanel } from './BatchReprocessPanel';
+export { GoalsManager } from './GoalsManager';
+export { ReviewsManager } from './ReviewsManager';
+export { DataExporter } from './DataExporter';
