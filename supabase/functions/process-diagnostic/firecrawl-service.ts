@@ -140,6 +140,7 @@ export async function scrapeWithFirecrawlDirect(
   try {
     const startTime = Date.now();
 
+    // Use extract format with jsonOptions for structured extraction
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
       headers: {
@@ -148,13 +149,10 @@ export async function scrapeWithFirecrawlDirect(
       },
       body: JSON.stringify({
         url: url.trim(),
-        formats: [
-          'markdown',
-          { 
-            type: 'json', 
-            prompt 
-          }
-        ],
+        formats: ['markdown', 'extract'],
+        extract: {
+          prompt: prompt
+        },
         onlyMainContent: true,
         waitFor: 3000,
         timeout: 60000,
@@ -177,18 +175,22 @@ export async function scrapeWithFirecrawlDirect(
     console.log('✅ Direct Firecrawl scraping completed');
     console.log(`Processing time: ${processingTime}s`);
 
+    // Extract data is in data.extract or data.data.extract
+    const extractedData = data.data?.extract || data.extract || {};
+    const markdownContent = data.data?.markdown || data.markdown || '';
+
     return {
       success: true,
-      propertyData: data.json || {},
-      rawContent: data.markdown || '',
+      propertyData: extractedData,
+      rawContent: markdownContent,
       processingTime,
       dataQuality: {
-        hasPropertyName: !!data.json?.property_name,
-        hasRating: !!data.json?.rating,
-        hasReviews: !!data.json?.recent_reviews?.length,
-        hasAmenities: !!data.json?.amenities?.length,
-        hasDescription: !!data.json?.description,
-        reviewCount: data.json?.recent_reviews?.length || 0
+        hasPropertyName: !!extractedData?.property_name || !!extractedData?.listing_title,
+        hasRating: !!extractedData?.rating,
+        hasReviews: !!extractedData?.recent_reviews?.length || !!extractedData?.reviews?.length,
+        hasAmenities: !!extractedData?.amenities?.length,
+        hasDescription: !!extractedData?.description,
+        reviewCount: extractedData?.recent_reviews?.length || extractedData?.reviews?.length || extractedData?.review_count || 0
       }
     };
 
