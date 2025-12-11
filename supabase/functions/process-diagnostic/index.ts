@@ -189,7 +189,7 @@ serve(async (req: Request) => {
           'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
-          submissionId: id,
+          id: id,  // analyzer expects 'id', not 'submissionId'
           propertyData: scrapeResult.propertyData,
           rawContent: scrapeResult.rawContent,
           platform: platform
