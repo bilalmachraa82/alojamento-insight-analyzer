@@ -9,3 +9,4 @@ export { PropertyKPIDashboard } from './PropertyKPIDashboard';
 export { CompetitorManager } from './CompetitorManager';
 export { DynamicPricingSimulator } from './DynamicPricingSimulator';
 export { SmartAlertsDashboard } from './SmartAlertsDashboard';
+export { BatchReprocessPanel } from './BatchReprocessPanel';

@@ -1,5 +1,8 @@
 project_id = "tdjwmxzhzvejrvxgpcrj"
 
+[functions.admin-batch-reprocess]
+verify_jwt = false
+
 [functions.daily-ingest]
 verify_jwt = false
 

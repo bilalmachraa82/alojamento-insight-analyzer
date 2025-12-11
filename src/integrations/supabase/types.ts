@@ -1026,6 +1026,14 @@ export type Database = {
       }
     }
     Functions: {
+      batch_reset_stuck_submissions: {
+        Args: never
+        Returns: {
+          new_status: string
+          old_status: string
+          submission_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
