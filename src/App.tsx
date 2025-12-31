@@ -33,14 +33,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const MySubmissions = lazy(() => import("./pages/MySubmissions"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AnalysisResult = lazy(() => import("./pages/AnalysisResult"));
-const TestPremiumPDF = lazy(() => import("./pages/TestPremiumPDF"));
-const TestEmails = lazy(() => import("./pages/TestEmails"));
-const TestMonitoring = lazy(() => import("./pages/TestMonitoring"));
-const TestScraping = lazy(() => import("./pages/TestScraping"));
-const TestPremiumFlow = lazy(() => import("./pages/TestPremiumFlow"));
-const TestApify = lazy(() => import("./pages/TestApify"));
 const Admin = lazy(() => import("./pages/Admin"));
-const DebugSubmissions = lazy(() => import("./pages/DebugSubmissions"));
 
 // Optimized QueryClient configuration
 const queryClient = new QueryClient({
@@ -67,25 +60,8 @@ const PageTracker: React.FC = () => {
  */
 const PWAInitializer: React.FC = () => {
   useEffect(() => {
-    // Register service worker
-    registerServiceWorker({
-      onSuccess: (registration) => {
-        console.log('[PWA] Service worker registered successfully');
-      },
-      onUpdate: (registration) => {
-        console.log('[PWA] New version available');
-      },
-    });
-
-    // Setup network status listeners
-    setupNetworkListeners({
-      onOnline: () => {
-        console.log('[PWA] Network connection restored');
-      },
-      onOffline: () => {
-        console.log('[PWA] Network connection lost');
-      },
-    });
+    registerServiceWorker();
+    setupNetworkListeners();
   }, []);
 
   return null;
@@ -111,14 +87,7 @@ const App = () => (
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/my-submissions" element={<MySubmissions />} />
                   <Route path="/results/:id" element={<AnalysisResult />} />
-                  <Route path="/test-pdf" element={<TestPremiumPDF />} />
-                  <Route path="/test-emails" element={<TestEmails />} />
-                  <Route path="/test-monitoring" element={<TestMonitoring />} />
-                <Route path="/test-scraping" element={<TestScraping />} />
-                <Route path="/test-premium-flow" element={<TestPremiumFlow />} />
-                <Route path="/test-apify" element={<TestApify />} />
-                <Route path="/admin" element={<Admin />} />
-                  <Route path="/debug" element={<DebugSubmissions />} />
+                  <Route path="/admin" element={<Admin />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

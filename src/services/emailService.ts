@@ -1,12 +1,16 @@
-import { render } from '@react-email/render';
+/**
+ * Email Service
+ *
+ * IMPORTANT: This client-side service is for development/testing only.
+ * In production, use the 'send-diagnostic-email' Supabase Edge Function
+ * which has secure access to the Resend API key.
+ *
+ * The Edge Function should be called via supabase.functions.invoke()
+ */
+
 import { supabase } from '@/integrations/supabase/client';
-import WelcomeEmail from '@/emails/WelcomeEmail';
-import ReportReadyEmail from '@/emails/ReportReadyEmail';
-import PaymentConfirmationEmail from '@/emails/PaymentConfirmationEmail';
-import PasswordResetEmail from '@/emails/PasswordResetEmail';
 
 // Configuration
-const RESEND_API_URL = 'https://api.resend.com/emails';
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 5000, 15000]; // 1s, 5s, 15s
 const RATE_LIMIT_DELAY = 1000; // 1 second between emails
@@ -61,78 +65,53 @@ const enforceRateLimit = async () => {
   lastEmailSent = Date.now();
 };
 
-// Resend API client
-class ResendClient {
-  private apiKey: string;
+/**
+ * Send email via Supabase Edge Function (recommended for production)
+ */
+async function sendViaEdgeFunction(params: {
+  email: string;
+  name: string;
+  emailType: string;
+  submissionId?: string;
+  propertyName?: string;
+  reportUrl?: string;
+  language?: string;
+}): Promise<{ id: string; error?: any }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-diagnostic-email', {
+      body: params,
+    });
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
-  async send(params: {
-    from: string;
-    to: string | string[];
-    subject: string;
-    html: string;
-    text?: string;
-  }): Promise<{ id: string; error?: any }> {
-    try {
-      const response = await fetch(RESEND_API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { id: '', error: data };
-      }
-
-      return { id: data.id };
-    } catch (error) {
+    if (error) {
       return { id: '', error };
     }
+
+    return { id: data?.emailId || `edge_${Date.now()}` };
+  } catch (error) {
+    return { id: '', error };
   }
 }
 
-// Email service with retry logic
+// Email service using Edge Functions
 class EmailService {
-  private resend: ResendClient | null = null;
   private fromEmail: string = 'Alojamento Insight <noreply@alojamento-insight.com>';
 
-  constructor() {
-    // Initialize Resend client if API key is available
-    const apiKey = import.meta.env.VITE_RESEND_API_KEY;
-    if (apiKey) {
-      this.resend = new ResendClient(apiKey);
-    }
-  }
-
   private async sendWithRetry(
-    emailParams: {
-      from: string;
-      to: string | string[];
-      subject: string;
-      html: string;
-      text?: string;
+    params: {
+      email: string;
+      name: string;
+      emailType: string;
+      submissionId?: string;
+      propertyName?: string;
+      reportUrl?: string;
+      language?: string;
     },
     retryCount = 0
   ): Promise<{ success: boolean; resendId?: string; error?: string }> {
-    if (!this.resend) {
-      return {
-        success: true,
-        resendId: `sim_${Date.now()}`
-      };
-    }
-
     try {
       await enforceRateLimit();
 
-      const result = await this.resend.send(emailParams);
+      const result = await sendViaEdgeFunction(params);
 
       if (result.error) {
         // Check if we should retry
@@ -140,7 +119,7 @@ class EmailService {
           const delay = RETRY_DELAYS[retryCount] || RETRY_DELAYS[RETRY_DELAYS.length - 1];
 
           await new Promise(resolve => setTimeout(resolve, delay));
-          return this.sendWithRetry(emailParams, retryCount + 1);
+          return this.sendWithRetry(params, retryCount + 1);
         }
 
         return {
@@ -162,7 +141,7 @@ class EmailService {
         const delay = RETRY_DELAYS[retryCount] || RETRY_DELAYS[RETRY_DELAYS.length - 1];
 
         await new Promise(resolve => setTimeout(resolve, delay));
-        return this.sendWithRetry(emailParams, retryCount + 1);
+        return this.sendWithRetry(params, retryCount + 1);
       }
 
       return {
@@ -172,55 +151,25 @@ class EmailService {
     }
   }
 
-  private async checkEmailPreferences(
-    email: string,
-    emailType: string
-  ): Promise<boolean> {
-    // Email preferences table doesn't exist yet, default to sending
-    console.log('Checking email preferences for:', email, emailType);
-    return true;
-  }
-
   private async trackEmail(
     notification: EmailNotificationRecord
   ): Promise<void> {
-    // Email notifications table doesn't exist yet
-    console.log('Email tracked:', notification.email_type, notification.status);
+    // Email tracking is handled by the Edge Function
   }
 
   async sendWelcomeEmail(user: EmailUser): Promise<{ success: boolean; error?: string }> {
     try {
-      // Check email preferences
-      const shouldSend = await this.checkEmailPreferences(user.email, 'welcome');
-      if (!shouldSend) {
-        return { success: false, error: 'User has opted out' };
-      }
-
-      // Render email template
-      const html = await render(
-        WelcomeEmail({
-          userName: user.name,
-          userEmail: user.email,
-          loginUrl: `${window.location.origin}/`,
-        })
-      );
-
-      const subject = `Welcome to Alojamento Insight Analyzer, ${user.name}!`;
-
-      // Send email
       const result = await this.sendWithRetry({
-        from: this.fromEmail,
-        to: user.email,
-        subject,
-        html,
+        email: user.email,
+        name: user.name,
+        emailType: 'welcome',
       });
 
-      // Track email
       await this.trackEmail({
         user_id: user.id,
         email: user.email,
         email_type: 'welcome',
-        subject,
+        subject: `Welcome to Alojamento Insight Analyzer, ${user.name}!`,
         template_data: { userName: user.name },
         status: result.success ? 'sent' : 'failed',
         resend_id: result.resendId,
@@ -231,7 +180,6 @@ class EmailService {
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Error sending welcome email:', error);
       return { success: false, error: errorMessage };
     }
   }
@@ -241,40 +189,20 @@ class EmailService {
     report: EmailReport
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      // Check email preferences
-      const shouldSend = await this.checkEmailPreferences(user.email, 'report_ready');
-      if (!shouldSend) {
-        return { success: false, error: 'User has opted out' };
-      }
-
-      // Render email template
-      const html = await render(
-        ReportReadyEmail({
-          userName: user.name,
-          userEmail: user.email,
-          propertyName: report.propertyName,
-          reportUrl: report.reportUrl,
-          submissionId: report.id,
-          reportType: report.reportType || 'premium',
-        })
-      );
-
-      const subject = `Your ${report.reportType === 'premium' ? 'Premium ' : ''}Report for ${report.propertyName} is Ready!`;
-
-      // Send email
       const result = await this.sendWithRetry({
-        from: this.fromEmail,
-        to: user.email,
-        subject,
-        html,
+        email: user.email,
+        name: user.name,
+        emailType: 'report_ready',
+        submissionId: report.id,
+        propertyName: report.propertyName,
+        reportUrl: report.reportUrl,
       });
 
-      // Track email
       await this.trackEmail({
         user_id: user.id,
         email: user.email,
         email_type: 'report_ready',
-        subject,
+        subject: `Your Report for ${report.propertyName} is Ready!`,
         template_data: {
           userName: user.name,
           propertyName: report.propertyName,
@@ -290,7 +218,6 @@ class EmailService {
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Error sending report ready email:', error);
       return { success: false, error: errorMessage };
     }
   }
@@ -300,42 +227,17 @@ class EmailService {
     payment: EmailPayment
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      // Check email preferences
-      const shouldSend = await this.checkEmailPreferences(user.email, 'payment_confirmation');
-      if (!shouldSend) {
-        return { success: false, error: 'User has opted out' };
-      }
-
-      // Render email template
-      const html = await render(
-        PaymentConfirmationEmail({
-          userName: user.name,
-          userEmail: user.email,
-          amount: payment.amount,
-          currency: payment.currency,
-          transactionId: payment.transactionId,
-          planName: payment.planName,
-          paymentMethod: payment.paymentMethod,
-          invoiceUrl: payment.invoiceUrl,
-        })
-      );
-
-      const subject = `Payment Confirmation - ${payment.currency} ${payment.amount.toFixed(2)}`;
-
-      // Send email
       const result = await this.sendWithRetry({
-        from: this.fromEmail,
-        to: user.email,
-        subject,
-        html,
+        email: user.email,
+        name: user.name,
+        emailType: 'payment_confirmation',
       });
 
-      // Track email
       await this.trackEmail({
         user_id: user.id,
         email: user.email,
         email_type: 'payment_confirmation',
-        subject,
+        subject: `Payment Confirmation - ${payment.currency} ${payment.amount.toFixed(2)}`,
         template_data: {
           userName: user.name,
           amount: payment.amount,
@@ -351,7 +253,6 @@ class EmailService {
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Error sending payment confirmation email:', error);
       return { success: false, error: errorMessage };
     }
   }
@@ -361,35 +262,17 @@ class EmailService {
     token: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      // Password reset emails should always be sent (security requirement)
-      const resetUrl = `${window.location.origin}/reset-password?token=${token}`;
-
-      // Render email template
-      const html = await render(
-        PasswordResetEmail({
-          userName: user.name,
-          userEmail: user.email,
-          resetUrl,
-          expiryHours: 24,
-        })
-      );
-
-      const subject = 'Reset Your Password - Alojamento Insight Analyzer';
-
-      // Send email
       const result = await this.sendWithRetry({
-        from: this.fromEmail,
-        to: user.email,
-        subject,
-        html,
+        email: user.email,
+        name: user.name,
+        emailType: 'password_reset',
       });
 
-      // Track email
       await this.trackEmail({
         user_id: user.id,
         email: user.email,
         email_type: 'password_reset',
-        subject,
+        subject: 'Reset Your Password - Alojamento Insight Analyzer',
         template_data: { userName: user.name },
         status: result.success ? 'sent' : 'failed',
         resend_id: result.resendId,
@@ -400,35 +283,25 @@ class EmailService {
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Error sending password reset email:', error);
       return { success: false, error: errorMessage };
     }
   }
 
   async retryFailedEmails(): Promise<{ retriedCount: number; successCount: number }> {
-    // Email notifications table doesn't exist yet
-    console.log('Retry failed emails requested');
+    // Email retry is handled by the Edge Function
     return { retriedCount: 0, successCount: 0 };
   }
 
-  async getEmailHistory(email: string): Promise<EmailNotificationRecord[]> {
-    // Email notifications table doesn't exist yet
-    console.log('Email history requested for:', email);
+  async getEmailHistory(_email: string): Promise<EmailNotificationRecord[]> {
+    // Email history is managed by the Edge Function
     return [];
   }
 
-  async getEmailStatistics(email: string) {
-    // Email notifications table doesn't exist yet
-    console.log('Email statistics requested for:', email);
-    
-    const totalSent = 0;
-    const byType = {} as Record<string, number>;
-    const lastSent = undefined;
-
+  async getEmailStatistics(_email: string) {
     return {
-      totalSent,
-      byType,
-      lastSent,
+      totalSent: 0,
+      byType: {} as Record<string, number>,
+      lastSent: undefined,
     };
   }
 }
