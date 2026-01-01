@@ -18,7 +18,6 @@ import RecommendationsList from "./RecommendationsList";
 import PricingStrategy from "./PricingStrategy";
 import CompetitorAnalysis from "./CompetitorAnalysis";
 import { useAnalysisData } from "@/hooks/useAnalysisData";
-import PremiumReportViewer from "./PremiumReportViewer";
 import EnhancedPremiumReport from "./EnhancedPremiumReport";
 
 interface AnalysisResultsViewerProps {
