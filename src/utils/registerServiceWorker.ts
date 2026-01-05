@@ -32,7 +32,6 @@ function isServiceWorkerSupported(): boolean {
 export async function registerServiceWorker(config: ServiceWorkerConfig = {}): Promise<void> {
   // Check if service workers are supported
   if (!isServiceWorkerSupported()) {
-    console.log('[PWA] Service workers are not supported or not running on HTTPS/localhost');
     return;
   }
 
@@ -44,30 +43,21 @@ export async function registerServiceWorker(config: ServiceWorkerConfig = {}): P
       });
     }
 
-    console.log('[PWA] Registering service worker...');
-
     // Register the service worker
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',
       updateViaCache: 'none' // Always check for updates
     });
 
-    console.log('[PWA] Service worker registered successfully:', registration.scope);
-
     // Handle updates
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       if (!newWorker) return;
 
-      console.log('[PWA] New service worker found, installing...');
-
       newWorker.addEventListener('statechange', () => {
-        console.log('[PWA] Service worker state changed:', newWorker.state);
-
         if (newWorker.state === 'installed') {
           if (navigator.serviceWorker.controller) {
             // New service worker available, show update notification
-            console.log('[PWA] New content available, please refresh');
             if (config.onUpdate) {
               config.onUpdate(registration);
             } else {
@@ -75,7 +65,6 @@ export async function registerServiceWorker(config: ServiceWorkerConfig = {}): P
             }
           } else {
             // First time installation
-            console.log('[PWA] Content cached for offline use');
             if (config.onSuccess) {
               config.onSuccess(registration);
             }
@@ -86,14 +75,12 @@ export async function registerServiceWorker(config: ServiceWorkerConfig = {}): P
 
     // Check for updates periodically (every hour)
     setInterval(() => {
-      console.log('[PWA] Checking for service worker updates...');
       registration.update();
     }, 60 * 60 * 1000);
 
     // Manual update check on visibility change
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        console.log('[PWA] Page visible, checking for updates...');
         registration.update();
       }
     });
@@ -192,12 +179,9 @@ export async function unregisterServiceWorker(): Promise<void> {
     const unregistered = await registration.unregister();
 
     if (unregistered) {
-      console.log('[PWA] Service worker unregistered successfully');
-
       // Clear all caches
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-      console.log('[PWA] All caches cleared');
     }
   } catch (error) {
     console.error('[PWA] Service worker unregistration failed:', error);
@@ -210,7 +194,6 @@ export async function unregisterServiceWorker(): Promise<void> {
 export function setupNetworkListeners(config: ServiceWorkerConfig = {}): void {
   // Handle online event
   window.addEventListener('online', () => {
-    console.log('[PWA] Network status: ONLINE');
     if (config.onOnline) {
       config.onOnline();
     } else {
@@ -220,7 +203,6 @@ export function setupNetworkListeners(config: ServiceWorkerConfig = {}): void {
 
   // Handle offline event
   window.addEventListener('offline', () => {
-    console.log('[PWA] Network status: OFFLINE');
     if (config.onOffline) {
       config.onOffline();
     } else {
@@ -230,7 +212,6 @@ export function setupNetworkListeners(config: ServiceWorkerConfig = {}): void {
 
   // Initial network status check
   if (!navigator.onLine) {
-    console.log('[PWA] Initial network status: OFFLINE');
     if (config.onOffline) {
       config.onOffline();
     }
@@ -286,7 +267,6 @@ function showNetworkStatus(status: 'online' | 'offline'): void {
  */
 export async function requestBackgroundSync(tag: string): Promise<void> {
   if (!isServiceWorkerSupported()) {
-    console.log('[PWA] Background sync not supported');
     return;
   }
 
@@ -296,9 +276,6 @@ export async function requestBackgroundSync(tag: string): Promise<void> {
     // Check if sync is supported
     if ('sync' in registration) {
       await (registration as any).sync.register(tag);
-      console.log(`[PWA] Background sync registered: ${tag}`);
-    } else {
-      console.log('[PWA] Background sync not supported by browser');
     }
   } catch (error) {
     console.error('[PWA] Background sync registration failed:', error);
@@ -312,7 +289,6 @@ export async function clearAllCaches(): Promise<void> {
   try {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-    console.log('[PWA] All caches cleared successfully');
   } catch (error) {
     console.error('[PWA] Failed to clear caches:', error);
   }
@@ -332,8 +308,6 @@ export async function getCacheStats(): Promise<Record<string, number>> {
       const keys = await cache.keys();
       stats[cacheName] = keys.length;
     }
-
-    console.log('[PWA] Cache statistics:', stats);
   } catch (error) {
     console.error('[PWA] Failed to get cache stats:', error);
   }

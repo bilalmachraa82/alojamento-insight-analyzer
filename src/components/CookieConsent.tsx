@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { setAnalyticsCookieConsent, getAnalyticsCookieConsent, initGA4 } from '@/config/analytics';
+import { setAnalyticsCookieConsent, initGA4 } from '@/config/analytics';
 
 interface CookiePreferences {
   necessary: boolean;

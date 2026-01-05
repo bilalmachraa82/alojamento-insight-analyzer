@@ -1,12 +1,9 @@
 /**
  * Sentiment Analysis Service
- * Uses Hugging Face Inference API for multilingual sentiment analysis
- * Model: cardiffnlp/twitter-xlm-roberta-base-sentiment
+ * Uses keyword-based analysis for client-side operations.
+ * For production AI-powered sentiment analysis, use the Supabase Edge Function
+ * 'analyze-sentiment' which has secure access to the Hugging Face API.
  */
-
-// Hugging Face API configuration
-const HF_API_URL = 'https://api-inference.huggingface.co/models/cardiffnlp/twitter-xlm-roberta-base-sentiment';
-const HF_API_KEY = import.meta.env.VITE_HUGGINGFACE_API_KEY || '';
 
 // Predefined topics for extraction
 export const REVIEW_TOPICS = [
@@ -48,13 +45,8 @@ export interface AnalyzedReview {
   language?: string;
 }
 
-// Cache for API responses (in-memory)
+// Cache for sentiment results (in-memory)
 const sentimentCache = new Map<string, SentimentResult>();
-const CACHE_EXPIRY = 1000 * 60 * 60 * 24; // 24 hours
-
-// Rate limiting
-let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 100; // 100ms between requests
 
 /**
  * Sleep function for rate limiting
@@ -64,86 +56,10 @@ async function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Call Hugging Face Inference API
- */
-async function callHuggingFaceAPI(text: string): Promise<any> {
-  // Rate limiting
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-    await sleep(MIN_REQUEST_INTERVAL - timeSinceLastRequest);
-  }
-  lastRequestTime = Date.now();
-
-  const response = await fetch(HF_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${HF_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ inputs: text }),
-  });
-
-  if (!response.ok) {
-    if (response.status === 503) {
-      // Model is loading, wait and retry
-      await sleep(2000);
-      return callHuggingFaceAPI(text);
-    }
-    throw new Error(`Hugging Face API error: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Convert Hugging Face response to normalized sentiment score
- */
-function parseHuggingFaceResponse(response: any[]): SentimentResult {
-  // Response format: [{ label: "positive", score: 0.9 }, ...]
-  const scores = {
-    positive: 0,
-    neutral: 0,
-    negative: 0,
-  };
-
-  response.forEach(item => {
-    const label = item.label.toLowerCase();
-    if (label.includes('positive')) {
-      scores.positive = item.score;
-    } else if (label.includes('negative')) {
-      scores.negative = item.score;
-    } else if (label.includes('neutral')) {
-      scores.neutral = item.score;
-    }
-  });
-
-  // Calculate normalized score (-1 to +1)
-  const score = scores.positive - scores.negative;
-
-  // Determine label based on highest score
-  let label: 'positive' | 'neutral' | 'negative';
-  const maxScore = Math.max(scores.positive, scores.neutral, scores.negative);
-
-  if (maxScore === scores.positive) {
-    label = 'positive';
-  } else if (maxScore === scores.negative) {
-    label = 'negative';
-  } else {
-    label = 'neutral';
-  }
-
-  return {
-    score,
-    label,
-    confidence: maxScore,
-    rawScores: scores,
-  };
-}
-
-/**
- * Analyze sentiment of a single review text
+ * Analyze sentiment of a single review text using keyword-based analysis.
  * Returns a score from -1 (negative) to +1 (positive)
+ *
+ * Note: For AI-powered analysis, use the 'analyze-sentiment' Edge Function.
  */
 export async function analyzeSentiment(reviewText: string): Promise<SentimentResult> {
   if (!reviewText || reviewText.trim().length === 0) {
@@ -155,38 +71,26 @@ export async function analyzeSentiment(reviewText: string): Promise<SentimentRes
   }
 
   // Check cache
-  const cacheKey = reviewText.substring(0, 100); // Use first 100 chars as key
+  const cacheKey = reviewText.substring(0, 100);
   const cached = sentimentCache.get(cacheKey);
   if (cached) {
     return cached;
   }
 
-  try {
-    // Truncate long reviews for API
-    const truncatedText = reviewText.substring(0, 500);
+  // Use keyword-based sentiment analysis
+  const result = keywordSentimentAnalysis(reviewText);
 
-    // Call Hugging Face API
-    const response = await callHuggingFaceAPI(truncatedText);
+  // Cache result
+  sentimentCache.set(cacheKey, result);
 
-    // Parse response
-    const result = parseHuggingFaceResponse(response[0] || response);
-
-    // Cache result
-    sentimentCache.set(cacheKey, result);
-
-    return result;
-  } catch (error) {
-    console.error('Error analyzing sentiment:', error);
-
-    // Fallback: simple keyword-based sentiment
-    return fallbackSentimentAnalysis(reviewText);
-  }
+  return result;
 }
 
 /**
- * Fallback sentiment analysis using keywords
+ * Keyword-based sentiment analysis
+ * Supports English and Portuguese keywords
  */
-function fallbackSentimentAnalysis(text: string): SentimentResult {
+function keywordSentimentAnalysis(text: string): SentimentResult {
   const lowerText = text.toLowerCase();
 
   const positiveKeywords = [
