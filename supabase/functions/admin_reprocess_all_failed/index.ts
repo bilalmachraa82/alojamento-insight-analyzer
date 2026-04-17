@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         results.push({
           id: submission.id,
           status: 'error',
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error reprocessing submissions:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
