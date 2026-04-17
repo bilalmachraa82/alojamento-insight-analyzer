@@ -1,10 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import {
+  checkSubmissionRateLimit,
+  getClientIp,
+  validatePropertyUrl,
+} from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const jsonResponse = (status: number, body: Record<string, unknown>, extraHeaders: Record<string, string> = {}) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json', ...extraHeaders },
+  });
 
 serve(async (req: Request) => {
   // Handle CORS preflight requests
@@ -17,46 +28,27 @@ serve(async (req: Request) => {
 
     // Input validation
     if (!name || !email || !property_url || !platform) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Missing required fields" 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return jsonResponse(400, { success: false, error: "Missing required fields" });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Invalid email format" 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return jsonResponse(400, { success: false, error: "Invalid email format" });
     }
 
     // Validate platform
     const validPlatforms = ['airbnb', 'booking', 'vrbo'];
-    if (!validPlatforms.includes(platform.toLowerCase())) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Invalid platform" 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+    const platformLower = platform.toLowerCase();
+    if (!validPlatforms.includes(platformLower)) {
+      return jsonResponse(400, { success: false, error: "Invalid platform" });
+    }
+
+    // Validate URL format and domain
+    const trimmedUrl = property_url.trim();
+    const urlValidation = validatePropertyUrl(trimmedUrl, platformLower);
+    if (!urlValidation.valid) {
+      return jsonResponse(400, { success: false, error: urlValidation.error });
     }
 
     // Create Supabase client with service role
@@ -64,33 +56,38 @@ serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Rate limiting check
+    const clientIp = getClientIp(req);
+    const rateLimitResult = await checkSubmissionRateLimit(supabase, email, clientIp);
+    if (!rateLimitResult.allowed) {
+      return jsonResponse(
+        429,
+        { success: false, error: rateLimitResult.reason },
+        rateLimitResult.retryAfterSeconds
+          ? { 'Retry-After': String(rateLimitResult.retryAfterSeconds) }
+          : {}
+      );
+    }
+
     // Insert submission using service role
     const { data: submissionData, error } = await supabase
       .from("diagnostic_submissions")
       .insert({
         name,
-        email,
-        property_url: property_url.trim(),
-        platform: platform.toLowerCase(),
+        email: email.toLowerCase(),
+        property_url: trimmedUrl,
+        platform: platformLower,
         submission_date: new Date().toISOString(),
         status: "pending",
-        user_id: user_id || null // Include user_id if provided
+        user_id: user_id || null,
+        client_ip: clientIp !== "unknown" ? clientIp : null,
       })
       .select()
       .single();
 
     if (error) {
       console.error("Database error:", error);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Failed to create submission" 
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return jsonResponse(500, { success: false, error: "Failed to create submission" });
     }
 
     console.log(`Submission created successfully: ${submissionData.id}`);
@@ -110,28 +107,13 @@ serve(async (req: Request) => {
       // Don't fail the submission, processing will be retried
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        submissionId: submissionData.id,
-        message: "Submission created successfully"
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return jsonResponse(200, {
+      success: true,
+      submissionId: submissionData.id,
+      message: "Submission created successfully",
+    });
   } catch (error) {
     console.error("Error in submit-diagnostic:", error);
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: String(error) 
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return jsonResponse(500, { success: false, error: String(error) });
   }
 });

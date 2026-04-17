@@ -118,7 +118,9 @@ describe('useUser', () => {
 
       expect(UserService.upsertUser).toHaveBeenCalledWith(newUserData);
       expect(createdUser.id).toBe('new-user-id');
-      expect(result.current.user?.email).toBe('new@example.com');
+      await waitFor(() =>
+        expect(result.current.user?.email).toBe('new@example.com')
+      );
     });
 
     it('should handle create errors', async () => {
@@ -138,7 +140,9 @@ describe('useUser', () => {
         })
       ).rejects.toThrow('Failed to create user');
 
-      expect(result.current.error).toBe('Failed to create user');
+      await waitFor(() =>
+        expect(result.current.error).toBe('Failed to create user')
+      );
     });
   });
 
@@ -165,7 +169,9 @@ describe('useUser', () => {
         undefined
       );
       expect(updatedUser.subscription_tier).toBe('premium');
-      expect(result.current.user?.subscription_tier).toBe('premium');
+      await waitFor(() =>
+        expect(result.current.user?.subscription_tier).toBe('premium')
+      );
     });
 
     it('should throw error if no user exists', async () => {

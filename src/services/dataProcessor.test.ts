@@ -55,7 +55,7 @@ describe('DataProcessor', () => {
       expect(result.amenities).toContain('WiFi');
       expect(result.amenities).toContain('Pool');
       expect(result.amenities).toContain('Parking');
-      expect(result.amenities.length).toBe(4); // 3 from mock + 1 from default
+      expect(result.amenities.length).toBe(3); // Array override replaces the default amenities
     });
 
     it('should estimate occupancy based on reviews and rating', () => {
