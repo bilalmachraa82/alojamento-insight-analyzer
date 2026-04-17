@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,8 @@ interface AnalysisData {
 }
 
 
+const MAX_POLL_ATTEMPTS = 720; // ~1 hour at 5s interval
+
 const AnalysisResult = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
@@ -42,6 +44,9 @@ const AnalysisResult = () => {
   const [error, setError] = useState<string | null>(null);
   const [progressValue, setProgressValue] = useState(0);
   const { toast } = useToast();
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollAttemptsRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   const fetchAnalysisData = async () => {
     try {
@@ -127,12 +132,22 @@ const AnalysisResult = () => {
   };
 
   const checkAnalysisStatus = async (submissionId: string) => {
+    if (!isMountedRef.current) return;
+
+    if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+      setAnalyzing(false);
+      setError("A análise está a demorar mais do que o esperado. Por favor, tente novamente mais tarde.");
+      return;
+    }
+    pollAttemptsRef.current += 1;
+
     try {
       const { data, error } = await supabase.functions.invoke("check-scrape-status", {
         body: { id: submissionId }
       });
 
       if (error) throw error;
+      if (!isMountedRef.current) return;
 
       if (data) {
         if (data.status === "scraping") {
@@ -146,13 +161,13 @@ const AnalysisResult = () => {
         } else if (data.status === "completed") {
           setProgressValue(100);
           setAnalyzing(false);
-          
+
           fetchAnalysisData();
           return;
         }
 
         if (data.status !== "completed" && data.status !== "failed") {
-          setTimeout(() => checkAnalysisStatus(submissionId), 5000);
+          pollTimeoutRef.current = setTimeout(() => checkAnalysisStatus(submissionId), 5000);
         } else {
           setAnalyzing(false);
         }
@@ -163,7 +178,17 @@ const AnalysisResult = () => {
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
+    pollAttemptsRef.current = 0;
     fetchAnalysisData();
+
+    return () => {
+      isMountedRef.current = false;
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+        pollTimeoutRef.current = null;
+      }
+    };
   }, [id]);
 
   const handleRefresh = () => {

@@ -1,10 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import SuccessMessage from "./SuccessMessage";
 import { Language } from "./translations";
+
+const MAX_POLL_ATTEMPTS = 720; // ~1 hour at 5s interval
 
 interface DiagnosticSuccessProps {
   submissionId: string;
@@ -33,10 +35,30 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
   const [completionToastShown, setCompletionToastShown] = useState(false);
   // Add state to track if we're navigating to prevent multiple redirects
   const [isNavigating, setIsNavigating] = useState(false);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollAttemptsRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  const schedulePoll = (id: string, delayMs: number) => {
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+    }
+    pollTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) checkProcessingStatus(id);
+    }, delayMs);
+  };
 
   const checkProcessingStatus = async (id: string) => {
+    if (!isMountedRef.current) return;
     if (checkingStatus || isNavigating) return; // Prevent multiple simultaneous checks or checks during navigation
-    
+
+    if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+      setCheckingStatus(false);
+      return;
+    }
+    pollAttemptsRef.current += 1;
+
     try {
       setCheckingStatus(true);
 
@@ -75,8 +97,8 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
           });
           
           // Short delay before navigation to let the toast be visible
-          setTimeout(() => {
-            navigate(`/results/${id}`);
+          navigateTimeoutRef.current = setTimeout(() => {
+            if (isMountedRef.current) navigate(`/results/${id}`);
           }, 2000);
           return;
         }
@@ -125,8 +147,8 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
               });
               
               // Longer delay for edge function completion
-              setTimeout(() => {
-                navigate(`/results/${id}`);
+              navigateTimeoutRef.current = setTimeout(() => {
+                if (isMountedRef.current) navigate(`/results/${id}`);
               }, 2000);
               return;
             }
@@ -137,10 +159,8 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
 
         // Continue checking status at regular intervals if not completed and not navigating
         if (statusData.status !== "completed" && statusData.status !== "failed" && !isNavigating) {
-          setTimeout(() => {
-            setCheckingStatus(false);
-            checkProcessingStatus(id);
-          }, 5000);
+          setCheckingStatus(false);
+          schedulePoll(id, 5000);
         } else {
           setCheckingStatus(false);
         }
@@ -150,7 +170,7 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
       setCheckingStatus(false);
       // Still continue checking on error, but with a longer delay (unless navigating)
       if (!isNavigating) {
-        setTimeout(() => checkProcessingStatus(id), 10000);
+        schedulePoll(id, 10000);
       }
     }
   };
@@ -170,13 +190,23 @@ const DiagnosticSuccess = ({ submissionId, userName, language, onReset }: Diagno
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
+    pollAttemptsRef.current = 0;
+
     if (submissionId) {
       checkProcessingStatus(submissionId);
     }
-    
-    // Clean up function to prevent memory leaks
+
     return () => {
-      // No need to clear any timeout as they're function-scoped in checkProcessingStatus
+      isMountedRef.current = false;
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+        pollTimeoutRef.current = null;
+      }
+      if (navigateTimeoutRef.current) {
+        clearTimeout(navigateTimeoutRef.current);
+        navigateTimeoutRef.current = null;
+      }
     };
   }, [submissionId]);
 
