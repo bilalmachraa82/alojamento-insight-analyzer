@@ -98,7 +98,7 @@ export async function scrapeWithFirecrawl(
     };
 
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       console.error('❌ Firecrawl request timed out');
       return {
         success: false,

@@ -228,7 +228,7 @@ async function generatePremiumHTML(analysisData: any): Promise<string> {
   return template(templateData);
 }
 
-async function getPremiumTemplate(): string {
+async function getPremiumTemplate(): Promise<string> {
   // Full premium template with ALL sections from A Maria Faz
   return `<!DOCTYPE html>
 <html lang="pt">

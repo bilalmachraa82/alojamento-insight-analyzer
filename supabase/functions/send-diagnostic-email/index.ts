@@ -368,7 +368,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || String(error)
+        error: error instanceof Error ? error.message : String(error)
       }),
       {
         status: 500,

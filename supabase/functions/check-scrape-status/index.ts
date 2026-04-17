@@ -779,7 +779,7 @@ function extractPropertyName(pageData: any): string {
   // If no metadata title, try to find a heading in the content
   if (pageData.text) {
     // Look for what might be a heading (first line or strong text pattern)
-    const lines = pageData.text.split('\n').filter(l => l.trim().length > 0);
+    const lines = pageData.text.split('\n').filter((l: string) => l.trim().length > 0);
     if (lines.length > 0) {
       return lines[0].trim();
     }
