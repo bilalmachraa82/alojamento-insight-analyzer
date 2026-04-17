@@ -77,7 +77,7 @@ export async function startEnhancedApifyRun(platform: string, startUrl: string, 
 
   console.log(`[EnhancedApify] ============= FINAL CONFIG =============`);
   console.log(`[EnhancedApify] Selected: ${selectedConfig}`);
-  console.log(`[EnhancedApify] Endpoint: ${startEndpoint.replace(APIFY_API_TOKEN, 'HIDDEN')}`);
+  console.log(`[EnhancedApify] Endpoint: ${startEndpoint.replace(APIFY_API_TOKEN!, 'HIDDEN')}`);
   
   try {
     const runResponse = await fetch(startEndpoint, {
