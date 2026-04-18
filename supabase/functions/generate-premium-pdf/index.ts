@@ -99,22 +99,52 @@ serve(async (req: Request) => {
     }
     console.log("✅ Upload concluído com sucesso");
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
+    // Generate signed URL (30 days) — bucket is private
+    const { data: signedData, error: signedError } = await supabase.storage
       .from('premium-reports')
-      .getPublicUrl(fileName);
-    console.log(`🌐 URL pública gerada: ${publicUrl}`);
+      .createSignedUrl(fileName, 60 * 60 * 24 * 30);
+
+    if (signedError || !signedData) {
+      console.error("❌ Erro ao gerar signed URL:", signedError);
+      throw signedError || new Error("Failed to create signed URL");
+    }
+    const reportUrl = signedData.signedUrl;
+    console.log(`🌐 Signed URL gerada (30d): ${reportUrl.substring(0, 80)}...`);
 
     // Update submission with report URL
     console.log("💾 Atualizando submission com URL do relatório...");
-    await supabase
+    const { data: updatedSubmission } = await supabase
       .from("diagnostic_submissions")
       .update({
-        premium_report_url: publicUrl,
+        premium_report_url: reportUrl,
         report_generated_at: new Date().toISOString()
       })
-      .eq("id", submissionId);
+      .eq("id", submissionId)
+      .select("email, name, property_data")
+      .single();
     console.log("✅ Submission atualizada");
+
+    // 📧 Trigger email notification (non-blocking)
+    if (updatedSubmission?.email) {
+      const propName = (updatedSubmission.property_data as any)?.property_name 
+        || updatedSubmission.name 
+        || "Propriedade";
+      console.log(`📧 Disparando email para ${updatedSubmission.email}...`);
+      supabase.functions.invoke('send-diagnostic-email', {
+        body: {
+          email: updatedSubmission.email,
+          name: updatedSubmission.name || "Cliente",
+          submissionId,
+          propertyName: propName,
+          reportUrl,
+          language: 'pt',
+          emailType: 'report_ready'
+        }
+      }).then(({ error }) => {
+        if (error) console.error("❌ Email trigger error:", error);
+        else console.log("✅ Email enviado com sucesso");
+      }).catch((e) => console.error("❌ Email exception:", e));
+    }
 
     console.log("=================================");
     console.log("✅ RELATÓRIO PREMIUM CONCLUÍDO");
@@ -124,7 +154,7 @@ serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: "Premium report generated successfully",
-        reportUrl: publicUrl,
+        reportUrl,
         fileName
       }),
       { 
