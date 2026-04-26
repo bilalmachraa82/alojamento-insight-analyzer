@@ -182,13 +182,18 @@ export const CLAUDE_ENV: EnvConfig = {
   required: ['CLAUDE_API_KEY'],
 };
 
+// Lovable AI Gateway env (replaces direct Claude API for analysis)
+export const LOVABLE_AI_ENV: EnvConfig = {
+  required: ['LOVABLE_API_KEY'],
+};
+
 // Combined configs for common use cases
 export const SCRAPER_ENV: EnvConfig = {
   required: [...SUPABASE_ENV.required, ...APIFY_ENV.required],
 };
 
 export const ANALYZER_ENV: EnvConfig = {
-  required: [...SUPABASE_ENV.required, ...CLAUDE_ENV.required],
+  required: [...SUPABASE_ENV.required, ...LOVABLE_AI_ENV.required],
 };
 
 export const FULL_PIPELINE_ENV: EnvConfig = {
