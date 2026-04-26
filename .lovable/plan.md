@@ -1,78 +1,70 @@
+# Auditoria & Plano de Resolução
 
+## Diagnóstico
 
-The user is asking what the next steps are to get the site 100% functional. Let me think about the current state:
+A app **carrega normalmente** (o erro de `SyntaxError: Export 'supabase'` que voltaste a ver no replay é apenas do bundle stale em cache do browser — basta hard refresh). O **erro real** que está a bloquear o pipeline está nos logs da edge function `analyze-property-claude`:
 
-**What's working:**
-- Scraping pipeline (Firecrawl + Apify)
-- Claude AI analysis
-- PDF report generation
-- Admin dashboard with Phase 2 features (Goals, Reviews, Pricing, Export)
-- Authentication & user roles
-- 17 edge functions deployed
-- Database schema with analytics tables
+```
+Your credit balance is too low to access the Anthropic API.
+Please go to Plans & Billing to upgrade or purchase credits.
+HTTP 400 - invalid_request_error
+```
 
-**Known pending items from conversation history:**
-- 12 submissions stuck in `pending` (need batch reprocess)
-- 11 submissions in `pending_manual_review` (page-not-found errors — invalid URLs)
-- No automated cron jobs running yet (daily-ingest, KPI refresh)
-- No email notifications when reports are ready
-- Build had recent TS errors (now fixed)
+### Estado atual da base de dados
 
-**What's missing for 100% production:**
-1. Backlog cleanup (12 pending submissions)
-2. Automated cron jobs (daily-ingest, KPI refresh, smart alerts)
-3. Email notifications to users when their report is ready
-4. End-to-end QA on a fresh user flow
-5. Maybe: monitoring/alerting setup
+| Status | Submissions |
+|---|---|
+| `pending_manual_review` | **13** (presas devido ao erro Anthropic) |
+| `pending` | 12 (antigas, de 18 abr) |
+| `completed` | 8 |
+| `manual_review_requested` | 1 |
 
-Let me present a concise prioritized plan.
+Todas as 13 submissões em `pending_manual_review` falharam exatamente no mesmo ponto: chamada HTTP à API da Anthropic com a `CLAUDE_API_KEY` que tem saldo zero.
 
----
+### Causa raiz
 
-# Próximo Passo: Levar o Site a 100%
+A função `analyze-property-claude` chama **diretamente** `https://api.anthropic.com/v1/messages` usando uma API key pessoal (`CLAUDE_API_KEY`) que ficou sem créditos. Mesmo problema afetará todas as próximas submissões.
 
-## Estado Atual
+## Solução
 
-Tudo o que é **core funciona**: scraping, análise IA, geração de PDF, dashboard admin, autenticação, e os 17 edge functions estão deployados. Faltam apenas peças de **automação e operação** para o site funcionar sem intervenção manual.
+Migrar a chamada de análise para o **Lovable AI Gateway**, que já tem o `LOVABLE_API_KEY` configurado nos secrets e fornece acesso a modelos potentes (incluindo família Gemini e GPT-5) **sem requerer a chave Anthropic** e com créditos incluídos no plano Lovable.
 
-## Prioridades (ordem recomendada)
+### Modelo escolhido
 
-### 1. Limpar o Backlog (5 min)
-- Processar as **12 submissões `pending`** que estão na fila via Admin Dashboard → Reprocess
-- Confirmar que terminam em `completed` com PDF gerado
-- As 11 em `pending_manual_review` ficam de fora (URLs inválidos do utilizador)
+**`google/gemini-2.5-pro`** — substituto direto do `claude-haiku-4-5`:
+- Excelente em raciocínio complexo + JSON estruturado (perfeito para análise de propriedades)
+- Suporta o tamanho de contexto necessário (16k output tokens)
+- Disponível via Lovable AI Gateway sem custo adicional fora da sandbox de billing já em uso
 
-### 2. Ativar Cron Jobs Automáticos (15 min)
-Sem isto, os KPIs e analytics nunca atualizam. Configurar via SQL:
-- **`daily-ingest`** — diário às 03:00 UTC, popula `fact_daily` com dados novos
-- **`refresh_all_kpi_views`** — diário às 03:30 UTC, refresca materialized views
-- **`admin-smart-alerts`** — de hora em hora, deteta anomalias
-- **`fix-stuck-submission`** — a cada 15 min, recupera submissões presas
+### Mudanças
 
-### 3. Notificações por Email ao Utilizador (20 min)
-Atualmente o utilizador submete e... não sabe quando o relatório está pronto. Falta:
-- Trigger no edge function `generate-premium-pdf` (no fim, com sucesso) → invoca `send-diagnostic-email`
-- Template de email com link direto para o relatório PDF
-- Email de erro quando submissão vai para `pending_manual_review` (URL inválido)
+1. **`supabase/functions/analyze-property-claude/index.ts`**
+   - Substituir chamada `https://api.anthropic.com/v1/messages` por `https://ai.gateway.lovable.dev/v1/chat/completions`
+   - Trocar header `x-api-key: CLAUDE_API_KEY` por `Authorization: Bearer ${LOVABLE_API_KEY}`
+   - Adaptar payload do formato Anthropic (`messages` + `system`) para formato OpenAI-compatible (`messages` com role `system` no array)
+   - Adaptar parsing da resposta: `claudeData.content[0].text` → `data.choices[0].message.content`
+   - Tratar códigos 429 (rate limit) e 402 (créditos esgotados) com mensagem clara
+   - Manter o resto da lógica intacta (validação, prompt, fallbacks, atualização de DB)
 
-### 4. QA End-to-End Final (10 min)
-- Submeter 1 propriedade nova como utilizador anónimo
-- Verificar: pending → scraping → analyzing → completed em <5 min
-- Confirmar receção do email com link para o PDF
-- Abrir o PDF e validar que o relatório premium renderiza corretamente
+2. **Reprocessar backlog (13 submissões presas)**
+   - Após deploy da função corrigida, executar SQL `batch_reset_stuck_submissions()` que já existe na DB
+   - Isto coloca os 13 registos em `status = pending` e zera o `retry_count`
+   - O cron job existente (`pg_cron`) vai apanhá-los automaticamente, ou podemos invocar `fix-stuck-submission` manualmente
 
-### 5. (Opcional) Monitorização Contínua
-- Configurar alertas para `success rate < 80%` ou `>5 submissões stuck`
-- Dashboard de métricas já existe em Admin → System Health
+3. **Cleanup opcional**
+   - O secret `CLAUDE_API_KEY` pode ficar nos secrets (não estorva), mas deixa de ser usado
+   - Atualizar a memória do projeto (`mem://infrastructure/ai-model-configuration`) para refletir que análise passa a usar Lovable AI Gateway com `gemini-2.5-pro`
 
-## Recomendação
+## Resultado esperado
 
-Começar pelo **passo 2 (cron jobs)** porque é o que tem maior impacto — sem isto o sistema de analytics fica congelado. O passo 1 (backlog) pode correr em paralelo. Os passos 3 e 4 fecham o loop de utilizador final.
+- ✅ Pipeline volta a funcionar end-to-end (scrape → análise → PDF → email) sem dependência de API key externa
+- ✅ Backlog de 13 submissões processado automaticamente
+- ✅ Sem custos adicionais (usa LOVABLE_API_KEY já incluído)
+- ✅ Sem mudanças no front-end ou no schema da DB
 
-## Detalhe Técnico
+## Detalhes técnicos
 
-- Cron jobs usam `pg_cron` + `pg_net` (já disponíveis no Lovable Cloud)
-- SQL inserido via tool de inserts (não via migration, porque contém URLs específicos do projeto)
-- Email trigger: adicionar chamada a `supabase.functions.invoke('send-diagnostic-email', ...)` no fim do `generate-premium-pdf` quando `status === 'completed'`
-- Template de email já parcialmente existe em `send-diagnostic-email/index.ts` — só precisa de variante "report ready"
-
+- Endpoint: `POST https://ai.gateway.lovable.dev/v1/chat/completions`
+- Body: `{ model: "google/gemini-2.5-pro", messages: [{role: "system", content: SYSTEM_PROMPT}, {role: "user", content: USER_PROMPT}], max_completion_tokens: 16000 }`
+- Response shape: `data.choices[0].message.content` (string com JSON dentro, igual ao que o resto do código já espera)
+- Não é necessário tocar em `supabase/config.toml` (a função já está deployada e mantém `verify_jwt = false`)
