@@ -5,8 +5,12 @@ import { requireEnv, ANALYZER_ENV } from "../_shared/env-validator.ts";
 const env = requireEnv(ANALYZER_ENV);
 const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-const CLAUDE_API_KEY = env.CLAUDE_API_KEY;
-const CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
+// Migrated from direct Anthropic API to Lovable AI Gateway (Apr 2026)
+// Reason: external Claude API key ran out of credits, blocking the entire pipeline.
+// Lovable AI Gateway provides equivalent capability via LOVABLE_API_KEY (auto-provisioned).
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_MODEL = "google/gemini-2.5-pro";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
