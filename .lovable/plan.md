@@ -1,70 +1,41 @@
-# Auditoria & Plano de Resolução
+## Diagnóstico confirmado até agora
 
-## Diagnóstico
+- O ficheiro fonte `src/integrations/supabase/client.ts` exporta corretamente `supabase` como named export.
+- A página `/admin` importa corretamente `supabase` desse cliente.
+- O erro acontece no carregamento lazy da página `/admin`, antes da lógica de permissões correr.
+- O Service Worker atual intercepta todos os ficheiros `.js` e `.css` com estratégia `cache-first`, ou seja, pode servir bundles antigos mesmo depois de novo deploy.
+- O fluxo atual de update do Service Worker depende de banner/click e não garante que todos os clientes saiam imediatamente de bundles incompatíveis.
 
-A app **carrega normalmente** (o erro de `SyntaxError: Export 'supabase'` que voltaste a ver no replay é apenas do bundle stale em cache do browser — basta hard refresh). O **erro real** que está a bloquear o pipeline está nos logs da edge function `analyze-property-claude`:
+Isto aponta para um problema de version skew entre chunks JavaScript: um chunk lazy antigo espera um export chamado `supabase`, mas o chunk atualmente servido/importado já não tem esse export com a mesma forma. O fix real não é pedir hard refresh; é impedir a app de voltar a usar bundles JS incompatíveis.
 
-```
-Your credit balance is too low to access the Anthropic API.
-Please go to Plans & Billing to upgrade or purchase credits.
-HTTP 400 - invalid_request_error
-```
+## Plano de correção
 
-### Estado atual da base de dados
+1. **Parar de cachear bundles JS/CSS com `cache-first`**
+   - Alterar `public/sw.js` para não usar `cache-first` em `/assets/*.js`, `/assets/*.css` e chunks Vite.
+   - Usar `network-first` ou simplesmente bypass de cache para assets com hash.
+   - Manter cache para imagens, manifest, ícones e offline page.
 
-| Status | Submissions |
-|---|---|
-| `pending_manual_review` | **13** (presas devido ao erro Anthropic) |
-| `pending` | 12 (antigas, de 18 abr) |
-| `completed` | 8 |
-| `manual_review_requested` | 1 |
+2. **Forçar limpeza segura de caches antigos**
+   - Bump da versão do Service Worker novamente.
+   - No `activate`, apagar todos os caches antigos da app, incluindo variantes `static`, `dynamic` e `api`.
+   - Garantir `skipWaiting()` + `clients.claim()` para o novo SW assumir imediatamente.
 
-Todas as 13 submissões em `pending_manual_review` falharam exatamente no mesmo ponto: chamada HTTP à API da Anthropic com a `CLAUDE_API_KEY` que tem saldo zero.
+3. **Adicionar recuperação automática de erro de chunk/módulo**
+   - No arranque da app, adicionar handlers para erros de carregamento de módulo/chunk, incluindo:
+     - `Export 'supabase' is not defined in module`
+     - `Failed to fetch dynamically imported module`
+     - `does not provide an export named`
+   - Quando detetado, limpar caches, desregistar Service Workers antigos e recarregar a página uma única vez com flag anti-loop.
 
-### Causa raiz
+4. **Simplificar a divisão manual de chunks se necessário**
+   - Rever `vite.config.ts`: o chunk manual `supabase-vendor` mistura `@supabase/supabase-js` e `@tanstack/react-query`.
+   - Se a validação mostrar que continua a haver incompatibilidade, remover essa separação manual para deixar o Vite gerir dependências críticas e reduzir risco de circular/version skew.
 
-A função `analyze-property-claude` chama **diretamente** `https://api.anthropic.com/v1/messages` usando uma API key pessoal (`CLAUDE_API_KEY`) que ficou sem créditos. Mesmo problema afetará todas as próximas submissões.
-
-## Solução
-
-Migrar a chamada de análise para o **Lovable AI Gateway**, que já tem o `LOVABLE_API_KEY` configurado nos secrets e fornece acesso a modelos potentes (incluindo família Gemini e GPT-5) **sem requerer a chave Anthropic** e com créditos incluídos no plano Lovable.
-
-### Modelo escolhido
-
-**`google/gemini-2.5-pro`** — substituto direto do `claude-haiku-4-5`:
-- Excelente em raciocínio complexo + JSON estruturado (perfeito para análise de propriedades)
-- Suporta o tamanho de contexto necessário (16k output tokens)
-- Disponível via Lovable AI Gateway sem custo adicional fora da sandbox de billing já em uso
-
-### Mudanças
-
-1. **`supabase/functions/analyze-property-claude/index.ts`**
-   - Substituir chamada `https://api.anthropic.com/v1/messages` por `https://ai.gateway.lovable.dev/v1/chat/completions`
-   - Trocar header `x-api-key: CLAUDE_API_KEY` por `Authorization: Bearer ${LOVABLE_API_KEY}`
-   - Adaptar payload do formato Anthropic (`messages` + `system`) para formato OpenAI-compatible (`messages` com role `system` no array)
-   - Adaptar parsing da resposta: `claudeData.content[0].text` → `data.choices[0].message.content`
-   - Tratar códigos 429 (rate limit) e 402 (créditos esgotados) com mensagem clara
-   - Manter o resto da lógica intacta (validação, prompt, fallbacks, atualização de DB)
-
-2. **Reprocessar backlog (13 submissões presas)**
-   - Após deploy da função corrigida, executar SQL `batch_reset_stuck_submissions()` que já existe na DB
-   - Isto coloca os 13 registos em `status = pending` e zera o `retry_count`
-   - O cron job existente (`pg_cron`) vai apanhá-los automaticamente, ou podemos invocar `fix-stuck-submission` manualmente
-
-3. **Cleanup opcional**
-   - O secret `CLAUDE_API_KEY` pode ficar nos secrets (não estorva), mas deixa de ser usado
-   - Atualizar a memória do projeto (`mem://infrastructure/ai-model-configuration`) para refletir que análise passa a usar Lovable AI Gateway com `gemini-2.5-pro`
+5. **Validar em ambiente real de preview**
+   - Abrir `/admin` com Playwright em sessão limpa.
+   - Simular presença de Service Worker/cache antigo quando possível.
+   - Confirmar que `/admin` deixa de cair no ErrorBoundary e que não aparece `Export 'supabase' is not defined in module` na consola.
 
 ## Resultado esperado
 
-- ✅ Pipeline volta a funcionar end-to-end (scrape → análise → PDF → email) sem dependência de API key externa
-- ✅ Backlog de 13 submissões processado automaticamente
-- ✅ Sem custos adicionais (usa LOVABLE_API_KEY já incluído)
-- ✅ Sem mudanças no front-end ou no schema da DB
-
-## Detalhes técnicos
-
-- Endpoint: `POST https://ai.gateway.lovable.dev/v1/chat/completions`
-- Body: `{ model: "google/gemini-2.5-pro", messages: [{role: "system", content: SYSTEM_PROMPT}, {role: "user", content: USER_PROMPT}], max_completion_tokens: 16000 }`
-- Response shape: `data.choices[0].message.content` (string com JSON dentro, igual ao que o resto do código já espera)
-- Não é necessário tocar em `supabase/config.toml` (a função já está deployada e mantém `verify_jwt = false`)
+Depois de implementado, a app deixa de depender de hard refresh/manual cache clear. Mesmo que um utilizador tenha um bundle antigo, a app limpa o cache incompatível e recarrega automaticamente para a versão correta.

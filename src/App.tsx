@@ -17,12 +17,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy } from "react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import CookieConsent from "@/components/CookieConsent";
 import { usePageTracking } from "@/hooks/useAnalytics";
-import { registerServiceWorker, setupNetworkListeners } from "@/utils/registerServiceWorker";
 import InstallPrompt from "@/components/PWA/InstallPrompt";
 import PerformanceMonitor from "@/components/performance/PerformanceMonitor";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -55,18 +54,6 @@ const PageTracker: React.FC = () => {
   return null;
 };
 
-/**
- * PWA Initializer - Register service worker and setup network listeners
- */
-const PWAInitializer: React.FC = () => {
-  useEffect(() => {
-    registerServiceWorker();
-    setupNetworkListeners();
-  }, []);
-
-  return null;
-};
-
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -78,7 +65,6 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
               <PageTracker />
-              <PWAInitializer />
               <PerformanceMonitor />
               {/* Suspense wrapper for lazy-loaded routes with loading fallback */}
               <Suspense fallback={<LoadingSpinner />}>
