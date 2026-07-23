@@ -1,5 +1,10 @@
 function isAppCache(name) {
-  return name.startsWith('alojamento-insights-') || /(^|-)precache-v\d+-|(^|-)runtime-|(^|-)googleAnalytics-/.test(name);
+  if (name.startsWith('alojamento-insights-')) {
+    return true;
+  }
+
+  const hasWorkboxBucket = /(^|-)precache-v\d+-|(^|-)runtime-|(^|-)googleAnalytics-/.test(name);
+  return hasWorkboxBucket && name.endsWith(self.registration.scope);
 }
 
 self.addEventListener('install', () => {
