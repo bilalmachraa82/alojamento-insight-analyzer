@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { recoverFromStaleAssets } from '@/utils/recoverStaleAssets';
 
 interface Props {
   children: ReactNode;
@@ -40,6 +41,8 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+    void recoverFromStaleAssets(error);
 
     // Report to Sentry
     Sentry.withScope((scope) => {
