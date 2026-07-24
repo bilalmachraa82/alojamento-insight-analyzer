@@ -1,9 +1,9 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { recoverFromStaleAssets } from '@/utils/recoverStaleAssets';
+import { isStaleAssetError, recoverFromStaleAssets } from '@/utils/recoverStaleAssets';
 
 interface Props {
   children: ReactNode;
@@ -16,6 +16,7 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
   eventId: string | null;
+  isRecoveringStaleAssets: boolean;
 }
 
 /**
@@ -32,6 +33,7 @@ class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
       eventId: null,
+      isRecoveringStaleAssets: false,
     };
   }
 
@@ -42,7 +44,14 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
-    void recoverFromStaleAssets(error);
+    if (isStaleAssetError(error)) {
+      this.setState({ isRecoveringStaleAssets: true });
+      void recoverFromStaleAssets(error).then((recovered) => {
+        if (!recovered) {
+          this.setState({ isRecoveringStaleAssets: false });
+        }
+      });
+    }
 
     // Report to Sentry
     Sentry.withScope((scope) => {
@@ -66,6 +75,7 @@ class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
       eventId: null,
+      isRecoveringStaleAssets: false,
     });
   };
 
@@ -77,6 +87,26 @@ class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      if (this.state.isRecoveringStaleAssets) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+            <Card className="w-full max-w-md shadow-lg">
+              <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div>
+                  <CardTitle className="text-xl font-bold text-gray-900">
+                    Atualizando a aplicação
+                  </CardTitle>
+                  <CardDescription className="mt-2">
+                    Estamos a limpar ficheiros antigos do browser e a carregar a versão mais recente.
+                  </CardDescription>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      }
+
       // Use custom fallback if provided
       if (this.props.fallback) {
         return this.props.fallback;
